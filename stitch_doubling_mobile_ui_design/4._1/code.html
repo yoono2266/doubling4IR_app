@@ -1,0 +1,195 @@
+<!DOCTYPE html><html class="dark" lang="ko"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>이메일 인증 모의 수령 화면</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@100..900&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#3d3933",
+                        "surface-container-low": "#1e1b16",
+                        "on-error": "#690005",
+                        "on-background": "#e9e1d8",
+                        "tertiary": "#e2c28e",
+                        "on-secondary": "#223145",
+                        "surface-container": "#231f1a",
+                        "surface-variant": "#38342e",
+                        "inverse-on-surface": "#34302a",
+                        "error": "#ffb4ab",
+                        "inverse-surface": "#e9e1d8",
+                        "card-border": "rgba(255, 255, 255, 0.05)",
+                        "background": "#16130e",
+                        "tertiary-container": "#bfa170",
+                        "secondary": "#b7c8e1",
+                        "outline": "#9a8f80",
+                        "tertiary-fixed": "#ffdea9",
+                        "primary-fixed": "#ffdea5",
+                        "surface-dim": "#16130e",
+                        "surface-container-highest": "#38342e",
+                        "on-secondary-fixed": "#0c1c2f",
+                        "on-primary-fixed": "#261900",
+                        "on-surface-variant": "#d1c5b4",
+                        "surface-container-high": "#2d2924",
+                        "on-tertiary-fixed-variant": "#59431b",
+                        "on-tertiary-fixed": "#271900",
+                        "on-primary-fixed-variant": "#5d4201",
+                        "on-tertiary": "#402d06",
+                        "on-secondary-container": "#a9bad2",
+                        "on-primary": "#412d00",
+                        "secondary-fixed": "#d3e4fd",
+                        "surface-tint": "#e9c176",
+                        "outline-gold": "rgba(197, 160, 89, 0.2)",
+                        "outline-variant": "#4e4639",
+                        "on-primary-container": "#4e3700",
+                        "on-secondary-fixed-variant": "#38485c",
+                        "on-error-container": "#ffdad6",
+                        "secondary-container": "#3b4a5f",
+                        "on-tertiary-container": "#4c3810",
+                        "primary": "#e9c176",
+                        "error-container": "#93000a",
+                        "primary-fixed-dim": "#e9c176",
+                        "background-deep": "#0D1B2A",
+                        "inverse-primary": "#775a19",
+                        "primary-container": "#c5a059",
+                        "surface": "#16130e",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "on-surface": "#e9e1d8",
+                        "surface-container-lowest": "#110e09",
+                        "tertiary-fixed-dim": "#e2c28e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1200px",
+                        "unit": "8px",
+                        "margin-desktop": "64px",
+                        "section-gap": "80px",
+                        "stack-md": "16px",
+                        "margin-mobile": "20px",
+                        "stack-sm": "8px",
+                        "stack-lg": "32px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Pretendard"],
+                        "label-lg": ["Pretendard"],
+                        "headline-lg-mobile": ["Pretendard"],
+                        "headline-lg": ["Pretendard"],
+                        "body-md": ["Pretendard"],
+                        "headline-md": ["Pretendard"],
+                        "headline-xl": ["Pretendard"],
+                        "label-sm": ["Pretendard"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-xl": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: theme('colors.background-deep');
+            color: theme('colors.on-surface');
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid theme('colors.card-border');
+        }
+
+        .gold-gradient-text {
+            background: linear-gradient(to right, theme('colors.primary-fixed-dim'), theme('colors.primary-container'));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+    </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" data-snapdom="injected-import"></head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+<!-- Mobile Container (390x844 max width constraint) -->
+<main class="w-full max-w-[390px] h-[844px] max-h-[844px] bg-background-deep relative overflow-hidden flex flex-col shadow-2xl rounded-[32px] border border-card-border ring-1 ring-white/5">
+<!-- Header area for context (App/Bottom Bar excluded as requested, using a simple context header) -->
+<div class="px-margin-mobile py-stack-lg border-b border-card-border/50">
+<div class="inline-flex items-center gap-2 bg-primary-container/20 px-3 py-1.5 rounded-full border border-outline-gold mb-4">
+<span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;">
+                    science
+                </span>
+<span class="font-label-sm text-label-sm text-primary tracking-widest uppercase">
+                    데모: 수신 메일함 미리보기
+                </span>
+</div>
+</div>
+<!-- Scrollable Content Canvas -->
+<div class="flex-1 overflow-y-auto px-margin-mobile py-section-gap flex flex-col">
+<!-- Email Card Simulation -->
+<div class="glass-panel rounded-xl p-6 flex flex-col gap-6 relative overflow-hidden group">
+<!-- Subtle glow effect -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl opacity-50 group-hover:opacity-100 transition-opacity duration-700"></div>
+<!-- Email Header -->
+<div class="flex flex-col gap-2 relative z-10">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-card-border">
+<span class="font-headline-md text-headline-md font-bold text-primary">D</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-lg text-label-lg text-on-surface">DOUBLING</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">no-reply@doubling.com</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">방금 전</span>
+</div>
+</div>
+<hr class="border-card-border/50">
+<!-- Email Body -->
+<div class="flex flex-col gap-6 relative z-10">
+<h2 class="font-headline-md text-headline-md text-on-surface leading-tight">
+                        이메일 인증을 완료해주세요
+                    </h2>
+<div class="flex flex-col gap-4 text-on-surface-variant">
+<p class="font-body-md text-body-md">
+                            안녕하세요.<br>
+                            DOUBLING 서비스 가입을 환영합니다.
+                        </p>
+<p class="font-body-md text-body-md">
+                            가입 절차를 완료하고 안전하게 서비스를 이용하시려면 아래 버튼을 눌러 이메일 주소를 인증해 주세요.
+                        </p>
+</div>
+<!-- Call to Action -->
+<div class="pt-4 flex flex-col gap-4">
+<button class="w-full bg-primary-container text-background-deep font-label-lg text-label-lg py-4 px-6 rounded-lg font-bold hover:bg-primary transition-colors duration-200 shadow-[0_0_15px_rgba(197,160,89,0.2)] active:scale-[0.98]">
+                            인증하기
+                        </button>
+<p class="font-label-sm text-label-sm text-on-surface-variant/70 text-center">
+                            본 요청은 24시간 동안 유효합니다. 본인이 요청하지 않은 경우 이 메일을 무시해 주세요.
+                        </p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>날짜 선택 - Doubling</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                "background": "#0D1B2A",
+                "surface": "#0D1B2A",
+                "surface-container": "#162639",
+                "primary": "#C5A059",
+                "primary-container": "#C5A059",
+                "on-primary": "#0D1B2A",
+                "on-primary-container": "#0D1B2A",
+                "tertiary": "#E2C28E",
+                "on-tertiary": "#0D1B2A",
+                "on-background": "#F8F9FA",
+                "on-surface": "#F8F9FA",
+                "on-surface-variant": "#F8F9FA",
+                "outline": "rgba(197, 160, 89, 0.2)",
+                "card-border": "rgba(255, 255, 255, 0.05)",
+                "error": "#ffb4ab",
+                "on-error": "#690005"
+              },
+              "borderRadius": {
+                "sm": "0.125rem",
+                "DEFAULT": "0.25rem",
+                "md": "0.375rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+              },
+              "spacing": {
+                      "margin-mobile": "20px",
+                      "stack-md": "16px",
+                      "stack-lg": "32px",
+                      "margin-desktop": "64px",
+                      "section-gap": "80px",
+                      "container-max": "1200px",
+                      "unit": "8px",
+                      "stack-sm": "8px",
+                      "gutter": "24px"
+              },
+              "fontFamily": {
+                      "headline-xl": [
+                              "Pretendard"
+                      ],
+                      "label-sm": [
+                              "Pretendard"
+                      ],
+                      "headline-md": [
+                              "Pretendard"
+                      ],
+                      "headline-lg": [
+                              "Pretendard"
+                      ],
+                      "label-lg": [
+                              "Pretendard"
+                      ],
+                      "headline-lg-mobile": [
+                              "Pretendard"
+                      ],
+                      "body-md": [
+                              "Pretendard"
+                      ],
+                      "body-lg": [
+                              "Pretendard"
+                      ]
+              },
+              "fontSize": {
+                      "headline-xl": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-lg": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0D1B2A;
+            color: #F8F9FA;
+        }
+        .glass-header {
+            background-color: rgba(22, 38, 57, 0.8);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col font-body-md bg-background text-on-surface">
+<!-- TopAppBar -->
+<header class="glass-header w-full px-margin-mobile h-16 sticky top-0 z-50 flex justify-between items-center border-b border-card-border">
+<button class="text-primary flex items-center justify-center p-2 rounded-DEFAULT hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="text-headline-md font-headline-md font-bold text-primary">날짜 선택</h1>
+<div class="text-label-lg font-label-lg text-primary">1/3</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow w-full max-w-container-max mx-auto px-margin-mobile py-stack-lg pb-48">
+<!-- Calendar Section -->
+<section class="bg-surface-container rounded-DEFAULT border border-card-border p-stack-md mb-stack-lg">
+<div class="flex justify-between items-center mb-stack-md">
+<button class="text-on-surface-variant p-2"><span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span></button>
+<h2 class="text-body-lg font-body-lg font-bold">2024년 8월</h2>
+<button class="text-on-surface-variant p-2"><span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span></button>
+</div>
+<div class="grid grid-cols-7 gap-y-stack-sm text-center text-label-sm font-label-sm mb-stack-sm text-on-surface-variant">
+<div class="">일</div><div class="">월</div><div class="">화</div><div class="">수</div><div class="">목</div><div class="">금</div><div class="">토</div>
+</div>
+<div class="grid grid-cols-7 gap-y-2 text-center text-body-md font-body-md">
+<!-- Empty days for August 2024 (starts on Thursday) -->
+<div></div><div></div><div></div><div></div>
+<!-- Dates -->
+<div class="p-2 text-on-surface-variant line-through opacity-50">1</div>
+<div class="p-2 text-on-surface-variant line-through opacity-50">2</div>
+<div class="p-2 text-on-surface-variant line-through opacity-50">3</div>
+<div class="p-2 text-on-surface-variant line-through opacity-50">4</div>
+<div class="p-2 text-on-surface-variant line-through opacity-50">5</div>
+<div class="p-2 text-on-surface-variant line-through opacity-50">6</div>
+<div class="p-2">7</div>
+<div class="p-2">8</div>
+<div class="p-2">9</div>
+<div class="p-2">10</div>
+<div class="p-2">11</div>
+<div class="p-2">12</div>
+<div class="p-2">13</div>
+<div class="p-2">14</div>
+<div class="p-2">15</div>
+<div class="p-2">16</div>
+<div class="p-2">17</div>
+<div class="p-2">18</div>
+<div class="p-2">19</div>
+<!-- Selected Range -->
+<div class="bg-primary/20 text-primary rounded-l-full p-2 relative z-10">
+<span class="relative z-20">20</span>
+</div>
+<div class="bg-primary/20 text-primary p-2 relative z-10">
+<span class="relative z-20">21</span>
+</div>
+<div class="bg-primary/20 text-primary rounded-r-full p-2 relative z-10">
+<span class="relative z-20">22</span>
+</div>
+<div class="p-2">23</div>
+<div class="p-2">24</div>
+<div class="p-2">25</div>
+<div class="p-2">26</div>
+<div class="p-2">27</div>
+<div class="p-2 text-on-surface-variant line-through opacity-50">28</div>
+<div class="p-2 text-on-surface-variant line-through opacity-50">29</div>
+<div class="p-2">30</div>
+<div class="p-2">31</div>
+</div>
+<div class="mt-stack-md flex items-center justify-end gap-4 text-label-sm font-label-sm">
+<div class="flex items-center gap-1"><div class="w-3 h-3 bg-primary/20 rounded-full"></div> 선택됨</div>
+<div class="flex items-center gap-1"><div class="w-3 h-3 border border-outline rounded-full"></div> 예약 가능</div>
+<div class="flex items-center gap-1 text-on-surface-variant line-through opacity-50">마감</div>
+</div>
+</section>
+<!-- Selection Summary -->
+<section class="bg-surface-container rounded-DEFAULT border border-card-border p-stack-md">
+<h3 class="text-label-lg font-label-lg text-on-surface-variant mb-unit">선택 요약</h3>
+<div class="flex items-center justify-between text-body-lg font-body-lg text-primary">
+<div class="flex items-center gap-2">
+<span class="">체크인 8/20</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+<span class="">체크아웃 8/22</span>
+</div>
+</div>
+<div class="mt-stack-sm text-body-md font-body-md text-on-surface">
+                이수 목표 <span class="font-bold text-primary">24시간</span>
+</div>
+</section>
+</main>
+<!-- Bottom Fix Button -->
+<div class="fixed bottom-[72px] left-0 w-full p-margin-mobile glass-header border-t border-card-border z-40">
+<button class="w-full bg-primary-container text-on-primary-container text-headline-md font-headline-md py-3 rounded-DEFAULT transition-transform active:scale-95 font-bold">
+            다음
+        </button>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full h-[72px] bg-white/10 backdrop-blur-[20px] border-t border-card-border z-50 flex justify-around items-center px-2 pb-safe">
+<button class="flex flex-col items-center gap-1 p-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 0;">casino</span>
+<span class="text-[10px] font-medium leading-none">잭팟</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 0;">sports_esports</span>
+<span class="text-[10px] font-medium leading-none">폴리</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="text-[10px] font-medium leading-none">홈</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 text-primary">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 0;">redeem</span>
+<span class="text-[10px] font-medium leading-none">Free</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="text-[10px] font-medium leading-none">마이</span>
+</button>
+</nav>
+</body></html>

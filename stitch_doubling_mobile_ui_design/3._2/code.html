@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Doubling - 옵션 확인</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                  "background": "#0D1B2A",
+                  "surface": "#0D1B2A",
+                  "surface-container": "#162639",
+                  "primary": "#C5A059",
+                  "primary-container": "#C5A059",
+                  "on-primary": "#0D1B2A",
+                  "on-primary-container": "#0D1B2A",
+                  "tertiary": "#E2C28E",
+                  "on-tertiary": "#0D1B2A",
+                  "on-background": "#F8F9FA",
+                  "on-surface": "#F8F9FA",
+                  "on-surface-variant": "#F8F9FA",
+                  "outline": "rgba(197, 160, 89, 0.2)",
+                  "card-border": "rgba(255, 255, 255, 0.05)",
+                  "error": "#ffb4ab",
+                  "on-error": "#690005"
+              },
+              "borderRadius": {
+                  "sm": "0.125rem",
+                  "DEFAULT": "0.25rem",
+                  "md": "0.375rem",
+                  "lg": "0.5rem",
+                  "xl": "0.75rem",
+                  "full": "9999px"
+              },
+              "spacing": {
+                      "margin-mobile": "20px",
+                      "stack-md": "16px",
+                      "stack-lg": "32px",
+                      "margin-desktop": "64px",
+                      "section-gap": "80px",
+                      "container-max": "1200px",
+                      "unit": "8px",
+                      "stack-sm": "8px",
+                      "gutter": "24px"
+              },
+              "fontFamily": {
+                      "headline-xl": ["Pretendard"],
+                      "label-sm": ["Pretendard"],
+                      "headline-md": ["Pretendard"],
+                      "headline-lg": ["Pretendard"],
+                      "label-lg": ["Pretendard"],
+                      "headline-lg-mobile": ["Pretendard"],
+                      "body-md": ["Pretendard"],
+                      "body-lg": ["Pretendard"]
+              },
+              "fontSize": {
+                      "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+      </script>
+<style>
+          body {
+              background-color: #0D1B2A; 
+              color: #F8F9FA;
+          }
+          .custom-checkbox {
+              accent-color: #C5A059;
+          }
+          .custom-checkbox:checked {
+              background-color: #C5A059;
+              border-color: #C5A059;
+          }
+      </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col items-center bg-background text-on-surface">
+<div class="w-full max-w-container-max flex-1 relative flex flex-col md:border-x md:border-card-border pb-48">
+<!-- TopAppBar -->
+<header class="docked full-width top-0 sticky z-50 border-b border-card-border flat no shadows glassmorphism bg-surface/10 backdrop-blur-xl flex justify-between items-center w-full px-margin-mobile h-16">
+<button class="text-primary hover:bg-surface-container/20 transition-colors Active: scale-95 duration-150 p-2 -ml-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="arrow_back" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<h1 class="text-headline-md font-headline-md font-bold text-primary flex-1 text-center">옵션 확인</h1>
+<div class="text-label-lg font-label-lg text-primary w-10 text-right">
+                2/3
+            </div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 px-margin-mobile pt-8 pb-12 flex flex-col gap-stack-lg">
+<!-- Guests Selection -->
+<section class="bg-surface-container rounded-DEFAULT border border-card-border p-6 flex flex-col gap-stack-md">
+<h2 class="text-body-lg font-body-lg text-on-background font-semibold">참석 인원</h2>
+<div class="flex items-center justify-between mt-2">
+<span class="text-body-md font-body-md text-on-surface-variant">성인</span>
+<div class="flex items-center gap-4">
+<button aria-label="Decrease" class="w-8 h-8 rounded-full border border-outline flex items-center justify-center text-primary hover:bg-surface-container/20 transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">remove</span>
+</button>
+<span class="text-headline-md font-headline-md text-on-background w-6 text-center">2</span>
+<button aria-label="Increase" class="w-8 h-8 rounded-full border border-outline flex items-center justify-center text-primary hover:bg-surface-container/20 transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">add</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Options Selection -->
+<section class="bg-surface-container rounded-DEFAULT border border-card-border p-6 flex flex-col gap-stack-md">
+<h2 class="text-body-lg font-body-lg text-on-background font-semibold">추가 옵션</h2>
+<div class="flex flex-col gap-4 mt-2">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-5 h-5 custom-checkbox rounded border-outline bg-transparent text-primary focus:ring-primary focus:ring-offset-surface-container" type="checkbox"/>
+<span class="text-body-md font-body-md text-on-surface-variant group-hover:text-on-background transition-colors">골프 부킹 추가</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-5 h-5 custom-checkbox rounded border-outline bg-transparent text-primary focus:ring-primary focus:ring-offset-surface-container" type="checkbox"/>
+<span class="text-body-md font-body-md text-on-surface-variant group-hover:text-on-background transition-colors">추가 의전 서비스</span>
+</label>
+</div>
+</section>
+<!-- Summary Card -->
+<section class="bg-surface-container rounded-DEFAULT border border-card-border p-6 flex flex-col gap-stack-md relative overflow-hidden">
+<div class="absolute top-0 right-0 bg-primary-container text-on-primary-container px-3 py-1 rounded-bl-DEFAULT text-label-sm font-label-sm font-bold">
+                    첫 예약 보장 적용됨
+                </div>
+<div class="pt-2">
+<h3 class="text-headline-md font-headline-md text-primary mb-1">Deluxe Room</h3>
+<p class="text-body-md font-body-md text-on-surface-variant">2023.11.15 - 2023.11.18 (3박 4일)</p>
+</div>
+<div class="h-px bg-card-border w-full my-2"></div>
+<div class="flex justify-between items-center">
+<span class="text-body-lg font-body-lg text-on-background">예약금</span>
+<span class="text-headline-md font-headline-md text-primary">USDT 15,000</span>
+</div>
+</section>
+<!-- Consent -->
+<section class="mt-4">
+<label class="flex items-start gap-3 cursor-pointer group">
+<input class="mt-1 w-5 h-5 custom-checkbox rounded border-outline bg-transparent text-primary focus:ring-primary focus:ring-offset-background" type="checkbox"/>
+<span class="text-body-md font-body-md text-on-surface-variant group-hover:text-on-background transition-colors leading-relaxed">
+                        취소/환불 규정 및 책임 이용 안내에 동의합니다. (필수)
+                    </span>
+</label>
+</section>
+</main>
+<!-- Bottom Fix Area for Button -->
+<div class="fixed bottom-20 left-0 w-full z-40 px-margin-mobile pb-6 pt-4 bg-background/80 backdrop-blur-md flex justify-center">
+<div class="w-full max-w-container-max">
+<button class="w-full bg-primary text-on-primary py-4 rounded-DEFAULT text-body-lg font-body-lg font-bold hover:bg-opacity-90 transition-all active:scale-[0.98] shadow-[0_4px_14px_0_rgba(197,160,89,0.39)]">
+                    다음
+                </button>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full h-20 bg-white/10 backdrop-blur-[20px] border-t border-card-border z-50 flex justify-around items-center px-2">
+<a class="flex flex-col items-center justify-center gap-1 w-16 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 0;">casino</span>
+<span class="text-label-sm">잭팟</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 w-16 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 0;">monetization_on</span>
+<span class="text-label-sm">폴리</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 w-16 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="text-label-sm">홈</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 w-16 text-primary font-bold" href="#">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 0;">star</span>
+<span class="text-label-sm">Free</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 w-16 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="text-label-sm">마이</span>
+</a>
+</nav>
+</div>
+</body></html>

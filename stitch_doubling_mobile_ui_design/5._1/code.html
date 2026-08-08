@@ -1,0 +1,201 @@
+<!DOCTYPE html><html class="dark" lang="ko"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>이메일 인증 성공 - Doubling</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link crossorigin="anonymous" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-bright": "#3d3933",
+                        "surface-container-low": "#1e1b16",
+                        "on-error": "#690005",
+                        "on-background": "#e9e1d8",
+                        "tertiary": "#e2c28e",
+                        "on-secondary": "#223145",
+                        "surface-container": "#231f1a",
+                        "surface-variant": "#38342e",
+                        "inverse-on-surface": "#34302a",
+                        "error": "#ffb4ab",
+                        "inverse-surface": "#e9e1d8",
+                        "card-border": "rgba(255, 255, 255, 0.05)",
+                        "background": "#16130e",
+                        "tertiary-container": "#bfa170",
+                        "secondary": "#b7c8e1",
+                        "outline": "#9a8f80",
+                        "tertiary-fixed": "#ffdea9",
+                        "primary-fixed": "#ffdea5",
+                        "surface-dim": "#16130e",
+                        "surface-container-highest": "#38342e",
+                        "on-secondary-fixed": "#0c1c2f",
+                        "on-primary-fixed": "#261900",
+                        "on-surface-variant": "#d1c5b4",
+                        "surface-container-high": "#2d2924",
+                        "on-tertiary-fixed-variant": "#59431b",
+                        "on-tertiary-fixed": "#271900",
+                        "on-primary-fixed-variant": "#5d4201",
+                        "on-tertiary": "#402d06",
+                        "on-secondary-container": "#a9bad2",
+                        "on-primary": "#412d00",
+                        "secondary-fixed": "#d3e4fd",
+                        "surface-tint": "#e9c176",
+                        "outline-gold": "rgba(197, 160, 89, 0.2)",
+                        "outline-variant": "#4e4639",
+                        "on-primary-container": "#4e3700",
+                        "on-secondary-fixed-variant": "#38485c",
+                        "on-error-container": "#ffdad6",
+                        "secondary-container": "#3b4a5f",
+                        "on-tertiary-container": "#4c3810",
+                        "primary": "#e9c176",
+                        "error-container": "#93000a",
+                        "primary-fixed-dim": "#e9c176",
+                        "background-deep": "#0D1B2A",
+                        "inverse-primary": "#775a19",
+                        "primary-container": "#c5a059",
+                        "surface": "#16130e",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "on-surface": "#e9e1d8",
+                        "surface-container-lowest": "#110e09",
+                        "tertiary-fixed-dim": "#e2c28e"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    spacing: {
+                        "container-max": "1200px",
+                        "unit": "8px",
+                        "margin-desktop": "64px",
+                        "section-gap": "80px",
+                        "stack-md": "16px",
+                        "margin-mobile": "20px",
+                        "stack-sm": "8px",
+                        "stack-lg": "32px",
+                        "gutter": "24px"
+                    },
+                    fontFamily: {
+                        "body-lg": ["Pretendard", "sans-serif"],
+                        "label-lg": ["Pretendard", "sans-serif"],
+                        "headline-lg-mobile": ["Pretendard", "sans-serif"],
+                        "headline-lg": ["Pretendard", "sans-serif"],
+                        "body-md": ["Pretendard", "sans-serif"],
+                        "headline-md": ["Pretendard", "sans-serif"],
+                        "headline-xl": ["Pretendard", "sans-serif"],
+                        "label-sm": ["Pretendard", "sans-serif"]
+                    },
+                    fontSize: {
+                        "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+                        "label-lg": ["14px", { lineHeight: "20px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "headline-lg-mobile": ["28px", { lineHeight: "36px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                        "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "headline-md": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+                        "headline-xl": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "label-sm": ["12px", { lineHeight: "16px", fontWeight: "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background-deep');
+            color: theme('colors.on-surface');
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid theme('colors.card-border');
+        }
+
+        .gold-glow {
+            box-shadow: 0 0 40px rgba(197, 160, 89, 0.15);
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .animate-scale-in {
+            animation: scaleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col items-center justify-center relative overflow-hidden bg-background-deep selection:bg-primary-container selection:text-background-deep">
+<!-- Atmospheric Background Glow -->
+<div class="absolute inset-0 z-0 pointer-events-none flex items-center justify-center">
+<div class="w-[300px] h-[300px] rounded-full bg-primary-container/10 blur-[100px]"></div>
+</div>
+<!-- Main Content Container (Mobile Centric) -->
+<main class="relative z-10 w-full max-w-[390px] h-full min-h-[844px] flex flex-col justify-between px-margin-mobile py-section-gap mx-auto sm:border sm:border-card-border sm:h-[844px] sm:my-auto sm:rounded-3xl sm:bg-background-deep/50 sm:backdrop-blur-xl sm:shadow-2xl">
+<!-- Empty Top Space for vertical balance -->
+<div class="flex-1"></div>
+<!-- Center Success Content -->
+<div class="flex flex-col items-center text-center space-y-stack-lg">
+<!-- Gold Checkmark Icon -->
+<div class="animate-scale-in relative flex items-center justify-center w-32 h-32 rounded-full glass-panel gold-glow">
+<span class="material-symbols-outlined text-[64px] text-primary-container" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">
+                    check_circle
+                </span>
+<!-- Subtle decorative ring -->
+<div class="absolute inset-0 rounded-full border border-primary-container/30 scale-110"></div>
+</div>
+<!-- Typography Group -->
+<div class="space-y-stack-sm animate-fade-in-up delay-100">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">
+                    인증이 완료되었습니다
+                </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-[280px] mx-auto">
+                    이제 더블링의 모든 기능을 이용하실 수 있습니다
+                </p>
+</div>
+</div>
+<!-- Bottom Action Area -->
+<div class="flex-1 flex flex-col justify-end animate-fade-in-up delay-300 pb-safe">
+<button class="w-full h-14 bg-primary-container text-background-deep font-label-lg text-label-lg rounded-DEFAULT flex items-center justify-center hover:bg-primary-container/90 active:scale-[0.98] transition-all duration-200" type="button">
+                시작하기
+            </button>
+</div>
+</main>
+<script>
+        // Simple script to handle button click if needed later
+        document.querySelector('button').addEventListener('click', () => {
+            // Add slight haptic feedback if supported, then redirect
+            if (navigator.vibrate) navigator.vibrate(50);
+            console.log('Navigate to main dashboard');
+        });
+    </script>
+</body></html>

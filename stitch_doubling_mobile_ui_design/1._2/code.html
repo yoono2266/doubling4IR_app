@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>DOUBLING - 게시글 상세</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "background": "#0D1B2A",
+                        "surface": "#0D1B2A",
+                        "surface-container": "#162639",
+                        "primary": "#C5A059",
+                        "primary-container": "#C5A059",
+                        "on-primary": "#0D1B2A",
+                        "on-primary-container": "#0D1B2A",
+                        "tertiary": "#E2C28E",
+                        "on-tertiary": "#0D1B2A",
+                        "on-background": "#F8F9FA",
+                        "on-surface": "#F8F9FA",
+                        "on-surface-variant": "#F8F9FA",
+                        "outline": "rgba(197, 160, 89, 0.2)",
+                        "card-border": "rgba(255, 255, 255, 0.05)",
+                        "error": "#ffb4ab",
+                        "on-error": "#690005"
+                    },
+                    borderRadius: {
+                        "sm": "0.125rem",
+                        "DEFAULT": "0.25rem",
+                        "md": "0.375rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "stack-md": "16px",
+                        "stack-lg": "32px",
+                        "section-gap": "80px",
+                        "margin-desktop": "64px",
+                        "margin-mobile": "20px",
+                        "stack-sm": "8px",
+                        "gutter": "24px",
+                        "container-max": "1200px",
+                        "unit": "8px",
+                        "safe": "env(safe-area-inset-bottom, 20px)"
+                    },
+                    fontFamily: {
+                        "label-sm": ["Pretendard", "sans-serif"],
+                        "headline-lg-mobile": ["Pretendard", "sans-serif"],
+                        "body-md": ["Pretendard", "sans-serif"],
+                        "headline-md": ["Pretendard", "sans-serif"],
+                        "headline-lg": ["Pretendard", "sans-serif"],
+                        "body-lg": ["Pretendard", "sans-serif"],
+                        "label-lg": ["Pretendard", "sans-serif"],
+                        "headline-xl": ["Pretendard", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #0D1B2A;
+            color: #F8F9FA;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(197, 160, 89, 0.2);
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col pt-16 pb-[160px] bg-background text-on-background">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 border-b border-card-border bg-white/10 backdrop-blur-[20px] flex justify-between items-center px-margin-mobile h-16 w-full text-primary">
+<button class="p-2 -ml-2 active:scale-95 transition-transform text-primary hover:bg-white/5 rounded flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface">게시글</h1>
+<div class="flex items-center gap-2">
+<button class="p-2 active:scale-95 transition-transform text-primary hover:bg-white/5 rounded flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<button class="p-2 -mr-2 active:scale-95 transition-transform text-primary hover:bg-white/5 rounded flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-container-max mx-auto px-margin-mobile mt-stack-md flex flex-col gap-stack-lg">
+<!-- Post Content Section -->
+<article class="flex flex-col gap-stack-md bg-surface-container p-stack-md rounded border border-card-border">
+<!-- Author Info -->
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-primary/20 shrink-0">
+<img alt="Author avatar" class="w-full h-full object-cover" data-alt="A portrait photograph of a sophisticated individual in a luxury setting, dimly lit with warm golden accents, high fashion editorial style, emphasizing exclusivity and high status." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_kQnuI97pnELRtQ7FDfUdlL89YvgPATp4GTjKzEL1nNC5-q_CgykQaKQS0jzYTFXaAeJVnFLgoIgGVwPG8UXg-qCH0fvrGae5_CMRfmJF4OrDiPpnay6Ftxhs3KxeKEfM1vi0ktR20TyfpPp5YJThs5BADU_80BH1XbD85DT2B7wJLhb3HSgiDgQWWAryra-kIcUOpwYBFtBnakd8B53SAkfBzOIKYDUS_DTWd6mJ58tPqvxcE-ZkGw"/>
+</div>
+<div class="flex flex-col justify-center flex-1">
+<span class="font-label-lg text-label-lg text-on-surface">@luxurylife</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">2시간 전</span>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+</button>
+</div>
+<!-- Post Text -->
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+                Just experienced the most incredible service at the high limit room. The attention to detail here is absolutely unmatched, setting a new standard for luxury.
+            </p>
+<!-- Post Image -->
+<div class="w-full aspect-[4/3] rounded overflow-hidden border border-card-border mt-stack-sm relative">
+<img alt="Post image" class="w-full h-full object-cover absolute inset-0" data-alt="A breathtaking view of an ultra-luxurious high-limit casino room. Deep navy blue walls adorned with intricate gold filigree. A lavish poker table in the center under a modern crystal chandelier casting a warm, premium glow. High cinematic quality, moody atmospheric lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTKyR93ABk-Ju11qrHC_xmE5PYua5gk4pA5Ml0hxkc2Axvll-MwvyX-JGxf_lgskuhwE_OuiAK640-xdCuxFSGBQjuhAaM4aZ66Afr61UhGe8ZL_p5O4IQFlm1LFN9FziAWtr6ciUVNPOAfy-tkxMPL-Ku8IRXmpoB0qAq9DxoDCXxZbhGLU5pBEubcTDTfoqa6eQR9oIaO13dB6kv36qedamcfLrqrDz9OE0eg-34kol4ZP_1-rU6Jw"/>
+</div>
+<!-- Engagement Stats -->
+<div class="flex items-center gap-6 mt-stack-sm pt-stack-sm border-t border-card-border text-on-surface-variant">
+<button class="flex items-center gap-2 hover:text-primary transition-colors group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" data-icon="favorite">favorite</span>
+<span class="font-label-lg text-label-lg">124</span>
+</button>
+<button class="flex items-center gap-2 hover:text-primary transition-colors group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" data-icon="chat_bubble">chat_bubble</span>
+<span class="font-label-lg text-label-lg">48</span>
+</button>
+<button class="ml-auto hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="share">share</span>
+</button>
+</div>
+</article>
+<!-- Comments Section -->
+<section class="flex flex-col gap-stack-md">
+<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">댓글 <span class="text-primary text-sm font-normal">48</span></h2>
+<div class="flex flex-col gap-stack-md">
+<!-- Comment 1 -->
+<div class="flex gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden shrink-0">
+<img alt="Commenter avatar" class="w-full h-full object-cover" data-alt="A small profile picture of a traveler, standing in front of a blurred out luxury hotel facade at night, moody lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAI4x5_eTJwCq9a7u0xIJw-NWVfAp8lfTPCB0EYKsR4zpZF0iNG7x5ehv7xiKd8iT1_G6POhT1noA9meQ6JA6Qc5aue-3j-4oyzSKV1-3jMUi_L4g1_3xS7JP8fhMb0Me6Xj6os1fcztFmvGCSHHjl6xs7aMYjPC6nrxlSwps5z5SGKgGbrQ8MwcFD_xt87l9TgsP9POOMzKyh6yL1ab01QxQz6pNQgy8yVSevw-ajZ40chOhaQUHQ0RQ"/>
+</div>
+<div class="flex flex-col flex-1 bg-surface-container p-3 rounded border border-card-border">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-label-lg text-label-lg text-on-surface">@traveler_kim</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">1시간 전</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">저도 다음 달에 가보려고요! 후기 감사합니다</p>
+</div>
+</div>
+<!-- Comment 2 -->
+<div class="flex gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden shrink-0">
+<img alt="Commenter avatar" class="w-full h-full object-cover" data-alt="A subtle, moody abstract profile picture featuring dark blue and gold swirling patterns, looking premium and exclusive." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnYMgticgTeEXDN_BiKN9A3iUN4gADxJagAjHR9kgwq6emKHoTjvdoCZ8jQjU_B2tH8Tlw3yDYMGMU4DWHEp0Hx0YOieiJ1_GNGauiADOl5X9sAf1qYVTzwkqFIcgLw_5Cj0GZsR6zVqXhrYloPc5jOK5-UqvvBZnQ78iHw1a1Uk6_rb9yYexN7Ny9zUpNQ8NgaJMCRU6t9jUoBuhOOh4NyTQfD1P8iM36Mth_Gcf4C8s69N3bG-8b0Q"/>
+</div>
+<div class="flex flex-col flex-1 bg-surface-container p-3 rounded border border-card-border">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-label-lg text-label-lg text-on-surface">@hotelfan</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">2시간 전</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">사진 진짜 예쁘네요 ㅎㅎ</p>
+</div>
+</div>
+<!-- Comment 3 -->
+<div class="flex gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-surface-container shrink-0 border border-card-border">
+<span class="material-symbols-outlined w-full h-full flex items-center justify-center text-on-surface-variant text-xl">person</span>
+</div>
+<div class="flex flex-col flex-1 bg-surface-container p-3 rounded border border-card-border">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-label-lg text-label-lg text-on-surface">@questionmark</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">3시간 전</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">혹시 체크인 시간 여유있게 잡으셨나요?</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Input Area -->
+<div class="fixed bottom-20 w-full z-40 bg-background/90 backdrop-blur-md border-t border-card-border p-4">
+<div class="max-w-container-max mx-auto flex items-center gap-3">
+<div class="flex-1 relative">
+<input class="w-full bg-surface-container border-b border-primary border-x-0 border-t-0 text-on-surface placeholder:text-on-surface-variant/50 focus:ring-0 focus:border-primary px-4 py-3 rounded-none font-body-md" placeholder="댓글을 입력하세요..." type="text"/>
+</div>
+<button class="bg-primary text-on-primary p-3 rounded active:scale-95 transition-transform flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined" data-icon="send">send</span>
+</button>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 h-20 bg-white/10 backdrop-blur-[20px] border-t border-card-border">
+<div class="max-w-container-max mx-auto h-full px-4 flex justify-between items-center">
+<a class="flex flex-col items-center justify-center w-16 h-full gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0">casino</span>
+<span class="text-xs font-normal">잭팟</span>
+</a>
+<a class="flex flex-col items-center justify-center w-16 h-full gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0">query_stats</span>
+<span class="text-xs font-normal">폴리</span>
+</a>
+<a class="flex flex-col items-center justify-center w-16 h-full gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0">home</span>
+<span class="text-xs font-normal">홈</span>
+</a>
+<a class="flex flex-col items-center justify-center w-16 h-full gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0">workspace_premium</span>
+<span class="text-xs font-normal">Free</span>
+</a>
+<a class="flex flex-col items-center justify-center w-16 h-full gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0">person</span>
+<span class="text-xs font-normal">마이</span>
+</a>
+</div>
+</nav>
+</body></html>

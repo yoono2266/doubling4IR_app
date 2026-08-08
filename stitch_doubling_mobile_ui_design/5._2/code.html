@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Doubling - 폴리마켓 내역</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-container": "#4c3810",
+                      "on-background": "#F8F9FA",
+                      "error": "#ffb4ab",
+                      "on-tertiary": "#402d06",
+                      "tertiary-fixed-dim": "#e2c28e",
+                      "on-secondary-fixed-variant": "#38485c",
+                      "on-primary-container": "#4e3700",
+                      "outline-variant": "#4e4639",
+                      "on-surface": "#e9e1d8",
+                      "secondary-fixed": "#d3e4fd",
+                      "on-primary-fixed": "#261900",
+                      "tertiary-container": "#bfa170",
+                      "primary-container": "#c5a059",
+                      "inverse-surface": "#e9e1d8",
+                      "inverse-on-surface": "#34302a",
+                      "surface-bright": "#3d3933",
+                      "tertiary": "#e2c28e",
+                      "surface-tint": "#e9c176",
+                      "surface": "#16130e",
+                      "on-secondary": "#223145",
+                      "error-container": "#93000a",
+                      "surface-container": "#231f1a",
+                      "primary": "#e9c176",
+                      "on-primary": "#412d00",
+                      "on-secondary-container": "#a9bad2",
+                      "surface-container-high": "#2d2924",
+                      "outline": "#9a8f80",
+                      "tertiary-fixed": "#ffdea9",
+                      "on-secondary-fixed": "#0c1c2f",
+                      "primary-fixed-dim": "#e9c176",
+                      "on-tertiary-fixed": "#271900",
+                      "card-border": "rgba(255, 255, 255, 0.05)",
+                      "surface-variant": "#38342e",
+                      "background": "#16130e",
+                      "on-error-container": "#ffdad6",
+                      "inverse-primary": "#775a19",
+                      "on-primary-fixed-variant": "#5d4201",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "background-deep": "#0D1B2A",
+                      "surface-container-lowest": "#110e09",
+                      "surface-dim": "#16130e",
+                      "on-tertiary-fixed-variant": "#59431b",
+                      "on-error": "#690005",
+                      "outline-gold": "rgba(197, 160, 89, 0.2)",
+                      "on-surface-variant": "#d1c5b4",
+                      "secondary-container": "#3b4a5f",
+                      "surface-container-highest": "#38342e",
+                      "surface-container-low": "#1e1b16",
+                      "secondary": "#b7c8e1",
+                      "primary-fixed": "#ffdea5"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "margin-desktop": "64px",
+                      "section-gap": "80px",
+                      "unit": "8px",
+                      "gutter": "24px",
+                      "margin-mobile": "20px",
+                      "stack-lg": "32px",
+                      "stack-sm": "8px",
+                      "container-max": "1200px",
+                      "stack-md": "16px"
+              },
+              "fontFamily": {
+                      "headline-lg-mobile": [
+                              "Pretendard"
+                      ],
+                      "label-lg": [
+                              "Pretendard"
+                      ],
+                      "body-md": [
+                              "Pretendard"
+                      ],
+                      "label-sm": [
+                              "Pretendard"
+                      ],
+                      "headline-lg": [
+                              "Pretendard"
+                      ],
+                      "headline-xl": [
+                              "Pretendard"
+                      ],
+                      "headline-md": [
+                              "Pretendard"
+                      ],
+                      "body-lg": [
+                              "Pretendard"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-lg": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-xl": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        body { font-family: 'Pretendard', sans-serif; }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-deep text-on-surface min-h-screen flex flex-col pb-[100px]">
+<!-- App Bar (Sub-page) -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-16 w-full border-b border-card-border bg-[#162639]/80 backdrop-blur-[20px]">
+<button class="text-on-surface-variant hover:bg-white/5 transition-colors p-2 rounded-full active:scale-95 duration-200">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-on-surface">폴리마켓 내역</h1>
+<button class="text-on-surface-variant hover:bg-white/5 transition-colors p-2 rounded-full active:scale-95 duration-200">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="flex-1 mt-16 px-[20px] py-stack-lg max-w-container-max mx-auto w-full">
+<div class="flex flex-col gap-stack-md">
+<!-- Market Card 1 -->
+<article class="bg-[#162639] border border-card-border rounded-xl p-stack-md flex flex-col gap-unit hover:border-primary/50 transition-colors duration-300 cursor-pointer group">
+<div class="flex justify-between items-start">
+<h2 class="font-body-lg text-body-lg text-on-surface group-hover:text-primary transition-colors">Ballon d'Or Winner 2026</h2>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">open_in_new</span>
+</div>
+<div class="flex items-center gap-2 mt-unit">
+<span class="inline-flex items-center px-2 py-1 rounded-sm bg-primary-container/20 text-primary font-label-sm text-label-sm">열람함</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-sm">2일 전</span>
+</div>
+</article>
+<!-- Market Card 2 -->
+<article class="bg-[#162639] border border-card-border rounded-xl p-stack-md flex flex-col gap-unit hover:border-primary/50 transition-colors duration-300 cursor-pointer group">
+<div class="flex justify-between items-start">
+<h2 class="font-body-lg text-body-lg text-on-surface group-hover:text-primary transition-colors">US Presidential Election 2024 Winner</h2>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">open_in_new</span>
+</div>
+<div class="flex items-center gap-2 mt-unit">
+<span class="inline-flex items-center px-2 py-1 rounded-sm bg-primary-container/20 text-primary font-label-sm text-label-sm">열람함</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-sm">5일 전</span>
+</div>
+</article>
+<!-- Market Card 3 -->
+<article class="bg-[#162639] border border-card-border rounded-xl p-stack-md flex flex-col gap-unit hover:border-primary/50 transition-colors duration-300 cursor-pointer group">
+<div class="flex justify-between items-start">
+<h2 class="font-body-lg text-body-lg text-on-surface group-hover:text-primary transition-colors">Federal Reserve Interest Rate Cut in Q3 2024</h2>
+<span class="material-symbols-outlined text-on-surface-variant text-sm">open_in_new</span>
+</div>
+<div class="flex items-center gap-2 mt-unit">
+<span class="inline-flex items-center px-2 py-1 rounded-sm bg-surface-variant text-on-surface-variant font-label-sm text-label-sm border border-card-border">종료됨</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-sm">1주일 전</span>
+</div>
+</article>
+</div>
+</main>
+<!-- BottomNavBar (Hidden on desktop, visible on mobile) -->
+<!-- Note: Bottom nav is usually suppressed on sub-pages with a back button according to semantic shell rules. 
+         However, the user prompt explicitly requested "Bottom Nav: 'My' tab active." 
+         Following the user's specific instruction for this generation while maintaining the requested styling. -->
+<nav class="md:hidden fixed bottom-0 w-full flex justify-around items-center h-20 px-margin-mobile pb-safe z-50 border-t border-card-border bg-white/10 backdrop-blur-[20px]">
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary/80 transition-all active:scale-90 duration-200 gap-1 w-16">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">casino</span>
+<span class="font-label-sm text-label-sm">프리미엄</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary/80 transition-all active:scale-90 duration-200 gap-1 w-16">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">workspace_premium</span>
+<span class="font-label-sm text-label-sm">잭팟</span>
+</button>
+<button class="flex flex-col items-center justify-center flex flex-col items-center justify-center text-primary font-bold hover:text-primary/80 transition-all active:scale-90 duration-200 gap-1 w-16">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">query_stats</span>
+<span class="font-label-sm text-label-sm">폴리마켓</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary/80 transition-all active:scale-90 duration-200 gap-1 w-16">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">groups</span>
+<span class="font-label-sm text-label-sm">커뮤니티</span>
+</button>
+</nav>
+</body></html>

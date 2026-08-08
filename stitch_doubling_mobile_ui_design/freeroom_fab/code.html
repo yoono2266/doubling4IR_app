@@ -1,0 +1,262 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Doubling - Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@100..900&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .shimmer {
+            background: linear-gradient(90deg, #c5a059 25%, #e2c28e 50%, #c5a059 75%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite linear;
+        }
+        @keyframes shimmer {
+            to { background-position: -200% 0; }
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed": "#d3e4fd",
+                        "outline-variant": "#4e4639",
+                        "tertiary-fixed-dim": "#e2c28e",
+                        "surface-container-lowest": "#110e09",
+                        "background-deep": "#0D1B2A",
+                        "on-surface-variant": "#d1c5b4",
+                        "on-secondary-fixed": "#0c1c2f",
+                        "on-tertiary": "#402d06",
+                        "on-error": "#690005",
+                        "on-secondary-container": "#a9bad2",
+                        "tertiary": "#e2c28e",
+                        "on-background": "#F8F9FA",
+                        "on-primary": "#412d00",
+                        "card-border": "rgba(255, 255, 255, 0.05)",
+                        "surface-variant": "#38342e",
+                        "outline-gold": "rgba(197, 160, 89, 0.2)",
+                        "surface": "#16130e",
+                        "surface-container": "#231f1a",
+                        "tertiary-fixed": "#ffdea9",
+                        "primary-container": "#c5a059",
+                        "primary-fixed": "#ffdea5",
+                        "on-primary-fixed-variant": "#5d4201",
+                        "on-primary-fixed": "#261900",
+                        "secondary": "#b7c8e1",
+                        "outline": "#9a8f80",
+                        "error-container": "#93000a",
+                        "on-surface": "#e9e1d8",
+                        "surface-container-highest": "#38342e",
+                        "inverse-primary": "#775a19",
+                        "on-primary-container": "#4e3700",
+                        "surface-dim": "#16130e",
+                        "surface-bright": "#3d3933",
+                        "on-secondary": "#223145",
+                        "primary-fixed-dim": "#e9c176",
+                        "surface-container-low": "#1e1b16",
+                        "surface-tint": "#e9c176",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed-variant": "#38485c",
+                        "on-tertiary-fixed": "#271900",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "inverse-surface": "#e9e1d8",
+                        "on-tertiary-fixed-variant": "#59431b",
+                        "background": "#16130e",
+                        "tertiary-container": "#bfa170",
+                        "secondary-container": "#3b4a5f",
+                        "surface-container-high": "#2d2924",
+                        "primary": "#e9c176",
+                        "on-tertiary-container": "#4c3810",
+                        "inverse-on-surface": "#34302a",
+                        "on-error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "stack-sm": "8px",
+                        "section-gap": "80px",
+                        "margin-desktop": "64px",
+                        "margin-mobile": "20px",
+                        "unit": "8px",
+                        "stack-md": "16px",
+                        "stack-lg": "32px",
+                        "container-max": "1200px"
+                    },
+                    "fontFamily": {
+                        "label-lg": ["Pretendard"],
+                        "headline-lg-mobile": ["Pretendard"],
+                        "body-md": ["Pretendard"],
+                        "body-lg": ["Pretendard"],
+                        "label-sm": ["Pretendard"],
+                        "headline-md": ["Pretendard"],
+                        "headline-lg": ["Pretendard"],
+                        "headline-xl": ["Pretendard"]
+                    },
+                    "fontSize": {
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-xl": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#0D1B2A] text-on-background antialiased pt-[64px] pb-24">
+<!-- App Bar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-16 bg-white/10 backdrop-blur-[20px] border-b border-card-border shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[28px]" data-icon="menu">menu</span>
+</div>
+<div class="font-headline-md text-headline-md font-bold tracking-widest text-primary">
+            DOUBLING
+        </div>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined hover:text-primary transition-colors cursor-pointer" data-icon="search">search</span>
+</div>
+</header>
+<main class="max-w-container-max mx-auto px-margin-mobile flex flex-col gap-6">
+<!-- Section 1: Jackpot Banner -->
+<section class="mt-stack-lg">
+<div class="flex overflow-x-auto gap-4 hide-scrollbar snap-x snap-mandatory pb-4">
+<div class="snap-center shrink-0 w-[90vw] md:w-[600px] rounded relative overflow-hidden bg-surface-container h-[120px]">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="A grand, luxurious casino floor at night, featuring opulent golden lighting, endless rows of premium slot machines, rich red carpets, and towering crystal chandeliers. The mood is extravagant, energetic, and high-end, utilizing a deep navy and shimmering gold color palette." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBIoRtXhOMAp2oS_dMGpeQ9TjO47JH_GdM2Om8FGHOvRIvK8fESXZL9nEKcppJfB11o7DnHlZYhZ5qK0lFANmwnU8JOGkQn0zb6qydNZ_hjIreYovh6STRKDlAJGoVMvDymJb3q0tGfyTSc1ZRUc1X48yalxYjwVFx-e31IghiRhyqEwQbITr57KLv9YsBuoE9-xpz-m-uM-NlMRgJM_DK60qJ7lsvDb_zQnFSj4oyhBAV_PfaVTNHH0A')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-[#0D1B2A]/90 via-[#0D1B2A]/50 to-transparent"></div>
+<div class="absolute bottom-0 left-0 w-full flex flex-col gap-1 px-3 py-2"><div class="flex justify-between items-end">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Okada Manila</span>
+<h3 class="font-headline-md text-headline-md text-primary mt-1">₱ 45,291,000</h3>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant/70">Updated 2m ago</span>
+</div></div>
+</div>
+<div class="snap-center shrink-0 w-[90vw] md:w-[600px] rounded relative overflow-hidden bg-surface-container h-[120px]">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="A sophisticated, modern VIP gaming room in a luxury resort. Dark mahogany wood paneling, glowing warm ambient light, elegant card tables with deep green felt, and golden accents. The aesthetic is exclusive, quiet, and highly premium, fitting a dark naval and gold theme." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAgc-XUeIris5QFtbRJ2VpLF9AXrxu4NUmNTl1Abz8xLUFtiIEUJISSDxDUV0vRcyCPTNPZ6BV4sItQfEPPAm7xe17wOHrApHaU_hdVhJKM0DSjftHdaa0E5_4s69u1o2F1PiIDOYx1nAtr3m53RErJVBZlgy5t_49D5_ewbGIaNrrdAy0eQJuQq1KuNxmsxyramcrUvA6tgbvYeeripydzuuASy8HiDog3HlQ9MsZ3ragk9_rf3Vzz1A')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-[#0D1B2A]/90 via-[#0D1B2A]/50 to-transparent"></div>
+<div class="absolute bottom-0 left-0 w-full flex flex-col gap-1 px-3 py-2"><div class="flex justify-between items-end">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Okada Manila</span>
+<h3 class="font-headline-md text-headline-md text-primary mt-1">₱ 45,291,000</h3>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant/70">Updated 2m ago</span>
+</div></div>
+</div>
+</div>
+</section>
+<!-- Section 2: Polymarket Card -->
+<section class="">
+<div class="bg-[#162639] border border-card-border rounded flex flex-col gap-3 relative px-4 py-2">
+<div class="absolute top-4 right-4 bg-primary/10 text-primary font-label-sm text-label-sm px-2 py-1 rounded">Sports</div>
+<h3 class="font-body-lg text-body-lg text-on-background font-medium mb-1 w-[80%]">Ballon d'Or Winner 2026</h3>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center border-b border-card-border pb-2">
+<span class="font-body-md text-body-md">Harry Kane</span>
+<div class="flex gap-2 items-center">
+<span class="font-label-lg text-label-lg text-on-surface-variant mr-2">58%</span>
+<button class="bg-[#C5A059] text-[#0D1B2A] font-label-sm text-label-sm px-3 py-1 rounded">Yes</button>
+<button class="border border-error text-error bg-transparent font-label-sm text-label-sm px-3 py-1 rounded">No</button>
+</div>
+</div>
+<div class="flex justify-between items-center border-b border-card-border pb-2">
+<span class="font-body-md text-body-md">Lamine Yamal</span>
+<div class="flex gap-2 items-center">
+<span class="font-label-lg text-label-lg text-on-surface-variant mr-2">21%</span>
+<button class="bg-[#C5A059] text-[#0D1B2A] font-label-sm text-label-sm px-3 py-1 rounded">Yes</button>
+<button class="border border-error text-error bg-transparent font-label-sm text-label-sm px-3 py-1 rounded">No</button>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-center mt-1 pt-3 border-t border-card-border">
+<span class="font-label-sm text-label-sm text-on-surface-variant">$6M Vol.</span>
+<div class="flex gap-3 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] hover:text-primary cursor-pointer" data-icon="bookmark">bookmark</span>
+<span class="material-symbols-outlined text-[18px] hover:text-primary cursor-pointer" data-icon="share">share</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 3: Community Feed -->
+<section class="flex flex-col gap-6">
+<!-- Post 1 -->
+<article class="bg-[#162639] border border-card-border rounded overflow-hidden">
+<div class="w-full h-[240px] bg-surface-container relative">
+<img class="w-full h-full object-cover" data-alt="A stunning, high-resolution lifestyle photograph of a person holding a cocktail looking out over a glittering city skyline at night from a luxury penthouse balcony. The scene utilizes a moody, dark naval color palette with striking gold and amber light reflections. Premium, cinematic, and sophisticated aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGAGOYm_mgWmGlLyXDpSEBC1Ubur-nnILlOTXJg2QMsnDSElOjybjM6X89hJ09NspLSkApw9HYU1eTMtBAfG-o4uzqaHZco-my9HF6taOYCTVNAb94h3B-KYr2ETaS2ZdKlRkO0SzFtdg-XgGkboXyyDBi2Hm7t5btIfW3HrlXKSCCbvVo3JONhfYsK1-1Pdou4TYlxcC3B4rj7qJkQTnM7_XoblERhis4FM4eaVgCe_AWFgRc8Rzf-g">
+</div>
+<div class="flex flex-col gap-3 px-4 py-2">
+<p class="font-body-md text-body-md text-on-background line-clamp-2">Just experienced the most incredible service at the high limit room. The attention to detail here is absolutely unmatched, setting a new standard for luxury.</p>
+<div class="flex justify-between items-center border-t border-card-border pt-3 mt-1">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A minimalist, professional portrait of a person in a sleek black suit, dimly lit with a subtle rim light, against a dark navy background. High-end, premium corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3WiYrlcbZ9lqK244HljqtWvxF8hcvV16Bkw7R53DKv2Ll8gXJeDNKP9ySNQ1Ht1BknCS8_u4GhMeUqNKfR62bHcpTsOl52zbg8Y-ZHHbvaI5r4c7Q2f8tOf29RUYg2cTZSAxNmhTDyvd7pQEsOeIefpWtF_4zOFZrrCHeKhu1LtSGwIvnHc-nHni3ZC_ymr0oDXHSZ9rss52vIpR4_WPhmERzXUjU051VUM-r3mvcmxWQdYahBm8wjA">
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">@luxurylife</span>
+</div>
+<div class="flex gap-4 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] hover:text-primary cursor-pointer" data-icon="favorite">favorite</span>
+<span class="material-symbols-outlined text-[18px] hover:text-primary cursor-pointer" data-icon="chat_bubble">chat_bubble</span>
+<span class="material-symbols-outlined text-[18px] hover:text-primary cursor-pointer" data-icon="bookmark">bookmark</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Post 2 -->
+<article class="bg-[#162639] border border-card-border rounded overflow-hidden">
+<div class="w-full h-[240px] bg-surface-container relative">
+<img class="w-full h-full object-cover" data-alt="A close-up, highly detailed shot of premium luxury watch resting on a dark velvet surface next to a glass of neat whiskey. The lighting is dramatic and moody, emphasizing the metallic gold gleam of the watch against the deep navy shadows. Exclusive, wealthy, and refined atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2g4xI99G_9wo24mruI1-u3UnXQaWwU_NWp6aFoI-7bfeGhjCgcmk_claPjZYznAKou49ZFszkmqNGN2T8GSgJLqjlk9YcdNAfltqDATwnKR5EY3nIzivyLzp28TqKxpThsgiuO00fUbQQ4GPp3B-ZidUJP4tG0INra8kZ9Yeu0pOD4VqUgh4ULYaMcSR4C4ymEKdP0-sXhyKLwFdcqKyT43nosXAvOkcWOw9R9GsBS1nEYFnJwLJdpw">
+</div>
+<div class="flex flex-col gap-3 px-4 py-2">
+<p class="font-body-md text-body-md text-on-background line-clamp-2">Celebrating tonight's milestone. Sometimes the quiet moments after a big win are the most rewarding.</p>
+<div class="flex justify-between items-center border-t border-card-border pt-3 mt-1">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A minimalist, professional portrait silhouette backlit by a warm golden glow, against a deep blue background. Premium and mysterious aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBaKQVwOf_pR51OtWCNQDIGhIZtHq46OKfeiKnmPMX1M4yPYjmQpR0zHzUukVWzX87PBBogzfOTI-NozhUjxPOWmglT9o5nUbZcarSfvPh0lNe67Apxx62UwIrzjZ_w0X_O7et1WOkhD13Iw1-ArmlfaTIIw-wuuPixdDM83Vpx3lJjW9Yn8BXq4j2Pzajg1BsZoq9QOvJTioztEzBktk7I0n0yND5Ve7AQkKU_wJYH7_AsZed_myeqA">
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">@nightowl</span>
+</div>
+<div class="flex gap-4 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] hover:text-primary cursor-pointer" data-icon="favorite">favorite</span>
+<span class="material-symbols-outlined text-[18px] hover:text-primary cursor-pointer" data-icon="chat_bubble">chat_bubble</span>
+<span class="material-symbols-outlined text-[18px] hover:text-primary cursor-pointer" data-icon="bookmark">bookmark</span>
+</div>
+</div>
+</div>
+</article>
+</section>
+<!-- Section 4: FreeRoom Banner -->
+<section class="mt-2 relative">
+<div class="flex overflow-x-auto gap-4 hide-scrollbar snap-x snap-mandatory">
+<div class="snap-center shrink-0 w-[240px] h-[100px] bg-[#162639] rounded border border-card-border overflow-hidden relative"><div class="h-full relative w-full"><img class="w-full h-full object-cover" data-alt="A wide shot of a luxurious hotel suite bedroom with floor-to-ceiling windows showing a night cityscape. The room is decorated in rich dark tones with gold accents, crisp white bedding, and soft, warm ambient lighting. Premium, elegant, and atmospheric." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmb26lFl4wlLcoajG8VaNgywp13Od98ToquapMR8VDMmn5LcIk0LMC2PNgnHsA4JUjILj7vGg7isArPWcGAR0jJAgrfzg5SLJIK3fgja5oC_EKh_Lwsw8jY5SDkCrSnMh7LLUyiNzNTfusdKYod0w389JZE4TmDe8Wyr2ReZr7OjfJ6zbhUREXsHUXnm-fHpsMw1dt-MvrG46Ju67_ioQS6IzZIeiDbw8T7AkXxi4lsLVKo_JRyHskkA"><div class="bg-gradient-to-t from-black/80 via-black/40 to-transparent absolute inset-0"></div><div class="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold text-[#0D1B2A] shimmer shadow-md">FR</div><div class="absolute bottom-2 left-3"><h4 class="font-label-lg text-label-lg font-bold text-white">Deluxe Room</h4><p class="text-[10px] text-white/80">24h usage, 2 nights</p></div></div></div>
+<div class="snap-center shrink-0 w-[240px] h-[100px] bg-[#162639] rounded border border-card-border overflow-hidden relative"><div class="h-full relative w-full"><img class="w-full h-full object-cover" data-alt="An expansive, opulent hotel premium suite living area featuring a plush dark velvet sofa, a modern glass coffee table, and subtle gold architectural detailing. The space feels vast, quiet, and exceptionally high-end, illuminated by strategic spotlighting against a navy backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9OKHe-9DCPB0qPuTFVLwVBOU3pngZ9i5CsofMvmsmWgmlHplrMao5OqEz2PeOw_TESFJgEQkq3QRaAqg18D5jkkuF552n9L5IukU-lYxjJIUq1fSOzlPyGWA1HS1hbbigV1hzgKTYQH9IAHGpAeOP_zWAM-mdsEjU21DLn2VsF9caTMSNuLbP6ku5YZwDQWns7Zt6eGiF2_Im5snWiv6HMBHCMIkxnDEAanwDw-2m-O7sGdJ5GCCmzA"><div class="bg-gradient-to-t from-black/80 via-black/40 to-transparent absolute inset-0"></div><div class="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold text-[#0D1B2A] shimmer shadow-md">FR</div><div class="absolute bottom-2 left-3"><h4 class="font-label-lg text-label-lg font-bold text-white">Premium Suite</h4><p class="text-[10px] text-white/80">36h usage, 3 nights</p></div></div></div>
+<div class="snap-center shrink-0 w-[240px] h-[100px] bg-[#162639] rounded border border-card-border overflow-hidden relative"><div class="h-full relative w-full"><img class="w-full h-full object-cover" data-alt="A breathtaking view of a palatial Governor Suite bathroom, featuring a freestanding deep soaking tub next to a massive window overlooking the glittering city at night. Dark marble floors, gold fixtures, and a serene, ultra-luxurious mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiKoAXbD0EHgJKMh67U9rWVxkKCawlYOSiLZEfJukecYShGPUViNZwsSpl2-Pw6vAC4joI-0DokW1X2H0YNbAa8yW3NK9muhaBzdtFMBagBXgPeyUYnOxFA1OuQpHsc8fVEl8YdAwRmn7Q8UbkE_YOLwGQYNb4nOvLV7HAJIVTSp_SevAY_iNmlwWqcmzOY8V8e9f2OlAphDEP8-K1T0IKJlAtITrEffSLxjegCX0XCKu-fzykhr19hA"><div class="bg-gradient-to-t from-black/80 via-black/40 to-transparent absolute inset-0"></div><div class="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold text-[#0D1B2A] shimmer shadow-md">FR</div><div class="absolute bottom-2 left-3"><h4 class="font-label-lg text-label-lg font-bold text-white">Governor Suite</h4><p class="text-[10px] text-white/80">72h usage, 4 nights</p></div></div></div>
+</div>
+<button class="absolute bottom-0 right-0 w-14 h-14 bg-[#C5A059] rounded-full flex items-center justify-center hover:scale-105 transition-transform z-40 translate-y-1/2" style="box-shadow: 0 0 20px rgba(197,160,89,0.3);"><span class="material-symbols-outlined text-[#0D1B2A] text-[28px]" data-icon="add">add</span></button></section>
+</main>
+<!-- FAB -->
+<!-- Bottom Nav Bar -->
+<nav class="fixed bottom-0 w-full flex justify-around items-center h-20 px-margin-mobile pb-safe border-t border-card-border bg-white/10 backdrop-blur-[20px] z-50"><a class="flex flex-col items-center justify-center text-on-surface-variant active:scale-90 duration-200 hover:text-primary/80 transition-all" href="#"><span class="material-symbols-outlined text-[24px]" data-icon="casino">casino</span><span class="font-label-sm text-label-sm mt-1">잭팟</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant active:scale-90 duration-200 hover:text-primary/80 transition-all" href="#"><span class="material-symbols-outlined text-[24px]" data-icon="query_stats">query_stats</span><span class="font-label-sm text-label-sm mt-1">폴리</span></a><a class="flex flex-col items-center justify-center text-primary font-bold active:scale-90 duration-200 hover:text-primary/80 transition-all" href="#"><span class="material-symbols-outlined text-[24px]" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span><span class="font-label-sm text-label-sm mt-1">홈</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant active:scale-90 duration-200 hover:text-primary/80 transition-all" href="#"><span class="material-symbols-outlined text-[24px]" data-icon="workspace_premium">workspace_premium</span><span class="font-label-sm text-label-sm mt-1">Free</span></a><a class="flex flex-col items-center justify-center text-on-surface-variant active:scale-90 duration-200 hover:text-primary/80 transition-all" href="#"><span class="material-symbols-outlined text-[24px]" data-icon="person">person</span><span class="font-label-sm text-label-sm mt-1">마이</span></a></nav>
+</body></html>

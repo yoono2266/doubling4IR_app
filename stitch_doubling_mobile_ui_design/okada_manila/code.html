@@ -1,0 +1,290 @@
+<!DOCTYPE html><html class="dark" lang="ko"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>2. 호텔 상세(Okada Manila)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-surface-variant": "#d1c5b4",
+                      "surface-container": "#231f1a",
+                      "inverse-surface": "#e9e1d8",
+                      "on-secondary": "#223145",
+                      "secondary-fixed": "#d3e4fd",
+                      "on-primary": "#412d00",
+                      "surface-tint": "#e9c176",
+                      "on-tertiary-fixed": "#271900",
+                      "outline-variant": "#4e4639",
+                      "on-error": "#690005",
+                      "background": "#16130e",
+                      "surface-container-lowest": "#110e09",
+                      "tertiary-fixed": "#ffdea9",
+                      "on-primary-fixed": "#261900",
+                      "primary-fixed-dim": "#e9c176",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "on-tertiary-container": "#4c3810",
+                      "surface-variant": "#38342e",
+                      "on-surface": "#e9e1d8",
+                      "on-primary-fixed-variant": "#5d4201",
+                      "on-background": "#e9e1d8",
+                      "surface-dim": "#16130e",
+                      "on-primary-container": "#4e3700",
+                      "secondary": "#b7c8e1",
+                      "surface-bright": "#3d3933",
+                      "secondary-container": "#3b4a5f",
+                      "error-container": "#93000a",
+                      "primary-container": "#c5a059",
+                      "on-error-container": "#ffdad6",
+                      "on-secondary-fixed": "#0c1c2f",
+                      "surface-container-highest": "#38342e",
+                      "inverse-primary": "#775a19",
+                      "on-tertiary-fixed-variant": "#59431b",
+                      "tertiary": "#e2c28e",
+                      "primary-fixed": "#ffdea5",
+                      "on-tertiary": "#402d06",
+                      "surface-container-low": "#1e1b16",
+                      "outline-gold": "rgba(197, 160, 89, 0.2)",
+                      "on-secondary-container": "#a9bad2",
+                      "surface-container-high": "#2d2924",
+                      "tertiary-container": "#bfa170",
+                      "card-border": "rgba(255, 255, 255, 0.05)",
+                      "inverse-on-surface": "#34302a",
+                      "outline": "#9a8f80",
+                      "on-secondary-fixed-variant": "#38485c",
+                      "background-deep": "#0D1B2A",
+                      "tertiary-fixed-dim": "#e2c28e",
+                      "primary": "#e9c176",
+                      "surface": "#16130e",
+                      "error": "#ffb4ab"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "unit": "8px",
+                      "margin-mobile": "20px",
+                      "section-gap": "80px",
+                      "container-max": "1200px",
+                      "stack-lg": "32px",
+                      "margin-desktop": "64px",
+                      "stack-md": "16px",
+                      "stack-sm": "8px"
+              },
+              "fontFamily": {
+                      "label-lg": [
+                              "Pretendard"
+                      ],
+                      "body-md": [
+                              "Pretendard"
+                      ],
+                      "headline-xl": [
+                              "Pretendard"
+                      ],
+                      "label-sm": [
+                              "Pretendard"
+                      ],
+                      "headline-lg": [
+                              "Pretendard"
+                      ],
+                      "body-lg": [
+                              "Pretendard"
+                      ],
+                      "headline-lg-mobile": [
+                              "Pretendard"
+                      ],
+                      "headline-md": [
+                              "Pretendard"
+                      ]
+              },
+              "fontSize": {
+                      "label-lg": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-xl": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body { font-family: 'Pretendard', sans-serif; background-color: #0D1B2A; }
+        .glass-panel { background: rgba(22, 38, 57, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .gold-gradient-text { background: linear-gradient(135deg, #FFDEA5 0%, #C5A059 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .gold-glow { box-shadow: 0 0 15px rgba(197, 160, 89, 0.2); }
+    </style>
+</head>
+<body class="text-on-surface antialiased pb-24">
+<!-- Screen Label -->
+<div class="fixed top-0 left-0 w-full bg-background-deep z-50 px-margin-mobile py-2 border-b border-card-border hidden md:block">
+<p class="font-label-sm text-label-sm text-on-surface-variant">2. 호텔 상세(Okada Manila)</p>
+</div>
+<!-- App Bar (Mobile overlay on hero) -->
+<header class="fixed top-0 w-full z-40 md:mt-8 bg-black/30 backdrop-blur-md border-b border-white/10 h-16 flex justify-between items-center px-margin-mobile">
+<button class="text-on-surface hover:text-primary transition-colors flex items-center active:scale-95 duration-200">
+<span class="material-symbols-outlined text-[24px]">chevron_left</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-semibold text-on-surface tracking-wide">Okada Manila</h1>
+<div class="w-6"></div> <!-- Spacer -->
+</header>
+<!-- Main Content Canvas -->
+<main class="w-full max-w-container-max mx-auto">
+<!-- Hero Section -->
+<section class="relative w-full h-[40vh] min-h-[300px] md:mt-16">
+<div class="absolute inset-0 w-full h-full bg-cover bg-center" data-alt="A luxurious cinematic exterior shot of Okada Manila integrated resort and casino at night. The striking architecture is illuminated with premium architectural lighting. A magnificent dancing water fountain is in the foreground, illuminated in elegant magenta and gold tones. The sky is a deep, pristine navy blue (#0D1B2A), creating a sophisticated, high-end atmosphere that feels exclusive and prestigious. Minimalist composition, sharp focus, 8k resolution." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuACQzUKtn79OYsPzR5-lmkGg-8Z-Xt-jzuHRbU18YsMy8WVsrB5WJC2LsD_W9CxF3lROl5zYG0h5sxXc8rZ1VUTmAGIHQC38hzs_I6LV-Fd0cH0pBh9DLy73dbag33Er8l5SyV39jQj_vHLmHOaRnRpvplsE34bFsIytpnkY2z0HegiQFQ9RAa5mQ_0fGJ-xqrzdE76z_vs36BkhoqJiT6ilItjpPEY75ntAp8CP3_QtphndbZh8A0ZoQ')"></div>
+<!-- Gradient Overlay -->
+<div class="absolute inset-0 bg-gradient-to-t from-[#0D1B2A] via-[#0D1B2A]/50 to-transparent"></div>
+</section>
+<div class="px-margin-mobile -mt-12 relative z-10 space-y-stack-lg md:px-margin-desktop md:mt-12">
+<!-- Jackpot Info Block -->
+<section class="glass-panel rounded-DEFAULT p-6 gold-glow flex flex-col items-center justify-center space-y-stack-sm text-center">
+<h2 class="font-label-lg text-label-lg text-primary uppercase tracking-widest">Current Jackpot</h2>
+<div class="font-headline-xl text-headline-xl font-bold gold-gradient-text tracking-tighter">₱ 85,200,000</div>
+<div class="w-full flex justify-between items-center pt-4 border-t border-white/10 mt-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">history</span> 역대 최고: ₱112,000,000
+                    </span>
+<span class="font-label-sm text-label-sm text-primary/80 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">update</span> 3분 전 갱신
+                    </span>
+</div>
+</section>
+<!-- FreeRoom List -->
+<section class="space-y-stack-md">
+<h3 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface font-semibold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">bed</span> Free Rooms
+                </h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+<!-- Card 1 -->
+<div class="relative w-full aspect-[2.5/1] rounded-DEFAULT overflow-hidden group border border-card-border">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="A luxurious modern hotel Deluxe Room interior in a deep atmospheric style. High-end furnishings with subtle gold metal accents against dark navy (#0D1B2A) elements. Soft, warm ambient lighting highlighting the premium textures of the bedding and furniture. Large window showing a night city view. The overall aesthetic is sleek, corporate, modern, and prestigious. Highly detailed, photorealistic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBy6LOGLdznLoh6uzF7pUmdTT72MbK6IZqisLAFx-P5_kYJKPg5C-l-EJYBF86AHNeI43FdRQbINoKa9G6aXOfSr4IiqUobF961cbDZTFX2_A67KO8dq_FVtpfNM3kXpti2RV4VCJMV-tY3rg5vpeCsx644AkJvhZwE3VRC0lbsc77Bdiz83i4e0C1kqpglVrASbJOWfp8sbXYEn3DfhV95UxpfDYDgeJ257nKYLTHwkiyWSGa6FtGe2Q')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10"></div>
+<div class="absolute top-3 right-3 bg-primary/20 backdrop-blur-md border border-primary/50 text-primary font-label-sm text-label-sm px-2 py-1 rounded-DEFAULT font-bold tracking-wider">
+                            FR
+                        </div>
+<div class="absolute bottom-4 left-4 right-4 flex justify-between items-end">
+<div>
+<h4 class="font-headline-md text-headline-md text-white font-semibold">Deluxe Room</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary">schedule</span> 24h usage
+                                </p>
+</div>
+<div class="text-right">
+<span class="font-label-lg text-label-lg text-primary bg-black/50 px-3 py-1.5 rounded-DEFAULT backdrop-blur-sm border border-card-border">2 Nights</span>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="relative w-full aspect-[2.5/1] rounded-DEFAULT overflow-hidden group border border-card-border">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="An expansive, ultra-luxurious Premium Suite living area. Sophisticated glassmorphism architectural elements. Deep navy (#0D1B2A) structural columns framing elegant gold (#C5A059) fixtures. Plush, dark velvet seating arrangement. Panoramic night view of a glowing metropolis. Soft, precise accent lighting creating a moody, exclusive, and expensive atmosphere. 8k, architectural digest style." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAXUl7YUR8l_AJeo83ZeEarvu9-CjeXhdjyMObE2WIxZCypz8YEhyJLth-mezZ8hrPyBvSLP0Hw-rhROBF44_nb-suCO2d_gocKjxhe4Dh5loXJTtrz2p-1A18tq1pc8CWBEYPfwD7fbnXSeBU1CBlyxqYsNOQfaO0k4OYmBG5H-WT9hclbURybxnxmLvVczeTM_Ef74ieRbOOtNSS_LTqQxOFvE97rVBfb60atyQo2z6i_tqOFDcV13w')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10"></div>
+<div class="absolute top-3 right-3 bg-primary/20 backdrop-blur-md border border-primary/50 text-primary font-label-sm text-label-sm px-2 py-1 rounded-DEFAULT font-bold tracking-wider">
+                            FR
+                        </div>
+<div class="absolute bottom-4 left-4 right-4 flex justify-between items-end">
+<div>
+<h4 class="font-headline-md text-headline-md text-white font-semibold">Premium Suite</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary">schedule</span> 36h usage
+                                </p>
+</div>
+<div class="text-right">
+<span class="font-label-lg text-label-lg text-primary bg-black/50 px-3 py-1.5 rounded-DEFAULT backdrop-blur-sm border border-card-border">3 Nights</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Membership Info Block -->
+<section class="glass-panel rounded-DEFAULT p-6 border-l-4 border-l-primary">
+<div class="flex items-start gap-4">
+<div class="p-3 bg-[#162639] rounded-full border border-card-border flex-shrink-0">
+<span class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface font-semibold mb-2">Reward Circle</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                            Experience ultimate exclusivity. Members receive priority booking, complimentary room upgrades, and dedicated concierge services tailored to your prestige.
+                        </p>
+<div class="mt-4 flex gap-2 flex-wrap">
+<span class="px-3 py-1 bg-black/40 border border-card-border rounded-DEFAULT font-label-sm text-label-sm text-on-surface-variant">Silver</span>
+<span class="px-3 py-1 bg-black/40 border border-card-border rounded-DEFAULT font-label-sm text-label-sm text-on-surface-variant">Gold</span>
+<span class="px-3 py-1 bg-primary/10 border border-primary/30 rounded-DEFAULT font-label-sm text-label-sm text-primary">Platinum</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom spacer for safe area -->
+<div class="h-8"></div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full flex justify-around items-center h-20 px-margin-mobile pb-safe border-t border-card-border bg-white/10 backdrop-blur-[20px] z-50 md:hidden"><button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary/80 transition-all active:scale-90 duration-200 gap-1 w-16"><span class="material-symbols-outlined text-[24px]">casino</span><span class="font-label-sm text-label-sm">잭팟</span></button><button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary/80 transition-all active:scale-90 duration-200 gap-1 w-16"><span class="material-symbols-outlined text-[24px]">query_stats</span><span class="font-label-sm text-label-sm">폴리</span></button><button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary/80 transition-all active:scale-90 duration-200 gap-1 w-16"><span class="material-symbols-outlined text-[24px]">home</span><span class="font-label-sm text-label-sm">홈</span></button><button class="flex flex-col items-center justify-center text-primary font-bold hover:text-primary/80 transition-all active:scale-90 duration-200 gap-1 w-16"><span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">workspace_premium</span><span class="font-label-sm text-label-sm">Free</span></button><button class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary/80 transition-all active:scale-90 duration-200 gap-1 w-16"><span class="material-symbols-outlined text-[24px]">person</span><span class="font-label-sm text-label-sm">마이</span></button></nav>
+
+
+</body></html>

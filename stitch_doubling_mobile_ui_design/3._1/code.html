@@ -1,0 +1,171 @@
+<!DOCTYPE html><html class="dark" lang="ko"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>이메일 인증 요청 - DOUBLING</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link as="style" crossorigin="" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-bright": "#3d3933",
+                        "surface-container-low": "#1e1b16",
+                        "on-error": "#690005",
+                        "on-background": "#e9e1d8",
+                        "tertiary": "#e2c28e",
+                        "on-secondary": "#223145",
+                        "surface-container": "#231f1a",
+                        "surface-variant": "#38342e",
+                        "inverse-on-surface": "#34302a",
+                        "error": "#ffb4ab",
+                        "inverse-surface": "#e9e1d8",
+                        "card-border": "rgba(255, 255, 255, 0.05)",
+                        "background": "#16130e",
+                        "tertiary-container": "#bfa170",
+                        "secondary": "#b7c8e1",
+                        "outline": "#9a8f80",
+                        "tertiary-fixed": "#ffdea9",
+                        "primary-fixed": "#ffdea5",
+                        "surface-dim": "#16130e",
+                        "surface-container-highest": "#38342e",
+                        "on-secondary-fixed": "#0c1c2f",
+                        "on-primary-fixed": "#261900",
+                        "on-surface-variant": "#d1c5b4",
+                        "surface-container-high": "#2d2924",
+                        "on-tertiary-fixed-variant": "#59431b",
+                        "on-tertiary-fixed": "#271900",
+                        "on-primary-fixed-variant": "#5d4201",
+                        "on-tertiary": "#402d06",
+                        "on-secondary-container": "#a9bad2",
+                        "on-primary": "#412d00",
+                        "secondary-fixed": "#d3e4fd",
+                        "surface-tint": "#e9c176",
+                        "outline-gold": "rgba(197, 160, 89, 0.2)",
+                        "outline-variant": "#4e4639",
+                        "on-primary-container": "#4e3700",
+                        "on-secondary-fixed-variant": "#38485c",
+                        "on-error-container": "#ffdad6",
+                        "secondary-container": "#3b4a5f",
+                        "on-tertiary-container": "#4c3810",
+                        "primary": "#e9c176",
+                        "error-container": "#93000a",
+                        "primary-fixed-dim": "#e9c176",
+                        "background-deep": "#0D1B2A",
+                        "inverse-primary": "#775a19",
+                        "primary-container": "#c5a059",
+                        "surface": "#16130e",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "on-surface": "#e9e1d8",
+                        "surface-container-lowest": "#110e09",
+                        "tertiary-fixed-dim": "#e2c28e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1200px",
+                        "unit": "8px",
+                        "margin-desktop": "64px",
+                        "section-gap": "80px",
+                        "stack-md": "16px",
+                        "margin-mobile": "20px",
+                        "stack-sm": "8px",
+                        "stack-lg": "32px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Pretendard", "sans-serif"],
+                        "label-lg": ["Pretendard", "sans-serif"],
+                        "headline-lg-mobile": ["Pretendard", "sans-serif"],
+                        "headline-lg": ["Pretendard", "sans-serif"],
+                        "body-md": ["Pretendard", "sans-serif"],
+                        "headline-md": ["Pretendard", "sans-serif"],
+                        "headline-xl": ["Pretendard", "sans-serif"],
+                        "label-sm": ["Pretendard", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-xl": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #0D1B2A; /* Using background-deep for mobile screens to ensure deep naval tone */
+            color: #e9e1d8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .mobile-container {
+            width: 390px;
+            height: 844px;
+            background-color: #0D1B2A; /* background-deep */
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); /* Just for presentation if viewed on desktop */
+        }
+    </style>
+</head>
+<body class="bg-background-deep text-on-background antialiased flex items-center justify-center min-h-screen">
+<!-- Mobile Viewport Container (390x844) -->
+<main class="mobile-container w-[390px] h-[844px] flex flex-col relative bg-background-deep border border-card-border overflow-hidden">
+<!-- Header (Back Button) -->
+<header class="flex justify-start items-center px-margin-mobile h-16 w-full pt-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back_ios</span>
+</button>
+</header>
+<!-- Main Content Area -->
+<section class="flex-grow flex flex-col items-center justify-center px-margin-mobile pb-[120px]">
+<!-- Icon Container (Glassmorphism circle) -->
+<div class="w-24 h-24 rounded-full bg-white/5 backdrop-blur-[20px] border border-card-border flex items-center justify-center mb-stack-lg shadow-[0_0_40px_rgba(197,160,89,0.15)] relative">
+<!-- Inner glow/pulse effect -->
+<div class="absolute inset-0 rounded-full border border-primary/20 animate-ping opacity-30"></div>
+<span class="material-symbols-outlined text-5xl text-primary" data-icon="mail" data-weight="fill" style="font-variation-settings: 'FILL' 1;">mail</span>
+</div>
+<!-- Text Content -->
+<div class="text-center w-full">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-stack-md">인증 메일을<br>발송했습니다</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mb-stack-lg">
+<strong class="text-primary font-semibold">kevin@example.com</strong>로<br>발송되었습니다.
+                </p>
+</div>
+</section>
+<!-- Fixed Bottom Actions Area -->
+<div class="absolute bottom-0 w-full px-margin-mobile pb-12 pt-6 bg-gradient-to-t from-[#0D1B2A] via-[#0D1B2A]/90 to-transparent">
+<!-- Resend & Timer -->
+<div class="flex justify-center items-center space-x-2 mb-stack-md">
+<p class="font-label-lg text-label-lg text-on-surface-variant">메일을 받지 못하셨나요?</p>
+<button class="font-label-lg text-label-lg text-primary hover:text-primary/80 transition-colors underline underline-offset-4 decoration-primary/50">재전송</button>
+<span class="font-label-lg text-label-lg text-error ml-2 tabular-nums">0:47</span>
+</div>
+<!-- Primary Action Button -->
+<button class="w-full bg-primary-container text-background-deep font-label-lg text-label-lg rounded py-4 flex justify-center items-center active:scale-[0.98] transition-transform duration-200">
+                메일함 열기
+            </button>
+</div>
+</main>
+</body></html>

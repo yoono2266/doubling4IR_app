@@ -1,0 +1,305 @@
+<!DOCTYPE html><html class="dark" lang="ko"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Doubling - Deluxe Room</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-container": "#a9bad2",
+                      "outline-gold": "rgba(197, 160, 89, 0.2)",
+                      "error": "#ffb4ab",
+                      "on-background": "#e9e1d8",
+                      "on-tertiary-container": "#4c3810",
+                      "background-deep": "#0D1B2A",
+                      "primary": "#e9c176",
+                      "on-primary-fixed": "#261900",
+                      "on-error-container": "#ffdad6",
+                      "tertiary": "#e2c28e",
+                      "on-primary-fixed-variant": "#5d4201",
+                      "surface-dim": "#16130e",
+                      "on-surface-variant": "#d1c5b4",
+                      "secondary-fixed": "#d3e4fd",
+                      "inverse-primary": "#775a19",
+                      "tertiary-container": "#bfa170",
+                      "inverse-surface": "#e9e1d8",
+                      "secondary-container": "#3b4a5f",
+                      "on-primary-container": "#4e3700",
+                      "surface-container-low": "#1e1b16",
+                      "card-border": "rgba(255, 255, 255, 0.05)",
+                      "surface-container-lowest": "#110e09",
+                      "tertiary-fixed-dim": "#e2c28e",
+                      "tertiary-fixed": "#ffdea9",
+                      "error-container": "#93000a",
+                      "on-secondary": "#223145",
+                      "on-secondary-fixed": "#0c1c2f",
+                      "on-tertiary-fixed-variant": "#59431b",
+                      "primary-fixed": "#ffdea5",
+                      "surface-bright": "#3d3933",
+                      "on-primary": "#412d00",
+                      "secondary": "#b7c8e1",
+                      "background": "#16130e",
+                      "on-tertiary": "#402d06",
+                      "surface-container-high": "#2d2924",
+                      "outline": "#9a8f80",
+                      "inverse-on-surface": "#34302a",
+                      "outline-variant": "#4e4639",
+                      "surface-tint": "#e9c176",
+                      "on-secondary-fixed-variant": "#38485c",
+                      "on-surface": "#e9e1d8",
+                      "on-error": "#690005",
+                      "surface-container": "#231f1a",
+                      "surface-variant": "#38342e",
+                      "surface": "#16130e",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "primary-fixed-dim": "#e9c176",
+                      "surface-container-highest": "#38342e",
+                      "primary-container": "#c5a059",
+                      "on-tertiary-fixed": "#271900"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "margin-mobile": "20px",
+                      "stack-md": "16px",
+                      "stack-lg": "32px",
+                      "margin-desktop": "64px",
+                      "section-gap": "80px",
+                      "container-max": "1200px",
+                      "unit": "8px",
+                      "stack-sm": "8px",
+                      "gutter": "24px"
+              },
+              "fontFamily": {
+                      "headline-xl": [
+                              "Pretendard"
+                      ],
+                      "label-sm": [
+                              "Pretendard"
+                      ],
+                      "headline-md": [
+                              "Pretendard"
+                      ],
+                      "headline-lg": [
+                              "Pretendard"
+                      ],
+                      "label-lg": [
+                              "Pretendard"
+                      ],
+                      "headline-lg-mobile": [
+                              "Pretendard"
+                      ],
+                      "body-md": [
+                              "Pretendard"
+                      ],
+                      "body-lg": [
+                              "Pretendard"
+                      ]
+              },
+              "fontSize": {
+                      "headline-xl": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-lg": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      }
+              },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0D1B2A;
+            color: #e9e1d8;
+            -webkit-font-smoothing: antialiased;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface pb-[160px] min-h-screen">
+<!-- TopAppBar (Suppressed navigation, but keeping app bar structure per instructions) -->
+<header class="bg-surface/10 dark:bg-surface/10 backdrop-blur-xl docked full-width top-0 sticky z-50 border-b border-card-border flat no shadows glassmorphism flex justify-between items-center w-full px-margin-mobile h-16">
+<button class="text-primary dark:text-primary hover:bg-surface-bright/20 transition-colors Active: scale-95 duration-150 p-2 rounded-DEFAULT flex items-center justify-center">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="text-headline-md font-headline-md font-bold text-primary dark:text-primary">Deluxe Room</h1>
+<div class="flex items-center gap-2">
+<button class="text-primary dark:text-primary hover:bg-surface-bright/20 transition-colors Active: scale-95 duration-150 p-2 rounded-DEFAULT flex items-center justify-center">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="text-primary dark:text-primary hover:bg-surface-bright/20 transition-colors Active: scale-95 duration-150 p-2 rounded-DEFAULT flex items-center justify-center">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</header>
+<!-- Main Content Container -->
+<main class="w-full max-w-container-max mx-auto md:px-margin-desktop md:pt-stack-lg">
+<!-- Image Gallery -->
+<section class="w-full relative h-[40vh] md:h-[60vh] md:rounded-xl overflow-hidden mb-stack-lg">
+<div class="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar h-full w-full">
+<div class="snap-center shrink-0 w-full h-full relative">
+<div class="bg-cover bg-center w-full h-full" data-alt="A luxurious hotel suite in deep navy and gold tones, featuring a plush king-sized bed, ambient warm lighting, and a panoramic night view of a glittering cityscape. The scene conveys premium exclusivity, stability, and atmospheric dark corporate modernity." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuArsp922HjVFuaNzfiP86s4qLNNv179mGpIdHiEHSwXVrqYRVWVH_n-QlkbB0uQ3kbR-S1zzky6yGaRFuGeU8S2fF6fApaKtME2sCzfQo0LnrojmTHbtDd3aCVVZr7doUVh_LT3R83u-7ZfifnduTZNua6jNSoGBb28z62pScuX_tAW-_lPOWtTaPoow9cs0Mp8VqL3nd5BnynkUYNr2muR0gL7RqPrlMKvBo1YKN_La_PtR_mtdT0qMA')"></div>
+</div>
+<div class="snap-center shrink-0 w-full h-full relative">
+<div class="bg-cover bg-center w-full h-full" data-alt="A sophisticated living area in a luxury hotel room, dark naval tones contrasting with regal metallic gold accents. Modern glassmorphic elements, sleek furniture, high-end visual fidelity, conveying quiet confidence and premium prestige." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDFu2pK9NBoMOq6kBj1ZVuaKLFi72fPqHNuvc3rCvrQYDtP_LK2pwWIyPT5XLTtMEwMS8tv2Sl1AnjOhdN8PChevjg_r9K7wodILAlurwf-b43fDXzNClErv_7ETqIyt1T4VCzbYKsqMChS01HNqilCE4n499ZDSNYrz-mFnZcUJP82keL8LeHYXj2qgKyO5x3mElJTLC3Fd2RGhzrMyDvhrUEmcg1oOD44j6VKTWKoHgjC13Pl964fJQ')"></div>
+</div>
+<div class="snap-center shrink-0 w-full h-full relative">
+<div class="bg-cover bg-center w-full h-full" data-alt="An opulent bathroom in a luxury suite, featuring deep dark marble, gold fixtures, and subtle warm lighting reflecting off surfaces. The atmosphere is luxurious and atmospheric dark, ensuring a high-tech and premium emotional response." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDt7KsFRJB-FdBVjwOiYUMAMovZVmQVn-oAQ0b4SuBaMR5mplTCedJIjehIOBgiOwyQZhQJNFeLyahCwlpXwZxVrvb-DOUx6_9p4YolvJZC1NHsDkutFSQOXKIrzIU2_k7gUEaD5h4r1V6bJEq0TMG_M31n8drArAfj8Us0NYMByiqtm0ihJkcVY27vM1Jg5wcarAkOkYn-t6u_D9hYM2qWkcDKjEjhm-90FNdBjBaztgQt4GyvB5EW0Q')"></div>
+</div>
+</div>
+<!-- Pagination indicators (decorative) -->
+<div class="absolute bottom-4 left-0 w-full flex justify-center gap-2 z-10">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<div class="w-2 h-2 rounded-full bg-on-surface-variant/50"></div>
+<div class="w-2 h-2 rounded-full bg-on-surface-variant/50"></div>
+</div>
+</section>
+<!-- Package Info Content -->
+<div class="px-margin-mobile md:px-0 flex flex-col gap-stack-lg">
+<!-- Header Section -->
+<section class="flex flex-col gap-stack-sm">
+<div class="flex items-center gap-2">
+<span class="bg-[#162639] border border-outline-gold text-primary font-label-sm text-label-sm px-2 py-1 rounded-DEFAULT">2박</span>
+</div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-surface">24h 이수형 패키지</h2>
+</section>
+<!-- Promo Banner -->
+<div class="bg-primary-container text-background-deep font-body-md text-body-md font-bold p-4 rounded-DEFAULT flex items-start gap-3 shadow-lg">
+<span class="material-symbols-outlined shrink-0" style="font-variation-settings: 'FILL' 1;">stars</span>
+<p class="">첫 예약 시 미이수해도 디포짓 50%만 차감됩니다</p>
+</div>
+<!-- Details Section -->
+<section class="bg-[#162639] border border-card-border p-6 rounded-DEFAULT flex flex-col gap-stack-md">
+<h3 class="font-headline-md text-headline-md text-primary mb-2 border-b border-card-border pb-4">패키지 포함 내역</h3>
+<ul class="flex flex-col gap-4 font-body-md text-body-md text-on-surface">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary">restaurant</span>
+<span class="">1일 1식(한식)</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary">flight_land</span>
+<span class="">공항 미팅/샌딩</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary">diamond</span>
+<span class="">의전 기본 제공</span>
+</li>
+</ul>
+</section>
+<!-- Deposit Info -->
+<section class="bg-[#162639] border border-card-border p-6 rounded-DEFAULT flex flex-col gap-stack-md">
+<h3 class="font-headline-md text-headline-md text-primary mb-2 border-b border-card-border pb-4">디포짓 안내</h3>
+<div class="flex flex-col gap-2">
+<p class="font-headline-md text-headline-md text-on-surface">USDT 15,000 상당</p>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">info</span>
+                        체크인 시 사전결제, 미이수 시 차감
+                    </p>
+</div>
+</section>
+</div>
+</main>
+<!-- Bottom Fix: Primary Button -->
+<div class="fixed bottom-[72px] left-0 w-full p-margin-mobile bg-gradient-to-t from-background-deep via-background-deep to-transparent z-40">
+<div class="max-w-container-max mx-auto">
+<button class="w-full bg-primary-container text-[#0D1B2A] font-headline-md text-headline-md py-4 rounded-DEFAULT hover:bg-primary-container/90 transition-colors shadow-lg font-bold">
+                예약하기
+            </button>
+</div>
+</div>
+<!-- BottomNavBar (Hidden on md, showing Free as active) -->
+<nav class="md:hidden bg-surface/10 dark:bg-surface/10 backdrop-blur-xl docked full-width bottom-0 border-t border-card-border flat no shadows glassmorphism fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary/80 transition-all" href="#">
+<span class="material-symbols-outlined">casino</span>
+<span class="text-label-sm font-label-sm mt-1">Jackpot</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary/80 transition-all" href="#">
+<span class="material-symbols-outlined">widgets</span>
+<span class="text-label-sm font-label-sm mt-1">Poly</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary/80 transition-all" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-label-sm font-label-sm mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary font-bold hover:text-primary/80 transition-all Active: scale-110 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">redeem</span>
+<span class="text-label-sm font-label-sm mt-1 text-primary">Free</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary/80 transition-all" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-label-sm font-label-sm mt-1">My</span>
+</a>
+</nav>
+
+
+</body></html>

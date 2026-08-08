@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Doubling - My Page</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#0D1B2A",
+                        "surface": "#0D1B2A",
+                        "surface-container": "#162639",
+                        "primary": "#C5A059",
+                        "primary-container": "#C5A059",
+                        "on-primary": "#0D1B2A",
+                        "on-primary-container": "#0D1B2A",
+                        "tertiary": "#E2C28E",
+                        "on-tertiary": "#0D1B2A",
+                        "on-background": "#F8F9FA",
+                        "on-surface": "#F8F9FA",
+                        "on-surface-variant": "#F8F9FA",
+                        "outline": "rgba(197, 160, 89, 0.2)",
+                        "card-border": "rgba(255, 255, 255, 0.05)",
+                        "error": "#ffb4ab",
+                        "on-error": "#690005"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "64px",
+                        "section-gap": "80px",
+                        "unit": "8px",
+                        "gutter": "24px",
+                        "margin-mobile": "20px",
+                        "stack-lg": "32px",
+                        "stack-sm": "8px",
+                        "container-max": "1200px",
+                        "stack-md": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Pretendard"],
+                        "label-lg": ["Pretendard"],
+                        "body-md": ["Pretendard"],
+                        "label-sm": ["Pretendard"],
+                        "headline-lg": ["Pretendard"],
+                        "headline-xl": ["Pretendard"],
+                        "headline-md": ["Pretendard"],
+                        "body-lg": ["Pretendard"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-xl": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Pretendard', sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid var(--card-border); }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="min-h-screen pb-[100px] bg-background text-on-surface">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-16 w-full border-b border-card-border bg-white/10 backdrop-blur-[20px]">
+<button class="text-on-surface-variant hover:bg-white/5 transition-colors active:scale-95 duration-200 p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<div class="font-headline-md text-headline-md font-bold tracking-widest text-primary">DOUBLING</div>
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center overflow-hidden border border-outline">
+<img class="object-cover w-full h-full" data-alt="A macro shot of a luxurious, abstract golden sphere floating in a deep space environment. The lighting is extremely dramatic and contrasty, emphasizing the rich gold reflections and deep naval shadows. The mood is highly premium, cinematic, and atmospheric." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPLun7p2nVNELr_LVj34m50RkukYfNUBY1RU84mN4c-ork8Wea1X9DUnpPitzAK3CMdb96hFCnpdlqzUtEdfpsTbK5QJlba2Mc0aX6S8mXjRM4RsD811mrhO0lwzqDLn5SWtsMlysTiLdqsuBb2sflHsOLaDKm8Cyi3jSPsq0GjphBUTf_1N_xHIX2MG2W3m3eqvUZkBEViivSdTgXa3M3SfSs0korEZ05slGvdElFvbukncaSExxBtA"/>
+</div>
+</header>
+<main class="pt-[80px] px-margin-mobile">
+<!-- Page Title -->
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-background mb-stack-lg mt-unit">마이</h1>
+<!-- Profile Card -->
+<div class="bg-surface-container rounded border border-card-border p-6 mb-stack-lg flex items-center gap-4 relative overflow-hidden">
+<!-- Decorative gradient orb -->
+<div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/10 rounded-full blur-2xl"></div>
+<div class="w-16 h-16 rounded-full border-2 border-primary-container overflow-hidden shrink-0">
+<img class="object-cover w-full h-full" data-alt="A stunning hyper-realistic portrait of a mysterious figure in a futuristic luxury setting, rendered in dark navy tones with subtle metallic gold accents reflecting on a polished visor. The image exudes exclusivity, wealth, and high-tech elegance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIvISI15CUPqrLIF2SmFfFpv617kjotRAH82h5nwNh4bcYgaPzxAHLX0fEYyLh40QzpFCvflz6CqQSrcnT6eA0R5snr1YyX01SabQRMcxbmr1trByswmjyt6V-48_vOSCiDEs0OXpb2xfXlJr_cSrmk-S229PzY-EjbcaDr-fN_gy-NMVQuP-PzvTP_nywnZm5-d2QVvEezCklGe7V_vptemP9ZaVpkr-xp_8kWTFhe-_S4I4qTE4tuA"/>
+</div>
+<div class="flex-1 z-10">
+<div class="flex items-center gap-2 mb-1">
+<h2 class="font-headline-md text-headline-md text-on-background">Kevin</h2>
+<span class="bg-surface-container border border-outline px-2 py-0.5 rounded font-label-sm text-label-sm text-on-surface-variant">일반회원</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-[16px]" data-icon="stars">stars</span>
+<span class="font-label-lg text-label-lg text-tertiary">Silver 멤버십</span>
+</div>
+</div>
+<button class="z-10 text-on-surface-variant bg-surface/50 p-2 rounded hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+<!-- Menu List -->
+<div class="bg-surface-container rounded border border-card-border overflow-hidden">
+<a class="flex items-center justify-between p-4 border-b border-card-border hover:bg-white/5 transition-colors group" href="#">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface group-hover:text-on-background transition-colors">프로필</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-4 border-b border-card-border hover:bg-white/5 transition-colors group" href="#">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined" data-icon="event_available">event_available</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface group-hover:text-on-background transition-colors">예약 내역</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-4 border-b border-card-border hover:bg-white/5 transition-colors group" href="#">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface group-hover:text-on-background transition-colors">코인 월렛</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-4 border-b border-card-border hover:bg-white/5 transition-colors group" href="#">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface group-hover:text-on-background transition-colors">폴리마켓 내역</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-4 border-b border-card-border hover:bg-white/5 transition-colors group" href="#">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined" data-icon="workspace_premium">workspace_premium</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface group-hover:text-on-background transition-colors">멤버십</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-4 border-b border-card-border hover:bg-white/5 transition-colors group" href="#">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined" data-icon="supervisor_account">supervisor_account</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface group-hover:text-on-background transition-colors">추천인 관리</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</a>
+<a class="flex items-center justify-between p-4 hover:bg-white/5 transition-colors group" href="#">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface group-hover:text-on-background transition-colors">설정</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</a>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 w-full flex justify-around items-center h-20 px-margin-mobile pb-safe border-t border-card-border bg-white/10 backdrop-blur-[20px] z-50">
+<button class="hover:text-primary/80 transition-all active:scale-90 duration-200 flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined mb-1" data-icon="workspace_premium">workspace_premium</span>
+<span class="font-label-sm text-label-sm">잭팟</span>
+</button>
+<button class="hover:text-primary/80 transition-all active:scale-90 duration-200 flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined mb-1" data-icon="query_stats">query_stats</span>
+<span class="font-label-sm text-label-sm">폴리</span>
+</button>
+<button class="hover:text-primary/80 transition-all active:scale-90 duration-200 flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined mb-1" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">홈</span>
+</button>
+<button class="hover:text-primary/80 transition-all active:scale-90 duration-200 flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined mb-1" data-icon="casino">casino</span>
+<span class="font-label-sm text-label-sm">Free</span>
+</button>
+<button class="hover:text-primary/80 transition-all active:scale-90 duration-200 flex flex-col items-center justify-center text-primary font-bold">
+<span class="material-symbols-outlined mb-1" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm">마이</span>
+</button>
+</nav>
+</body></html>

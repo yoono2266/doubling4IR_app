@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Email Verification Failure</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-container": "#a9bad2",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#38485c",
+                        "inverse-on-surface": "#34302a",
+                        "on-tertiary": "#402d06",
+                        "inverse-primary": "#775a19",
+                        "on-background": "#F8F9FA",
+                        "on-tertiary-container": "#4c3810",
+                        "surface-bright": "#3d3933",
+                        "on-surface-variant": "#d1c5b4",
+                        "tertiary-container": "#bfa170",
+                        "on-tertiary-fixed": "#271900",
+                        "on-error": "#690005",
+                        "background": "#16130e",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "background-deep": "#0D1B2A",
+                        "on-secondary-fixed": "#0c1c2f",
+                        "on-secondary": "#223145",
+                        "card-border": "rgba(255, 255, 255, 0.05)",
+                        "primary-container": "#c5a059",
+                        "on-tertiary-fixed-variant": "#59431b",
+                        "secondary-fixed": "#d3e4fd",
+                        "outline": "#9a8f80",
+                        "on-primary-container": "#4e3700",
+                        "tertiary-fixed": "#ffdea9",
+                        "on-primary-fixed-variant": "#5d4201",
+                        "surface-container-lowest": "#110e09",
+                        "on-primary": "#412d00",
+                        "error-container": "#93000a",
+                        "surface-container-high": "#2d2924",
+                        "surface-container-highest": "#38342e",
+                        "secondary-container": "#3b4a5f",
+                        "outline-variant": "#4e4639",
+                        "surface-container": "#231f1a",
+                        "primary": "#e9c176",
+                        "tertiary": "#e2c28e",
+                        "error": "#ffb4ab",
+                        "primary-fixed-dim": "#e9c176",
+                        "primary-fixed": "#ffdea5",
+                        "surface-tint": "#e9c176",
+                        "on-surface": "#e9e1d8",
+                        "secondary": "#b7c8e1",
+                        "surface-dim": "#16130e",
+                        "surface-container-low": "#1e1b16",
+                        "surface-variant": "#38342e",
+                        "outline-gold": "rgba(197, 160, 89, 0.2)",
+                        "on-primary-fixed": "#261900",
+                        "inverse-surface": "#e9e1d8",
+                        "tertiary-fixed-dim": "#e2c28e",
+                        "surface": "#16130e"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    spacing: {
+                        "container-max": "1200px",
+                        "section-gap": "80px",
+                        "stack-md": "16px",
+                        "unit": "8px",
+                        "margin-mobile": "20px",
+                        "margin-desktop": "64px",
+                        "gutter": "24px",
+                        "stack-lg": "32px",
+                        "stack-sm": "8px"
+                    },
+                    fontFamily: {
+                        "label-sm": ["Pretendard"],
+                        "headline-lg-mobile": ["Pretendard"],
+                        "body-lg": ["Pretendard"],
+                        "headline-md": ["Pretendard"],
+                        "body-md": ["Pretendard"],
+                        "label-lg": ["Pretendard"],
+                        "headline-lg": ["Pretendard"],
+                        "headline-xl": ["Pretendard"]
+                    },
+                    fontSize: {
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-xl": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        };
+    </script>
+<style>
+        @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
+        
+        body { font-family: 'Pretendard', sans-serif; }
+        
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .gold-glow {
+            box-shadow: 0 0 40px rgba(197, 160, 89, 0.15);
+        }
+
+        .bg-glow {
+            background: radial-gradient(circle at 50% 30%, rgba(197, 160, 89, 0.1) 0%, transparent 70%);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+        .animate-scale-in { animation: scaleIn 0.8s ease-out forwards; }
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+        
+        .opacity-0 { opacity: 0; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#0D1B2A] text-on-surface h-screen w-full flex flex-col relative overflow-hidden bg-glow antialiased selection:bg-primary selection:text-[#0D1B2A]">
+<!-- Content Area -->
+<main class="flex-1 flex flex-col items-center pt-[132px] px-margin-mobile relative z-10 w-full max-w-[430px] mx-auto">
+<!-- Error Icon Container -->
+<div class="relative mb-stack-lg animate-scale-in opacity-0 flex items-center justify-center">
+<!-- Decorative rings -->
+<div class="absolute inset-0 rounded-full border border-primary/20 scale-110"></div>
+<div class="absolute inset-0 rounded-full border border-primary/10 scale-125"></div>
+<!-- Main icon panel -->
+<div class="w-32 h-32 rounded-full glass-panel gold-glow flex items-center justify-center relative z-10 bg-primary/5">
+<span class="material-symbols-outlined text-[64px] text-primary" data-icon="error">error</span>
+</div>
+</div>
+<!-- Text Content -->
+<div class="text-center w-full space-y-stack-sm mb-stack-lg">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface animate-fade-in-up opacity-0 delay-100">
+                인증에 실패했습니다
+            </h1>
+<p class="font-body-md text-body-md text-on-surface-variant animate-fade-in-up opacity-0 delay-200">
+                인증 링크가 만료되었거나 올바르지 않습니다.<br/>새로운 인증 링크를 요청해 주세요.
+            </p>
+</div>
+</main>
+<!-- Bottom Action Area -->
+<div class="fixed bottom-0 left-0 w-full p-margin-mobile pb-safe bg-gradient-to-t from-[#0D1B2A] to-transparent z-20 flex flex-col items-center animate-fade-in-up opacity-0 delay-300">
+<div class="w-full max-w-[430px] mx-auto space-y-stack-md">
+<button class="w-full h-14 bg-primary text-[#0D1B2A] font-label-lg text-label-lg rounded transition-transform active:scale-95 flex items-center justify-center" type="button">
+                재인증 요청
+            </button>
+<a class="block w-full text-center font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors py-2" href="#">
+                홈으로 돌아가기
+            </a>
+</div>
+</div>
+</body></html>
