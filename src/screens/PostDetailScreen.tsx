@@ -1,0 +1,168 @@
+import React, { useState } from 'react';
+import { useApp } from '../context/AppContext';
+
+export const PostDetailScreen: React.FC = () => {
+  const { selectedPost, setCurrentSubScreen, toggleLikePost, showToast } = useApp();
+  const [commentInput, setCommentInput] = useState('');
+  const [comments, setComments] = useState([
+    { id: 'c1', author: 'Alexander Kim', text: '스위트룸 버틀러 서비스 정보 유용하네요!', time: '10분 전' },
+    { id: 'c2', author: 'David Park', text: '다음달 마닐라 출장 때 꼭 이용해보겠습니다.', time: '5분 전' }
+  ]);
+
+  if (!selectedPost) return null;
+
+  const handleAddComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentInput.trim()) return;
+
+    setComments(prev => [
+      ...prev,
+      { id: `c-${Date.now()}`, author: 'Kevin', text: commentInput, time: '방금 전' }
+    ]);
+    setCommentInput('');
+    showToast('댓글이 등록되었습니다.');
+  };
+
+  return (
+    <div className="flex flex-col gap-4 pb-44 pt-2">
+      <button 
+        onClick={() => setCurrentSubScreen(null)}
+        className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
+      >
+        <span className="material-symbols-outlined text-sm">arrow_back</span>
+        <span>목록으로 돌아가기</span>
+      </button>
+
+      <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-5 flex flex-col gap-4 shadow-xl">
+        {/* Author Header */}
+        {selectedPost.postType === 'video_promo' ? (
+          <div className="flex items-center justify-between border-b border-[#1F334D] pb-3">
+            <div>
+              <span className="text-xs text-slate-400 font-mono flex items-center gap-1">
+                <span className="material-symbols-outlined text-[13px] text-slate-500">schedule</span>
+                <span>{selectedPost.publishedAt || '2026-08-12 10:01:58'}</span>
+              </span>
+            </div>
+            <span className="text-xs font-bold text-[#0D1B2A] bg-[#C5A059] px-2.5 py-1 rounded-full shadow-sm">
+              {selectedPost.category || '더블링 뉴스'}
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between border-b border-[#1F334D] pb-3">
+            <div className="flex items-center gap-3">
+              <img src={selectedPost.avatar} alt={selectedPost.author} className="w-10 h-10 rounded-full border border-[#C5A059]" />
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-bold text-white">{selectedPost.author}</span>
+                  <span className="text-[10px] text-[#C5A059] bg-[#C5A059]/15 px-1.5 py-0.2 rounded">
+                    {selectedPost.authorRole}
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-400">{selectedPost.timeAgo}</span>
+              </div>
+            </div>
+            <span className="text-xs font-semibold text-[#C5A059] bg-[#0D1B2A] px-2.5 py-1 rounded-full border border-[#1F334D]">
+              #{selectedPost.category}
+            </span>
+          </div>
+        )}
+
+        {/* Post Title & Body */}
+        <div>
+          <h2 className="text-base font-bold text-white mb-2">{selectedPost.title}</h2>
+          {selectedPost.postType !== 'video_promo' && (
+            <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-line">{selectedPost.content}</p>
+          )}
+        </div>
+
+        {/* Video / Attached Image */}
+        {selectedPost.postType === 'video_promo' ? (
+          <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-[#0D1B2A] border border-[#1F334D] my-1">
+            <img 
+              src={selectedPost.videoThumbnail || selectedPost.image || 'https://images.unsplash.com/photo-1511193311914-0346f16efe90?w=1000&auto=format&fit=crop&q=80'} 
+              alt={selectedPost.title} 
+              className="w-full h-full object-cover" 
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-md border border-white/30 flex items-center justify-center text-[#FFF0D0] shadow-2xl">
+                <span className="material-symbols-outlined text-4xl font-bold ml-1">play_arrow</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          selectedPost.image && (
+            <div className="rounded-xl overflow-hidden max-h-60 w-full my-1">
+              <img src={selectedPost.image} alt={selectedPost.title} className="w-full h-full object-cover" />
+            </div>
+          )
+        )}
+
+        {/* Hashtags for video promo */}
+        {selectedPost.postType === 'video_promo' && selectedPost.hashtags && (
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            {selectedPost.hashtags.map((tag, idx) => (
+              <span key={idx} className="text-xs font-semibold text-[#E2C28E] bg-[#0D1B2A] px-2.5 py-1 rounded border border-[#1F334D]">
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Like & Share Action bar */}
+        <div className="flex items-center justify-between pt-2 border-t border-[#1F334D] text-xs">
+          <button 
+            onClick={() => toggleLikePost(selectedPost.id)}
+            className={`flex items-center gap-1.5 ${selectedPost.isLiked ? 'text-rose-400 font-bold' : 'text-slate-400'}`}
+          >
+            <span className={`material-symbols-outlined text-base ${selectedPost.isLiked ? 'fill-1' : ''}`}>
+              favorite
+            </span>
+            <span>좋아요 ({selectedPost.likes})</span>
+          </button>
+
+          <button 
+            onClick={() => showToast('포스트 링크가 복사되었습니다.')}
+            className="flex items-center gap-1 text-slate-400 hover:text-white"
+          >
+            <span className="material-symbols-outlined text-base">share</span>
+            <span>공유하기</span>
+          </button>
+        </div>
+
+        {/* Comments Section */}
+        <div className="space-y-3 pt-2">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">댓글 ({comments.length})</h3>
+
+          <div className="space-y-2">
+            {comments.map((c) => (
+              <div key={c.id} className="bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D] text-xs space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-[#E2C28E]">{c.author}</span>
+                  <span className="text-[10px] text-slate-500">{c.time}</span>
+                </div>
+                <p className="text-slate-200">{c.text}</p>
+              </div>
+            ))}
+          </div>
+
+          <form onSubmit={handleAddComment} className="flex gap-2 pt-1">
+            <input 
+              type="text" 
+              placeholder="댓글을 입력하세요..." 
+              value={commentInput}
+              onChange={(e) => setCommentInput(e.target.value)}
+              className="flex-1 bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3 py-2 text-white text-xs focus:border-[#C5A059] focus:outline-none"
+            />
+            <button 
+              type="submit" 
+              className="px-3 py-2 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs"
+            >
+              등록
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  );
+};

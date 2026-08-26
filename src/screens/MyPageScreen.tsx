@@ -1,0 +1,791 @@
+import React from 'react';
+import { useApp } from '../context/AppContext';
+import { MembershipDashboardScreen } from './MembershipDashboardScreen';
+import { PolyPortfolioHistoryScreen } from './PolyPortfolioHistoryScreen';
+import { CompBenefitSelectionScreen } from './CompBenefitSelectionScreen';
+import { CurrentTripSummaryScreen } from './CurrentTripSummaryScreen';
+import { getTierInfo } from '../data/membershipData';
+import { AttendanceStreakWidget } from '../components/AttendanceStreakWidget';
+
+export const MyPageScreen: React.FC = () => {
+  const {
+    user,
+    reservations,
+    walletTransactions,
+    polyVotes,
+    settings,
+    updateSettings,
+    currentSubScreen,
+    setCurrentSubScreen,
+    setCurrentTab,
+    setIsLoggedIn,
+    hasActiveTrip,
+    setHasActiveTrip,
+    showToast
+  } = useApp();
+
+  const currentTier = getTierInfo(user.membershipTier);
+
+  const handleCopyReferral = () => {
+    navigator.clipboard.writeText(`https://doubling.app/ref/${user.referralCode}`);
+    showToast('추천인 초대 링크가 클립보드에 복사되었습니다!');
+  };
+
+  // SUB-MENU: CURRENT TRIP SUMMARY (이번 여행 요약) - Only accessible if hasActiveTrip is true
+  if (currentSubScreen === 'current-trip-summary') {
+    if (!hasActiveTrip) {
+      setCurrentSubScreen(null);
+      return null;
+    }
+    return <CurrentTripSummaryScreen />;
+  }
+
+  // SUB-MENU: COMP BENEFITS (멤버십 혜택 받기)
+  if (currentSubScreen === 'comp-benefits') {
+    return <CompBenefitSelectionScreen />;
+  }
+
+  // SUB-MENU 1: PROFILE
+  if (currentSubScreen === 'my-profile') {
+    return (
+      <div className="flex flex-col gap-4 pb-44 pt-2">
+        <button 
+          onClick={() => setCurrentSubScreen(null)}
+          className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
+        >
+          <span className="material-symbols-outlined text-sm">arrow_back</span>
+          <span>마이페이지로 돌아가기</span>
+        </button>
+
+        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <span className="material-symbols-outlined text-[#C5A059]">badge</span>
+          파트너 프로필 정보
+        </h2>
+
+        <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-5 flex flex-col gap-4 shadow-md">
+          <div className="flex items-center gap-4 border-b border-[#1F334D] pb-4">
+            <img src={user.avatar} alt={user.name} className="w-16 h-16 rounded-full object-cover border-2 border-[#C5A059]" />
+            <div>
+              <h3 className="text-base font-bold text-white">{user.name} 님</h3>
+              <p className="text-xs font-bold text-[#C9CBCF] flex items-center gap-1">
+                <span className="material-symbols-outlined text-xs">diamond</span>
+                {user.membershipTier} VIP Member
+              </p>
+              <p className="text-xs text-slate-400">{user.company}</p>
+            </div>
+          </div>
+
+          <div className="space-y-3 text-xs">
+            <div className="flex justify-between py-1 border-b border-[#1F334D]/60">
+              <span className="text-slate-400">연령대 / 그룹</span>
+              <span className="font-bold text-white">{user.ageGroup}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-[#1F334D]/60 items-center">
+              <span className="text-slate-400">더블링 멤버십 등급</span>
+              <button 
+                onClick={() => setCurrentSubScreen('my-membership')}
+                className="font-bold text-[#C9CBCF] bg-[#C9CBCF]/10 px-2.5 py-0.5 rounded-full border border-[#C9CBCF]/30 hover:bg-[#C9CBCF]/20 transition flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-xs">diamond</span>
+                <span>{user.membershipTier} ({user.tierScore.toLocaleString()}점)</span>
+              </button>
+            </div>
+            <div className="flex justify-between py-1 border-b border-[#1F334D]/60">
+              <span className="text-slate-400">등급 유지 기한</span>
+              <span className="font-mono font-bold text-slate-200">{user.tierExpiration}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-[#1F334D]/60">
+              <span className="text-slate-400">추천인 코드</span>
+              <span className="font-mono font-bold text-[#C5A059]">{user.referralCode}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // SUB-MENU 2: RESERVATION HISTORY (Coin Wallet & Comp 3 types)
+  if (currentSubScreen === 'my-reservations') {
+    return (
+      <div className="flex flex-col gap-4 pb-44 pt-2">
+        <button 
+          onClick={() => setCurrentSubScreen(null)}
+          className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
+        >
+          <span className="material-symbols-outlined text-sm">arrow_back</span>
+          <span>마이페이지로 돌아가기</span>
+        </button>
+
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#C5A059]">calendar_month</span>
+            FreePlay 신청 내역 ({reservations.length}건)
+          </h2>
+          <button
+            onClick={() => setCurrentSubScreen('comp-benefits')}
+            className="text-[11px] font-bold text-[#E2C28E] hover:underline flex items-center gap-0.5"
+          >
+            <span>+ 추가 혜택 신청</span>
+            <span className="material-symbols-outlined text-xs">arrow_forward</span>
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {reservations.map((res) => {
+            const bType = res.benefitType || 'freeplay_suite';
+
+            return (
+              <div key={res.id} className="bg-[#162639] border border-[#C5A059]/40 rounded-2xl p-4 flex flex-col gap-3 shadow-md">
+                <div className="flex items-start justify-between">
+                  <div>
+                    {/* Comp Type & Status Badges */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {bType === 'freeplay_suite' && (
+                        <span className="text-[10px] font-extrabold text-[#0D1B2A] bg-[#C5A059] px-2 py-0.5 rounded flex items-center gap-1 shadow-sm">
+                          <span className="material-symbols-outlined text-xs">king_bed</span>
+                          FreePlay 스위트
+                        </span>
+                      )}
+                      {bType === 'gaming_room' && (
+                        <span className="text-[10px] font-extrabold text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded border border-purple-500/40 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-xs">casino</span>
+                          멤버십 게이밍룸
+                        </span>
+                      )}
+                      {bType === 'dining' && (
+                        <span className="text-[10px] font-extrabold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/40 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-xs">restaurant</span>
+                          멤버십 다이닝
+                        </span>
+                      )}
+
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                        res.status === '승인완료' || res.status === '확정'
+                          ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
+                          : res.status === '심사중'
+                          ? 'text-amber-400 bg-amber-500/10 border-amber-500/30 animate-pulse'
+                          : 'text-sky-400 bg-sky-500/10 border-sky-500/30'
+                      }`}>
+                        상태: {res.status}
+                      </span>
+                    </div>
+
+                    <h3 className="text-sm font-bold text-white mt-1.5">{res.hotelName}</h3>
+                    <p className="text-xs text-slate-300">{res.roomType}</p>
+                  </div>
+                  <span className="text-[11px] font-mono text-slate-400">{res.id}</span>
+                </div>
+
+                {/* Detailed Reservation Info based on Benefit Type */}
+                <div className="bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D] text-xs space-y-1.5">
+                  {bType === 'freeplay_suite' && (
+                    <>
+                      <div className="flex justify-between text-slate-300">
+                        <span>체크인 - 체크아웃:</span>
+                        <span className="font-mono font-bold text-white">{res.checkIn} ~ {res.checkOut}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-300">
+                        <span>투숙 정보:</span>
+                        <span>{res.nights || 2}박 / {res.guests}인</span>
+                      </div>
+                      <div className="flex justify-between text-slate-300 pt-1 border-t border-[#1F334D]">
+                        <span>디포짓 코인:</span>
+                        <span className="font-mono font-extrabold text-[#E2C28E]">
+                          {(res.totalCoins || 0).toLocaleString()} 코인
+                        </span>
+                      </div>
+                    </>
+                  )}
+
+                  {bType === 'gaming_room' && (
+                    <>
+                      <div className="flex justify-between text-slate-300">
+                        <span>이용 일자:</span>
+                        <span className="font-mono font-bold text-white">{res.checkIn}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-300">
+                        <span>이용 인원:</span>
+                        <span>성인 {res.guests}인</span>
+                      </div>
+                      {res.optionsList && res.optionsList.length > 0 && (
+                        <div className="flex justify-between text-slate-300">
+                          <span>선택 옵션:</span>
+                          <span className="text-slate-200 text-right truncate max-w-[200px]">
+                            {res.optionsList.join(', ')}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-slate-300 pt-1 border-t border-[#1F334D]">
+                        <span>비용 혜택:</span>
+                        <span className="font-bold text-purple-300">VIP 살롱 전액 무상 의전</span>
+                      </div>
+                    </>
+                  )}
+
+                  {bType === 'dining' && (
+                    <>
+                      <div className="flex justify-between text-slate-300">
+                        <span>이용 일자:</span>
+                        <span className="font-mono font-bold text-white">{res.checkIn}</span>
+                      </div>
+                      {res.timeSlot && (
+                        <div className="flex justify-between text-slate-300">
+                          <span>이용 시간대:</span>
+                          <span className="font-bold text-[#E2C28E]">{res.timeSlot}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-slate-300">
+                        <span>예약 인원:</span>
+                        <span>성인 {res.guests}인</span>
+                      </div>
+                      {res.optionsList && res.optionsList.length > 0 && (
+                        <div className="flex justify-between text-slate-300">
+                          <span>선택 옵션:</span>
+                          <span className="text-slate-200 text-right truncate max-w-[200px]">
+                            {res.optionsList.join(', ')}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-slate-300 pt-1 border-t border-[#1F334D]">
+                        <span>바우처 지원:</span>
+                        <span className="font-bold text-amber-300">VIP 다이닝 바우처 전액 지원</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // SUB-MENU 3: COIN WALLET (Real Payment / FreePlay)
+  if (currentSubScreen === 'my-wallet') {
+    return (
+      <div className="flex flex-col gap-4 pb-44 pt-2">
+        <button 
+          onClick={() => setCurrentSubScreen(null)}
+          className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
+        >
+          <span className="material-symbols-outlined text-sm">arrow_back</span>
+          <span>마이페이지로 돌아가기</span>
+        </button>
+
+        {/* Sub-menu 3: Coin Wallet Screen */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#C5A059]">account_balance_wallet</span>
+            코인 월렛
+          </h2>
+          <span className="text-[10px] font-bold text-[#E2C28E] bg-[#C5A059]/15 px-2 py-0.5 rounded border border-[#C5A059]/30">
+            실결제 전용
+          </span>
+        </div>
+
+        {/* Balance Card */}
+        <div className="bg-gradient-to-br from-[#162639] via-[#1f334d] to-[#0D1B2A] border border-[#C5A059] rounded-2xl p-5 shadow-xl flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">사용 가능 코인 잔액</span>
+            <span className="text-[10px] text-slate-300 bg-[#0D1B2A] px-2 py-0.5 rounded border border-[#1F334D]">
+              FreePlay 신청 결제용
+            </span>
+          </div>
+          <p className="text-2xl font-extrabold text-[#FFF0D0] gold-gradient-text font-mono">
+            {user.walletCoin.toLocaleString()} <span className="text-sm text-slate-300 font-sans">코인</span>
+          </p>
+
+          <div className="grid grid-cols-2 gap-2 pt-2">
+            <button 
+              onClick={() => showToast('코인 충전 및 전환 주소가 생성되었습니다.')}
+              className="py-2.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow"
+            >
+              코인 충전/입금
+            </button>
+            <button 
+              onClick={() => showToast(`출금 가능 한도: ${user.walletCoin.toLocaleString()} 코인`)}
+              className="py-2.5 rounded-xl bg-[#0D1B2A] border border-[#C5A059]/40 text-[#E2C28E] font-bold text-xs hover:border-[#C5A059]"
+            >
+              외부 출금
+            </button>
+          </div>
+        </div>
+
+        {/* Info Box */}
+        <div className="bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D] text-xs text-slate-400 space-y-1">
+          <p className="flex items-center gap-1 text-slate-300 font-bold">
+            <span className="material-symbols-outlined text-xs text-[#C5A059]">info</span>
+            <span>코인 월렛 안내</span>
+          </p>
+          <p className="text-[11px] leading-relaxed">
+            코인 월렛은 FreePlay 스위트룸 신청 및 실제 제휴 상품 결제 전용 잔액입니다. 예측 챌린지 전용 무료 재화인 DP(더블링포인트)와는 완전히 독립되어 관리됩니다.
+          </p>
+        </div>
+
+        {/* Transactions Log */}
+        <div>
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">코인 거래 및 결제 내역</h3>
+          <div className="space-y-2">
+            {walletTransactions.map((tx) => (
+              <div key={tx.id} className="bg-[#162639] border border-[#1F334D] p-3 rounded-xl flex items-center justify-between text-xs">
+                <div>
+                  <p className="font-bold text-white">{tx.title}</p>
+                  <p className="text-[10px] text-slate-400">{tx.date} • {tx.txHash}</p>
+                </div>
+                <span className={`font-mono font-extrabold ${
+                  tx.amount > 0 ? 'text-emerald-400' : tx.amount < 0 ? 'text-[#E2C28E]' : 'text-slate-400'
+                }`}>
+                  {tx.amount > 0 ? `+${tx.amount.toLocaleString()}` : tx.amount.toLocaleString()} 코인
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // SUB-MENU 4: POLY MARKET PORTFOLIO & HISTORY (DP)
+  if (currentSubScreen === 'my-poly-history') {
+    return <PolyPortfolioHistoryScreen />;
+  }
+
+  // SUB-MENU 5: MEMBERSHIP DASHBOARD
+  if (currentSubScreen === 'my-membership' || currentSubScreen === 'membership-dashboard') {
+    return <MembershipDashboardScreen />;
+  }
+
+  // SUB-MENU 6: REFERRAL MANAGEMENT (DP)
+  if (currentSubScreen === 'my-referral') {
+    return (
+      <div className="flex flex-col gap-4 pb-44 pt-2">
+        <button 
+          onClick={() => setCurrentSubScreen(null)}
+          className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
+        >
+          <span className="material-symbols-outlined text-sm">arrow_back</span>
+          <span>마이페이지로 돌아가기</span>
+        </button>
+
+        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <span className="material-symbols-outlined text-[#C5A059]">group_add</span>
+          추천인 리워드 관리
+        </h2>
+
+        <div className="bg-[#162639] border border-[#1F334D] p-5 rounded-2xl flex flex-col gap-3 shadow-md">
+          <span className="text-xs text-slate-400">나의 고유 추천인 코드</span>
+          <div className="flex items-center justify-between bg-[#0D1B2A] p-3 rounded-xl border border-[#C5A059]/40 font-mono font-bold text-sm text-[#E2C28E]">
+            <span>{user.referralCode}</span>
+            <button 
+              onClick={handleCopyReferral}
+              className="text-xs bg-[#C5A059] text-[#0D1B2A] px-2.5 py-1 rounded font-sans font-bold hover:brightness-110"
+            >
+              복사
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-center text-xs mt-2">
+            <div className="bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D]">
+              <span className="text-slate-400 block">초대한 파트너</span>
+              <span className="text-base font-bold text-white font-mono">14명</span>
+            </div>
+            <div className="bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D]">
+              <span className="text-slate-400 block">누적 수수료 리워드</span>
+              <span className="text-base font-bold text-[#E2C28E] font-mono">2,450 DP</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // SUB-MENU 7: SETTINGS
+  if (currentSubScreen === 'my-settings') {
+    return (
+      <div className="flex flex-col gap-4 pb-44 pt-2">
+        <button 
+          onClick={() => setCurrentSubScreen(null)}
+          className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
+        >
+          <span className="material-symbols-outlined text-sm">arrow_back</span>
+          <span>마이페이지로 돌아가기</span>
+        </button>
+
+        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <span className="material-symbols-outlined text-[#C5A059]">settings</span>
+          설정 (Settings)
+        </h2>
+
+        <div className="bg-[#162639] border border-[#1F334D] p-4 rounded-2xl flex flex-col gap-4 shadow-md text-xs">
+          {/* Toggle 1: Push Notifications */}
+          <div className="flex items-center justify-between py-2 border-b border-[#1F334D]">
+            <div>
+              <p className="font-bold text-white">푸시 알림 수신</p>
+              <p className="text-[10px] text-slate-400">예약 확정 및 예측 챌린지 오즈 변동 알림</p>
+            </div>
+            <button 
+              onClick={() => updateSettings({ pushNotifications: !settings.pushNotifications })}
+              className={`w-12 h-6 rounded-full p-1 transition-colors ${
+                settings.pushNotifications ? 'bg-[#C5A059]' : 'bg-[#0D1B2A]'
+              }`}
+            >
+              <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                settings.pushNotifications ? 'translate-x-6' : 'translate-x-0'
+              }`} />
+            </button>
+          </div>
+
+          {/* Toggle 2: Marketing Consent */}
+          <div className="flex items-center justify-between py-2 border-b border-[#1F334D]">
+            <div>
+              <p className="font-bold text-white">마케팅 수신 동의</p>
+              <p className="text-[10px] text-slate-400">VIP 전용 리조트 프로모션 수신</p>
+            </div>
+            <button 
+              onClick={() => updateSettings({ marketingConsent: !settings.marketingConsent })}
+              className={`w-12 h-6 rounded-full p-1 transition-colors ${
+                settings.marketingConsent ? 'bg-[#C5A059]' : 'bg-[#0D1B2A]'
+              }`}
+            >
+              <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                settings.marketingConsent ? 'translate-x-6' : 'translate-x-0'
+              }`} />
+            </button>
+          </div>
+
+          {/* Monthly Booking Self Limit Stepper */}
+          <div className="flex items-center justify-between py-2 border-b border-[#1F334D]">
+            <div>
+              <p className="font-bold text-white">월간 예약 자기 제한 수</p>
+              <p className="text-[10px] text-slate-400">과도한 포인트 소진 방지 보호 설정</p>
+            </div>
+            <div className="flex items-center gap-2 bg-[#0D1B2A] px-2 py-1 rounded-lg border border-[#1F334D]">
+              <button 
+                onClick={() => updateSettings({ monthlyBookingLimit: Math.max(1, settings.monthlyBookingLimit - 1) })}
+                className="w-5 h-5 rounded bg-[#162639] text-[#C5A059] font-bold text-xs"
+              >
+                -
+              </button>
+              <span className="font-mono font-bold text-white">{settings.monthlyBookingLimit}회</span>
+              <button 
+                onClick={() => updateSettings({ monthlyBookingLimit: settings.monthlyBookingLimit + 1 })}
+                className="w-5 h-5 rounded bg-[#162639] text-[#C5A059] font-bold text-xs"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* IR Demo State Reset: Active Trip / Check-in State */}
+          <div className="pt-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-bold text-white flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[#D4AF37] text-sm">restart_alt</span>
+                  <span>데모 상태 초기화</span>
+                </p>
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  현재 투숙(체크인) 상태를 초기화(미투숙/체크아웃)합니다.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setHasActiveTrip(false);
+                  showToast('투숙 상태가 초기화되었습니다 (체크아웃 상태로 전환)');
+                }}
+                className="px-3 py-1.5 rounded-xl bg-rose-500/20 border border-rose-500/50 text-rose-300 hover:bg-rose-500/30 text-xs font-bold transition flex items-center gap-1 shrink-0 active:scale-95"
+              >
+                <span className="material-symbols-outlined text-xs">refresh</span>
+                <span>데모 상태 초기화</span>
+              </button>
+            </div>
+            <div className="mt-2.5 text-[10px] text-slate-400 bg-[#0D1B2A] p-2.5 rounded-xl border border-[#1F334D] flex items-center justify-between">
+              <span>현재 투숙 상태: <strong className={hasActiveTrip ? 'text-emerald-400 font-mono font-bold' : 'text-slate-400 font-mono font-bold'}>{hasActiveTrip ? '투숙 중 (In-House · 체크인됨)' : '미투숙 (체크인 전)'}</strong></span>
+              {hasActiveTrip ? (
+                <span className="flex items-center gap-1 text-[9px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  LIVE
+                </span>
+              ) : (
+                <span className="text-[9px] text-slate-500">대기</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // MY MAIN SCREEN WITH TWO SEPARATE BALANCE CARDS & 7 SUB-MENUS
+  return (
+    <div className="flex flex-col gap-4 pb-44 pt-2">
+      {/* User Header Summary Card with ETERNITY Tier Badge */}
+      <div className="bg-[#162639] border border-[#C5A059]/40 rounded-2xl p-5 flex items-center justify-between shadow-xl">
+        <div className="flex items-center gap-3">
+          <img src={user.avatar} alt={user.name} className="w-14 h-14 rounded-full object-cover border-2 border-[#C5A059]" />
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-white">{user.name} 님</h2>
+              {/* ETERNITY Platinum Tier Badge (Clickable to Membership Dashboard) */}
+              <button 
+                onClick={() => setCurrentSubScreen('my-membership')}
+                className="flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#C9CBCF]/30 to-[#E2E8F0]/20 border border-[#C9CBCF]/60 text-white font-black hover:brightness-125 transition shadow-sm"
+                title="더블링 멤버십 대시보드"
+              >
+                <span className="material-symbols-outlined text-xs text-[#C9CBCF]">diamond</span>
+                <span>{user.membershipTier}</span>
+              </button>
+            </div>
+            <p className="text-xs text-[#E2C28E] font-medium">{user.company}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5 font-mono">CODE: {user.referralCode}</p>
+          </div>
+        </div>
+
+        {/* Quick Tier Link */}
+        <button
+          onClick={() => setCurrentSubScreen('my-membership')}
+          className="text-right flex flex-col items-end hover:opacity-80 transition"
+        >
+          <span className="text-[10px] text-slate-400 font-medium">누적 Tier Score</span>
+          <span className="text-sm font-black text-white font-mono flex items-center gap-0.5">
+            {user.tierScore.toLocaleString()}<span className="text-[10px] text-[#C9CBCF]">점</span>
+            <span className="material-symbols-outlined text-xs text-slate-400">chevron_right</span>
+          </span>
+        </button>
+      </div>
+
+      {/* TWO SEPARATE BALANCE CARDS: 1. DP (Prediction Challenge) & 2. Coin Wallet (Real Payments) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Card 1: DP Balance Card (Prediction Challenge Exclusive) */}
+        <div 
+          onClick={() => {
+            setCurrentTab('poly');
+            setCurrentSubScreen(null);
+          }}
+          className="bg-gradient-to-br from-[#162639] to-[#0D1B2A] border border-[#C5A059]/60 p-4 rounded-2xl flex flex-col justify-between gap-3 cursor-pointer hover:border-[#C5A059] transition shadow-lg group relative overflow-hidden"
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#C5A059]/20 border border-[#C5A059]/40 flex items-center justify-center text-[#E2C28E]">
+                <span className="material-symbols-outlined text-xl">query_stats</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">더블링포인트 (DP)</span>
+                <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 whitespace-nowrap inline-block mt-0.5">
+                  예측 챌린지 전용 · 무료
+                </span>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-slate-400 group-hover:text-[#E2C28E] transition text-sm">open_in_new</span>
+          </div>
+
+          <div>
+            <p className="text-xl font-black text-[#FFF0D0] font-mono leading-none">
+              {user.walletDp.toLocaleString()} <span className="text-xs text-[#E2C28E] font-sans font-bold">DP</span>
+            </p>
+            <p className="text-[10px] text-slate-400 mt-1.5">
+              웹3 예측 챌린지 투표 전용 (현금 환전 불가)
+            </p>
+          </div>
+
+          <div className="pt-2 border-t border-[#1F334D] flex items-center justify-between text-[11px] text-[#E2C28E] font-bold">
+            <span>예측 챌린지 바로가기</span>
+            <span>→</span>
+          </div>
+        </div>
+
+        {/* Card 2: Coin Wallet Card (Real Payments & FreePlay) */}
+        <div 
+          onClick={() => setCurrentSubScreen('my-wallet')}
+          className="bg-gradient-to-br from-[#162639] to-[#0D1B2A] border border-[#1F334D] hover:border-[#C5A059]/50 p-4 rounded-2xl flex flex-col justify-between gap-3 cursor-pointer transition shadow-md group"
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#0D1B2A] border border-[#1F334D] flex items-center justify-center text-slate-300 group-hover:text-[#E2C28E]">
+                <span className="material-symbols-outlined text-xl">account_balance_wallet</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">코인 월렛</span>
+                <span className="text-[9px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20 whitespace-nowrap inline-block mt-0.5">
+                  FreePlay 실결제용
+                </span>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-slate-400 group-hover:text-white transition text-sm">chevron_right</span>
+          </div>
+
+          <div>
+            <p className="text-xl font-bold text-slate-100 font-mono leading-none">
+              {user.walletCoin.toLocaleString()} <span className="text-xs text-slate-400 font-sans">코인</span>
+            </p>
+            <p className="text-[10px] text-slate-400 mt-1.5">
+              FreePlay 신청 디포짓 및 유료 결제
+            </p>
+          </div>
+
+          <div className="pt-2 border-t border-[#1F334D] flex items-center justify-between text-[11px] text-slate-300 font-bold group-hover:text-[#E2C28E]">
+            <span>입출금 및 결제 관리</span>
+            <span>→</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Attendance Streak Widget */}
+      <AttendanceStreakWidget />
+
+      {/* SUB-MENU LIST (Dynamic numbering based on hasActiveTrip) */}
+      <div className="space-y-2">
+        <h3 className="text-xs font-bold text-[#C5A059] uppercase tracking-wider px-1">
+          마이페이지 메뉴 ({hasActiveTrip ? 8 : 7})
+        </h3>
+
+        {/* 1. Current Trip Summary (ONLY when hasActiveTrip is true) */}
+        {hasActiveTrip && (
+          <div 
+            onClick={() => setCurrentSubScreen('current-trip-summary')}
+            className="p-3.5 rounded-2xl bg-[#162639] border-2 border-[#C5A059]/60 hover:border-[#C5A059] transition cursor-pointer flex items-center justify-between group shadow-sm"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#0D1B2A] border border-[#C5A059]/40 flex items-center justify-center text-[#C5A059] shrink-0">
+                <span className="material-symbols-outlined text-lg">luggage</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-white group-hover:text-[#E2C28E] transition break-keep">1. 이번 여행 요약</span>
+                  <span className="text-[9px] font-extrabold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/30">
+                    투숙 중
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-300 block break-keep mt-0.5">Okada Manila 실시간 체크인 및 예상 적립 안내</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="text-[11px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+                +400점
+              </span>
+              <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+            </div>
+          </div>
+        )}
+
+        {/* Profile */}
+        <div 
+          onClick={() => setCurrentSubScreen('my-profile')}
+          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-[#C5A059]">badge</span>
+            <span className="text-xs font-bold text-white">{hasActiveTrip ? '2' : '1'}. 파트너 프로필 정보</span>
+          </div>
+          <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+        </div>
+
+        {/* Reservations */}
+        <div 
+          onClick={() => setCurrentSubScreen('my-reservations')}
+          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-[#C5A059]">calendar_month</span>
+            <span className="text-xs font-bold text-white">{hasActiveTrip ? '3' : '2'}. FreePlay 신청 내역</span>
+          </div>
+          <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+            {reservations.length}건
+          </span>
+        </div>
+
+        {/* Coin Wallet */}
+        <div 
+          onClick={() => setCurrentSubScreen('my-wallet')}
+          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-[#C5A059]">account_balance_wallet</span>
+            <div>
+              <span className="text-xs font-bold text-white block">{hasActiveTrip ? '4' : '3'}. 코인 월렛 / 입출금</span>
+              <span className="text-[10px] text-slate-400">잔액: {user.walletCoin.toLocaleString()} 코인</span>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+        </div>
+
+        {/* Prediction Challenge History */}
+        <div 
+          onClick={() => setCurrentSubScreen('my-poly-history')}
+          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-[#C5A059]">history</span>
+            <div>
+              <span className="text-xs font-bold text-white block">{hasActiveTrip ? '5' : '4'}. 예측 챌린지 참여 내역</span>
+              <span className="text-[10px] text-[#E2C28E] font-medium">잔액: {user.walletDp.toLocaleString()} DP</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
+              {polyVotes.length}건
+            </span>
+            <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+          </div>
+        </div>
+
+        {/* Membership Dashboard */}
+        <div 
+          onClick={() => setCurrentSubScreen('my-membership')}
+          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C9CBCF]/60 transition cursor-pointer flex items-center justify-between group"
+        >
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-[#C9CBCF]">diamond</span>
+            <div>
+              <span className="text-xs font-bold text-white block group-hover:text-[#E2C28E] transition">{hasActiveTrip ? '6' : '5'}. 더블링 멤버십 등급 관리</span>
+              <span className="text-[10px] text-slate-400">호텔/소비 실적 기반 Cross-IR 등급</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-[#C9CBCF] bg-[#C9CBCF]/15 border border-[#C9CBCF]/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="material-symbols-outlined text-[11px]">diamond</span>
+              {user.membershipTier} ({user.tierScore.toLocaleString()}점)
+            </span>
+            <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+          </div>
+        </div>
+
+        {/* Referral */}
+        <div 
+          onClick={() => setCurrentSubScreen('my-referral')}
+          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-[#C5A059]">group_add</span>
+            <span className="text-xs font-bold text-white">{hasActiveTrip ? '7' : '6'}. 추천인 리워드 관리</span>
+          </div>
+          <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+        </div>
+
+        {/* Settings */}
+        <div 
+          onClick={() => setCurrentSubScreen('my-settings')}
+          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-[#C5A059]">settings</span>
+            <span className="text-xs font-bold text-white">{hasActiveTrip ? '8' : '7'}. 앱 설정 & 제한</span>
+          </div>
+          <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+        </div>
+      </div>
+
+      {/* Logout button */}
+      <button 
+        onClick={() => {
+          setIsLoggedIn(false);
+          setCurrentSubScreen('login');
+        }}
+        className="w-full py-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 font-bold text-xs hover:bg-rose-500/20 transition mt-2"
+      >
+        로그아웃 (데모 계정)
+      </button>
+    </div>
+  );
+};
