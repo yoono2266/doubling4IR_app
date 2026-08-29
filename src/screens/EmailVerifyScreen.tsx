@@ -1,8 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { apiCommonClient, ResultCode } from '../utils/apiClient';
+
+interface UAuthResponse {
+  result: ResultCode | number;
+  message?: string;
+  sessionid?: string;
+  data?: {
+    loginfo?: { $session?: string };
+    userinfo?: unknown;
+  };
+}
 
 export const EmailVerifyScreen: React.FC = () => {
-  const { currentSubScreen, setCurrentSubScreen, setIsLoggedIn, setCurrentTab, showToast } = useApp();
+  const {
+    currentSubScreen,
+    setCurrentSubScreen,
+    setIsLoggedIn,
+    setCurrentTab,
+    socialSignupInfo,
+    setSocialSignupInfo,
+    showToast,
+  } = useApp();
+  const [isStarting, setIsStarting] = useState(false);
 
   // Determine current active subscreen step: 'request' | 'receipt' | 'success' | 'fail'
   const getInitialStep = (): 'request' | 'receipt' | 'success' | 'fail' => {
@@ -21,6 +41,8 @@ export const EmailVerifyScreen: React.FC = () => {
     else if (currentSubScreen === 'email-verify-success') setStep('success');
     else if (currentSubScreen === 'email-verify-fail') setStep('fail');
     else setStep('request');
+    // 임시 : 회원 가입 처리 완료를 그냥 시켜라.
+    setStep('success')
   }, [currentSubScreen]);
 
   // Timer countdown simulation for request step
@@ -33,11 +55,47 @@ export const EmailVerifyScreen: React.FC = () => {
     }
   }, [step, timerSeconds]);
 
-  const handleStartApp = () => {
-    setIsLoggedIn(true);
-    setCurrentTab('home');
-    setCurrentSubScreen(null);
-    showToast('Kevin 님 환영합니다! 더블링 서비스가 시작되었습니다.');
+  const handleStartApp = async () => {
+    if (!socialSignupInfo) {
+      setIsLoggedIn(true);
+      setCurrentTab('home');
+      setCurrentSubScreen(null);
+      showToast('Kevin 님 환영합니다! 더블링 서비스가 시작되었습니다.');
+      return;
+    }
+
+    setIsStarting(true);
+    try {
+      const response = await apiCommonClient.post<UAuthResponse, {}>('/members/uAuth', {userid:socialSignupInfo.platformUid, upass:"123456"}, {
+        platform: {
+          _platform_uid: socialSignupInfo.platformUid,
+          _platform_gid: socialSignupInfo.platformGid,
+          _platform_bid: socialSignupInfo.platformBid,
+        },
+      });
+      const sessionId = response.data?.loginfo?.$session || response.sessionid;
+
+      if (response.result !== ResultCode.SUCCESS || !sessionId) {
+        throw new Error(response.message || '자동 로그인에 실패했습니다.');
+      }
+
+      localStorage.setItem('sessionid', sessionId);
+      localStorage.setItem('user_info', JSON.stringify(response.data?.userinfo ?? {
+        email: socialSignupInfo.platformUid,
+        sub: socialSignupInfo.platformGid,
+        u_profile: socialSignupInfo.profileImage,
+      }));
+      setSocialSignupInfo(null);
+      setIsLoggedIn(true);
+      setCurrentTab('home');
+      setCurrentSubScreen(null);
+      showToast('회원가입 및 자동 로그인이 완료되었습니다.');
+    } catch (error) {
+      console.error('회원가입 후 자동 로그인 오류:', error);
+      showToast(error instanceof Error ? error.message : '자동 로그인에 실패했습니다.');
+    } finally {
+      setIsStarting(false);
+    }
   };
 
   const formatTimer = (sec: number) => {
@@ -49,7 +107,7 @@ export const EmailVerifyScreen: React.FC = () => {
   return (
     <div className="flex flex-col min-h-[85vh] justify-between max-w-sm mx-auto py-4">
       
-      {/* Step Quick Switcher Demo Pills for Evaluators */}
+      {/* Step Quick Switcher Demo Pills for Evaluators 
       <div className="bg-[#162639]/80 border border-[#1F334D] rounded-full p-1 flex items-center justify-between gap-1 mb-2">
         <button 
           onClick={() => { setStep('request'); setCurrentSubScreen('email-verify-request'); }}
@@ -84,7 +142,7 @@ export const EmailVerifyScreen: React.FC = () => {
           5. 실패
         </button>
       </div>
-
+        */}
       {/* Top Back Header (Only Back Button for Request, Back button or title for others) */}
       <div className="flex items-center justify-between pb-3 border-b border-[#1F334D]">
         <button 
@@ -226,7 +284,7 @@ export const EmailVerifyScreen: React.FC = () => {
             {/* Headline & Subtitle */}
             <div className="space-y-2">
               <h1 className="text-xl font-extrabold text-white tracking-tight">
-                인증이 완료되었습니다
+                회원가입이 완료되었습니다
               </h1>
               <p className="text-xs text-slate-300 leading-relaxed max-w-[260px] mx-auto">
                 이제 더블링의 모든 기능을 이용하실 수 있습니다
@@ -236,9 +294,10 @@ export const EmailVerifyScreen: React.FC = () => {
             {/* Primary Button: 시작하기 */}
             <button
               onClick={handleStartApp}
+              disabled={isStarting}
               className="w-full py-3.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow-lg hover:brightness-110 active:scale-[0.98] transition pt-3"
-            >
-              시작하기
+              >
+              {isStarting ? '로그인 중...' : '시작하기'}
             </button>
           </div>
         )}

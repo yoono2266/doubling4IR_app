@@ -7,7 +7,7 @@ export const WritePostModal: React.FC = () => {
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('호텔/여행 후기');
 
-  const categories = ['호텔/여행 후기', '예측 챌린지', '잭팟/팁', '자유게시판'];
+  const categories = ['호텔/여행 후기', '폴리마켓', '잭팟/팁', '자유게시판'];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

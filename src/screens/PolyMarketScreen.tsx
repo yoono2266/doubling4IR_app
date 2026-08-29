@@ -1,16 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { PolyMarketItem } from '../data/polyMarketData';
-import { AttendanceStreakWidget } from '../components/AttendanceStreakWidget';
-
-const DP_PRESETS = [100, 500, 1000, 5000];
-
-const calcExpectedPayout = (amount: number, oddsStr: string): number => {
-  const percent = parseFloat(oddsStr.replace(/[^0-9.]/g, '')) || 50;
-  const decimal = percent / 100;
-  if (decimal <= 0) return amount;
-  return Math.round(amount / decimal);
-};
 
 export const PolyMarketScreen: React.FC = () => {
   const {
@@ -19,7 +9,8 @@ export const PolyMarketScreen: React.FC = () => {
     getUserVoteForMarket,
     setSelectedMarket,
     setCurrentSubScreen,
-    user
+    user,
+    requireLogin
   } = useApp();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
@@ -31,24 +22,17 @@ export const PolyMarketScreen: React.FC = () => {
     odds: string;
     isRevote: boolean;
     prevChoice?: string;
-    prevAmount?: number;
   } | null>(null);
-
-  const [selectedAmount, setSelectedAmount] = useState<number>(100);
 
   const [resultModalData, setResultModalData] = useState<{
     marketTitle: string;
     choice: string;
     odds: string;
-    amount: number;
-    expectedPayout: number;
     isRevote: boolean;
     prevChoice?: string;
-    participationRewardDp?: number;
   } | null>(null);
 
-  // Policy-compliant 4 categories + ALL
-  const categories = ['ALL', '사회', '연예', '정치', '인물'];
+  const categories = ['ALL', 'Sports', 'Crypto', 'Macro', 'Tech'];
 
   const filteredMarkets = selectedCategory === 'ALL'
     ? polyMarkets
@@ -56,39 +40,30 @@ export const PolyMarketScreen: React.FC = () => {
 
   const handleOpenVoteModal = (m: PolyMarketItem, choice: string, odds: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (!requireLogin()) return;
     const existingVote = getUserVoteForMarket(m.id);
-    const isRevote = !!existingVote;
-    const initialAmount = existingVote?.amountDp || 100;
-
-    // If initialAmount exceeds wallet, fall back to 100 or lowest available
-    setSelectedAmount(initialAmount);
-
+    const isRevote = !!existingVote && existingVote.choice !== choice;
     setConfirmModalData({
       market: m,
       choice,
       odds,
       isRevote,
-      prevChoice: existingVote?.choice,
-      prevAmount: existingVote?.amountDp
+      prevChoice: existingVote?.choice
     });
   };
 
   const handleConfirmVote = () => {
     if (!confirmModalData) return;
-    const { market, choice, odds, prevChoice } = confirmModalData;
-    const res = castPolyVote(market.id, market.title, market.category, choice, odds, selectedAmount);
+    const { market, choice, odds } = confirmModalData;
+    const res = castPolyVote(market.id, market.title, market.category, choice, odds);
 
     if (res.success) {
-      const payout = calcExpectedPayout(selectedAmount, odds);
       setResultModalData({
         marketTitle: market.title,
         choice,
         odds,
-        amount: selectedAmount,
-        expectedPayout: payout,
         isRevote: res.isRevote,
-        prevChoice: prevChoice || res.prevChoice,
-        participationRewardDp: res.participationRewardDp
+        prevChoice: res.prevChoice
       });
     }
     setConfirmModalData(null);
@@ -106,27 +81,19 @@ export const PolyMarketScreen: React.FC = () => {
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-[#C5A059]">query_stats</span>
-            예측 챌린지
+            폴리 마켓 (Poly Market)
           </h2>
-          <p className="text-xs text-slate-400">웹3 기반 사회·연예·정치·인물 실시간 오즈 & 100~5,000 DP 투표</p>
+          <p className="text-xs text-slate-400">웹3 기반 예측 마켓 실시간 오즈 & 100 DP 투표</p>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Leaderboard Screen Button */}
-          <button
-            onClick={() => setCurrentSubScreen('poly-leaderboard')}
-            className="flex items-center gap-1.5 bg-[#162639] border border-[#C5A059]/40 hover:border-[#C5A059] px-2.5 py-1.5 rounded-xl shadow-sm transition text-[#E2C28E] hover:text-white group active:scale-95"
-            title="이번 시즌 리더보드 보기"
-          >
-            <span className="material-symbols-outlined text-base text-[#E2C28E] group-hover:scale-110 transition-transform">leaderboard</span>
-            <span className="text-xs font-bold">리더보드</span>
-          </button>
+        <div className="text-right">
+          <span className="text-[10px] text-slate-400 font-semibold block">보유 DP</span>
+          <span className="text-xs font-bold text-[#E2C28E] font-mono">
+            {user.walletDp.toLocaleString()} DP
+          </span>
         </div>
       </div>
 
-      {/* Attendance Streak Widget */}
-      <AttendanceStreakWidget />
-
-      {/* Category Tabs: 전체 마켓 / 사회 / 연예 / 정치 / 인물 */}
+      {/* Category Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
         {categories.map((cat) => (
           <button
@@ -143,27 +110,131 @@ export const PolyMarketScreen: React.FC = () => {
         ))}
       </div>
 
-      {/* Market Cards List - Unified Single Yes/No Format */}
+      {/* Market Cards List */}
       <div className="space-y-3">
         {filteredMarkets.map((m) => {
           const userVote = getUserVoteForMarket(m.id);
 
+          // Type A: Sports Market Card with Multi-Candidates
+          if (m.type === 'sports' && m.candidates) {
+            return (
+              <div
+                key={m.id}
+                className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3 shadow-md hover:border-[#C5A059]/50 transition cursor-pointer"
+                onClick={() => handleNavigateDetail(m)}
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-[#C5A059] bg-[#C5A059]/15 px-2 py-0.5 rounded border border-[#C5A059]/30">
+                      {m.category}
+                    </span>
+                    {m.leagueName && (
+                      <span className="text-[10px] text-slate-300 font-semibold flex items-center gap-1 bg-[#0D1B2A] px-2 py-0.5 rounded border border-[#1F334D]">
+                        <span className="material-symbols-outlined text-xs text-[#C5A059]">
+                          {m.leagueIcon || 'sports_soccer'}
+                        </span>
+                        {m.leagueName}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-mono bg-[#0D1B2A] px-2 py-1 rounded border border-[#1F334D] whitespace-nowrap">
+                    볼륨: {m.totalVolumeDp}
+                  </span>
+                </div>
+
+                {/* Title */}
+                <div>
+                  <h3 className="text-sm font-bold text-white hover:text-[#E2C28E] transition leading-snug flex items-center justify-between">
+                    <span>{m.title}</span>
+                    <span className="material-symbols-outlined text-xs text-slate-400">chevron_right</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 line-clamp-1">{m.description}</p>
+                </div>
+
+                {/* Multi-Candidate List with 2-row Candidate Layout & YES / NO Buttons */}
+                <div className="space-y-2 pt-1">
+                  {m.candidates.map((cand) => {
+                    const noPercent = 100 - cand.percent;
+                    const noOdds = `${noPercent}%`;
+                    const isYesVoted = userVote?.choice === `${cand.name} (YES)` || userVote?.choice === cand.name;
+                    const isNoVoted = userVote?.choice === `${cand.name} (NO)`;
+
+                    return (
+                      <div
+                        key={cand.id}
+                        className={`p-2.5 rounded-xl border transition flex flex-col gap-2 text-xs ${
+                          isYesVoted || isNoVoted
+                            ? 'bg-[#0D1B2A] border-[#C5A059] ring-1 ring-[#C5A059]/60'
+                            : 'bg-[#0D1B2A]/80 border-[#1F334D] hover:border-[#C5A059]/30'
+                        }`}
+                      >
+                        {/* Top Row: Full Candidate Name + Probability/Odds Badge */}
+                        <div className="flex items-center justify-between gap-2 min-w-0">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <span
+                              className={`w-2 h-2 rounded-full shrink-0 ${
+                                isYesVoted ? 'bg-emerald-400' : isNoVoted ? 'bg-rose-400' : 'bg-slate-600'
+                              }`}
+                            />
+                            <span className="text-slate-100 font-bold text-xs truncate">
+                              {cand.name}
+                            </span>
+                          </div>
+                          <span className="font-mono font-extrabold text-[#E2C28E] bg-[#162639] px-2 py-0.5 rounded border border-[#1F334D] text-[11px] shrink-0">
+                            {cand.odds}
+                          </span>
+                        </div>
+
+                        {/* Bottom Row: YES / NO Action Buttons (Clean & spacious) */}
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <button
+                            onClick={(e) => handleOpenVoteModal(m, `${cand.name} (YES)`, cand.odds, e)}
+                            className={`py-1.5 px-2 rounded-lg border text-xs font-bold transition flex items-center justify-center gap-1 active:scale-95 whitespace-nowrap ${
+                              isYesVoted
+                                ? 'bg-emerald-500 text-[#0D1B2A] border-emerald-400 font-black shadow-sm'
+                                : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30'
+                            }`}
+                          >
+                            <span>YES {cand.odds}</span>
+                          </button>
+                          <button
+                            onClick={(e) => handleOpenVoteModal(m, `${cand.name} (NO)`, noOdds, e)}
+                            className={`py-1.5 px-2 rounded-lg border text-xs font-bold transition flex items-center justify-center gap-1 active:scale-95 whitespace-nowrap ${
+                              isNoVoted
+                                ? 'bg-rose-500 text-white border-rose-400 font-black shadow-sm'
+                                : 'bg-rose-500/15 border-rose-500/40 text-rose-300 hover:bg-rose-500/30'
+                            }`}
+                          >
+                            <span>NO {noOdds}</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          }
+
+          // Type B: General / Social / Binary Sports Market Card
           return (
             <div
               key={m.id}
               className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3 shadow-md hover:border-[#C5A059]/50 transition cursor-pointer"
               onClick={() => handleNavigateDetail(m)}
             >
-              {/* Category & Total Volume */}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-[#C5A059] bg-[#C5A059]/15 px-2.5 py-0.5 rounded border border-[#C5A059]/30">
+                  <span className="text-[10px] font-bold text-[#C5A059] bg-[#C5A059]/15 px-2 py-0.5 rounded border border-[#C5A059]/30">
                     {m.category}
                   </span>
-                  {userVote && (
-                    <span className="text-[10px] font-extrabold text-[#E2C28E] bg-[#C5A059]/10 px-2 py-0.5 rounded border border-[#C5A059]/30 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-xs">how_to_vote</span>
-                      내 투표: {userVote.choice} ({userVote.amountDp.toLocaleString()} DP)
+                  {m.leagueName && (
+                    <span className="text-[10px] text-slate-300 font-semibold flex items-center gap-1 bg-[#0D1B2A] px-2 py-0.5 rounded border border-[#1F334D]">
+                      <span className="material-symbols-outlined text-xs text-[#C5A059]">
+                        {m.leagueIcon || 'query_stats'}
+                      </span>
+                      {m.leagueName}
                     </span>
                   )}
                 </div>
@@ -172,40 +243,33 @@ export const PolyMarketScreen: React.FC = () => {
                 </span>
               </div>
 
-              {/* Title & Description */}
               <div>
                 <h3 className="text-sm font-bold text-white hover:text-[#E2C28E] transition leading-snug flex items-center justify-between">
                   <span>{m.title}</span>
                   <span className="material-symbols-outlined text-xs text-slate-400">chevron_right</span>
                 </h3>
-                <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">{m.description}</p>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-2">{m.description}</p>
               </div>
 
-              {/* Voting Probability Bar */}
+              {/* Voting Visual Bar */}
               <div>
                 <div className="flex justify-between text-xs font-bold font-mono mb-1">
                   <span className="text-emerald-400">YES {m.yesOdds}</span>
                   <span className="text-rose-400">NO {m.noOdds}</span>
                 </div>
                 <div className="w-full bg-[#0D1B2A] h-2.5 rounded-full overflow-hidden flex border border-[#1F334D]">
-                  <div
-                    className="bg-emerald-500 h-full transition-all duration-300"
-                    style={{ width: `${m.yesValue}%` }}
-                  />
-                  <div
-                    className="bg-rose-500 h-full transition-all duration-300"
-                    style={{ width: `${m.noValue}%` }}
-                  />
+                  <div className="bg-emerald-500 h-full transition-all" style={{ width: `${m.yesValue || 50}%` }} />
+                  <div className="bg-rose-500 h-full transition-all" style={{ width: `${m.noValue || 50}%` }} />
                 </div>
               </div>
 
-              {/* Clean YES / NO Voting Buttons (percentage only) */}
+              {/* Working Yes / No Voting Buttons without (100DP) */}
               <div className="grid grid-cols-2 gap-2.5 pt-1">
                 <button
-                  onClick={(e) => handleOpenVoteModal(m, 'YES', m.yesOdds, e)}
+                  onClick={(e) => handleOpenVoteModal(m, 'YES', m.yesOdds || '50%', e)}
                   className={`py-2.5 px-3 rounded-xl border text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] ${
                     userVote?.choice === 'YES'
-                      ? 'bg-emerald-500 text-[#0D1B2A] border-emerald-400 font-black shadow-emerald-900/30'
+                      ? 'bg-emerald-500 text-[#0D1B2A] border-emerald-400 font-black'
                       : 'bg-emerald-500/15 border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/30'
                   }`}
                 >
@@ -214,10 +278,10 @@ export const PolyMarketScreen: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={(e) => handleOpenVoteModal(m, 'NO', m.noOdds, e)}
+                  onClick={(e) => handleOpenVoteModal(m, 'NO', m.noOdds || '50%', e)}
                   className={`py-2.5 px-3 rounded-xl border text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] ${
                     userVote?.choice === 'NO'
-                      ? 'bg-rose-500 text-white border-rose-400 font-black shadow-rose-900/30'
+                      ? 'bg-rose-500 text-white border-rose-400 font-black'
                       : 'bg-rose-500/15 border-rose-500/50 text-rose-300 hover:bg-rose-500/30'
                   }`}
                 >
@@ -230,129 +294,83 @@ export const PolyMarketScreen: React.FC = () => {
         })}
       </div>
 
-      {/* DP Use & Confirmation Modal (with 4 Presets) */}
-      {confirmModalData && (() => {
-        const isRevote = confirmModalData.isRevote;
-        const prevAmount = confirmModalData.prevAmount || 100;
-        const maxAvailableDp = isRevote ? user.walletDp + prevAmount : user.walletDp;
-        const projectedBalance = isRevote
-          ? user.walletDp + prevAmount - selectedAmount
-          : user.walletDp - selectedAmount;
-        const expectedPayout = calcExpectedPayout(selectedAmount, confirmModalData.odds);
+      {/* Vote Confirmation Modal */}
+      {confirmModalData && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#162639] border border-[#C5A059] rounded-2xl p-5 w-full max-w-sm flex flex-col gap-4 shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-[#1F334D] pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[#C5A059]">how_to_vote</span>
+                {confirmModalData.isRevote ? '투표 변경 확인' : '폴리마켓 투표 확인'}
+              </h3>
+              <button
+                onClick={() => setConfirmModalData(null)}
+                className="text-slate-400 hover:text-white text-base"
+              >
+                ✕
+              </button>
+            </div>
 
-        return (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-[#162639] border border-[#C5A059] rounded-2xl p-5 w-full max-w-sm flex flex-col gap-4 shadow-2xl animate-in fade-in zoom-in-95">
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-[#1F334D] pb-3">
-                <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[#C5A059]">how_to_vote</span>
-                  {isRevote ? '투표 포지션 변경' : '예측 챌린지 DP 사용 확인'}
-                </h3>
-                <button
-                  onClick={() => setConfirmModalData(null)}
-                  className="text-slate-400 hover:text-white text-base"
-                >
-                  ✕
-                </button>
-              </div>
+            <div className="space-y-2 text-xs">
+              <span className="text-[10px] font-bold text-[#C5A059] uppercase">{confirmModalData.market.category}</span>
+              <p className="text-white font-bold">{confirmModalData.market.title}</p>
 
-              {/* Market Info & Selection */}
-              <div className="space-y-3 text-xs">
-                <div>
-                  <span className="text-[10px] font-bold text-[#C5A059] uppercase">{confirmModalData.market.category}</span>
-                  <p className="text-white font-bold text-xs mt-0.5 line-clamp-2">{confirmModalData.market.title}</p>
-                </div>
-
-                {/* Selected Choice Badge */}
-                <div className="flex items-center justify-between bg-[#0D1B2A] p-2.5 rounded-xl border border-[#1F334D]">
-                  <span className="text-slate-400">선택 항목:</span>
-                  <span className={`font-black text-sm ${
-                    confirmModalData.choice === 'YES' ? 'text-emerald-400' : 'text-rose-400'
-                  }`}>
-                    {confirmModalData.choice} ({confirmModalData.odds})
-                  </span>
-                </div>
-
-                {/* Preset Options (100 / 500 / 1,000 / 5,000 DP) */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center text-[11px]">
-                    <span className="text-slate-300 font-bold">매수 DP 선택:</span>
-                    <span className="text-slate-400">보유: {user.walletDp.toLocaleString()} DP</span>
+              {confirmModalData.isRevote ? (
+                <div className="bg-[#0D1B2A] p-3 rounded-xl border border-[#C5A059]/40 space-y-1.5">
+                  <p className="text-[11px] text-amber-300 font-medium">
+                    ⚠️ 기존 투표 선택지를 변경합니다:
+                  </p>
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-slate-400">기존 선택:</span>
+                    <span className="text-rose-400 line-through">{confirmModalData.prevChoice}</span>
                   </div>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {DP_PRESETS.map((preset) => {
-                      const isDisabled = preset > maxAvailableDp;
-                      const isSelected = selectedAmount === preset;
-
-                      return (
-                        <button
-                          key={preset}
-                          type="button"
-                          disabled={isDisabled}
-                          onClick={() => setSelectedAmount(preset)}
-                          className={`py-2 px-1 rounded-xl text-xs font-bold transition border flex flex-col items-center justify-center ${
-                            isSelected
-                              ? 'bg-[#C5A059] text-[#0D1B2A] border-[#C5A059] font-black shadow-md'
-                              : isDisabled
-                              ? 'bg-[#0D1B2A]/40 text-slate-600 border-[#1F334D]/40 cursor-not-allowed'
-                              : 'bg-[#0D1B2A] text-slate-300 border-[#1F334D] hover:border-[#C5A059]/60'
-                          }`}
-                        >
-                          <span>{preset >= 1000 ? `${preset / 1000}K` : preset}</span>
-                          <span className="text-[9px] opacity-80">DP</span>
-                        </button>
-                      );
-                    })}
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-white">신규 변경:</span>
+                    <span className="text-emerald-400 text-sm">{confirmModalData.choice} ({confirmModalData.odds})</span>
                   </div>
+                  <p className="text-[10px] text-slate-400 pt-1 border-t border-[#1F334D]">
+                    * 재투표는 보유 중인 100 DP 투표 포지션 내에서 변경 적용됩니다.
+                  </p>
                 </div>
-
-                {/* Live Cost & Expected Return Summary */}
+              ) : (
                 <div className="bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D] space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-400">사용 포인트:</span>
-                    <span className="font-mono font-extrabold text-[#E2C28E] text-sm">
-                      {selectedAmount.toLocaleString()} DP
+                    <span className="text-slate-400">투표 선택:</span>
+                    <span className="font-extrabold text-[#E2C28E] text-sm">
+                      {confirmModalData.choice} ({confirmModalData.odds})
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-400">잔여 예상 포인트:</span>
-                    <span className={`font-mono font-bold ${projectedBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {projectedBalance.toLocaleString()} DP
+                    <span className="text-slate-400">차감 DP:</span>
+                    <span className="font-mono font-extrabold text-[#FFF0D0]">100 DP (고정)</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-1 border-t border-[#1F334D]">
+                    <span className="text-slate-400">투표 후 예상 잔액:</span>
+                    <span className="font-mono font-bold text-emerald-400">
+                      {(user.walletDp - 100).toLocaleString()} DP
                     </span>
                   </div>
-
-                  {/* Expected Payout based on Odds */}
-                  <div className="pt-2 border-t border-[#1F334D]/80">
-                    <div className="bg-[#162639] p-2 rounded-lg border border-[#C5A059]/30 text-center">
-                      <span className="text-[11px] text-slate-300 block">
-                        선택한 금액: <strong className="text-white">{selectedAmount.toLocaleString()} DP</strong> · 적중 시 예상 획득: <strong className="text-[#E2C28E]">약 {expectedPayout.toLocaleString()} DP</strong>
-                      </span>
-                    </div>
-                  </div>
                 </div>
-              </div>
+              )}
+            </div>
 
-              {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <button
-                  onClick={() => setConfirmModalData(null)}
-                  className="py-2.5 rounded-xl bg-[#0D1B2A] border border-[#1F334D] text-slate-300 font-bold text-xs hover:bg-[#162639]"
-                >
-                  취소
-                </button>
-                <button
-                  disabled={selectedAmount > maxAvailableDp}
-                  onClick={handleConfirmVote}
-                  className="py-2.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-black text-xs shadow-lg hover:brightness-110 active:scale-98 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  포인트 사용 확정
-                </button>
-              </div>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                onClick={() => setConfirmModalData(null)}
+                className="py-2.5 rounded-xl bg-[#0D1B2A] border border-[#1F334D] text-slate-300 font-bold text-xs hover:bg-[#162639]"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleConfirmVote}
+                className="py-2.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-black text-xs shadow-lg hover:brightness-110 active:scale-98 transition"
+              >
+                {confirmModalData.isRevote ? '변경 확정' : '100 DP 지불 투표'}
+              </button>
             </div>
           </div>
-        );
-      })()}
+        </div>
+      )}
 
       {/* Result Screen Modal */}
       {resultModalData && (
@@ -364,57 +382,33 @@ export const PolyMarketScreen: React.FC = () => {
 
             <div>
               <h3 className="text-base font-black text-white">
-                {resultModalData.isRevote ? '투표 변경 완료!' : '예측 챌린지 투표 참여 완료!'}
+                {resultModalData.isRevote ? '투표 변경 완료!' : '폴리마켓 투표 참여 완료!'}
               </h3>
               <p className="text-xs text-slate-300 mt-1">
                 {resultModalData.isRevote
-                  ? `[${resultModalData.choice}] (${resultModalData.amount.toLocaleString()} DP)로 성공적으로 변경되었습니다.`
-                  : `${resultModalData.amount.toLocaleString()} DP가 차감되어 정상적으로 등록되었습니다.`}
+                  ? `[${resultModalData.choice}]로 성공적으로 변경되었습니다.`
+                  : '100 DP가 차감되어 정상적으로 예측 마켓에 등록되었습니다.'}
               </p>
             </div>
 
-            <div className="w-full bg-[#0D1B2A] p-3.5 rounded-2xl border border-[#1F334D] text-left text-xs space-y-2">
-              {/* Instant Participation Reward Banner */}
-              {resultModalData.participationRewardDp && (
-                <div className="bg-gradient-to-r from-[#C5A059]/20 via-[#E2C28E]/15 to-[#C5A059]/20 border border-[#E2C28E]/60 rounded-xl p-2.5 flex items-center justify-between shadow-sm animate-in fade-in">
-                  <div className="flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[#E2C28E] text-base animate-pulse">
-                      card_giftcard
-                    </span>
-                    <div>
-                      <span className="font-bold text-white text-[11px] block">참여 즉시 보상 지급</span>
-                      <span className="text-[9px] text-slate-300">정산 전 무조건 즉시 적립</span>
-                    </div>
-                  </div>
-                  <span className="text-xs font-black text-[#E2C28E] font-mono bg-[#0D1B2A] px-2 py-0.5 rounded-lg border border-[#E2C28E]/40 shadow-inner">
-                    +{resultModalData.participationRewardDp} DP
-                  </span>
-                </div>
-              )}
-
-              <div className="space-y-1.5 pt-0.5">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">마켓:</span>
-                  <span className="font-bold text-white truncate max-w-[180px]">{resultModalData.marketTitle}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">선택한 결과:</span>
-                  <span className="font-extrabold text-[#E2C28E]">{resultModalData.choice} ({resultModalData.odds})</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">투표 금액:</span>
-                  <span className="font-mono font-bold text-white">{resultModalData.amount.toLocaleString()} DP</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">적중 시 예상 획득:</span>
-                  <span className="font-mono font-bold text-[#E2C28E]">약 {resultModalData.expectedPayout.toLocaleString()} DP</span>
-                </div>
-                <div className="flex justify-between pt-1.5 border-t border-[#1F334D]">
-                  <span className="text-slate-400">현재 보유 잔액:</span>
-                  <span className="font-mono font-extrabold text-emerald-400">
-                    {user.walletDp.toLocaleString()} DP
-                  </span>
-                </div>
+            <div className="w-full bg-[#0D1B2A] p-3.5 rounded-2xl border border-[#1F334D] text-left text-xs space-y-1.5">
+              <div className="flex justify-between">
+                <span className="text-slate-400">마켓:</span>
+                <span className="font-bold text-white truncate max-w-[180px]">{resultModalData.marketTitle}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">선택한 결과:</span>
+                <span className="font-extrabold text-[#E2C28E]">{resultModalData.choice}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">투표 금액:</span>
+                <span className="font-mono font-bold text-white">100 DP</span>
+              </div>
+              <div className="flex justify-between pt-1 border-t border-[#1F334D]">
+                <span className="text-slate-400">현재 보유 잔액:</span>
+                <span className="font-mono font-extrabold text-emerald-400">
+                  {user.walletDp.toLocaleString()} DP
+                </span>
               </div>
             </div>
 

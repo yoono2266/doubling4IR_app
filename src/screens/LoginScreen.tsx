@@ -1,22 +1,277 @@
 import React, { useState } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { GoogleSignIn } from '@capawesome/capacitor-google-sign-in';
 import { useApp } from '../context/AppContext';
 import { LOGO_BASE64 } from '../assets/logoBase64';
+import { apiCommonClient, ApiError, ResultCode, CommonResponse } from '../utils/apiClient';
+
+// /members/ulogin API 요청/응답 타입 정의
+interface LoginParam {
+  userid: string;
+  upass: string;
+}
+
+interface LoginResponse {
+  result: ResultCode;
+  message?: string;
+  sessionid?: string;
+  data?: any;
+}
+
+interface UAuthResponse {
+  result: ResultCode | number;
+  message?: string;
+  sessionid?: string;
+  data?: {
+    loginfo?: {
+      $session?: string;
+    };
+    userinfo?: any;
+  };
+}
+
+interface GoogleUserInfo {
+  sub: string;
+  email: string;
+  email_verified?: boolean;
+  picture?: string;
+}
+
+let googleScriptPromise: Promise<void> | null = null;
+
+const loadGoogleIdentityScript = (): Promise<void> => {
+  if (window.google?.accounts?.oauth2) return Promise.resolve();
+  if (googleScriptPromise) return googleScriptPromise;
+
+  googleScriptPromise = new Promise((resolve, reject) => {
+    const existingScript = document.querySelector<HTMLScriptElement>('script[data-google-identity]');
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve());
+      existingScript.addEventListener('error', () => reject(new Error('Google 로그인 SDK를 불러오지 못했습니다.')));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.dataset.googleIdentity = 'true';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Google 로그인 SDK를 불러오지 못했습니다.'));
+    document.head.appendChild(script);
+  });
+
+  return googleScriptPromise;
+};
+
+const decodeGoogleUserInfo = async (accessToken: string): Promise<GoogleUserInfo> => {
+  const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) throw new Error('Google 사용자 정보를 확인하지 못했습니다.');
+  return response.json() as Promise<GoogleUserInfo>;
+};
 
 export const LoginScreen: React.FC = () => {
-  const { setIsLoggedIn, setCurrentTab, setCurrentSubScreen, showToast } = useApp();
-  const [email, setEmail] = useState('kevin@antigravity.vc');
-  const [password, setPassword] = useState('password123');
+  const { setIsLoggedIn, setCurrentTab, setCurrentSubScreen, setSocialSignupInfo, showToast } = useApp();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  // 로그인 제출 핸들러 (API 호출 연동)
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoggedIn(true);
-    setCurrentTab('home');
-    setCurrentSubScreen(null);
-    showToast('Kevin 님으로 정상 로그인되었습니다.');
+
+    if (!email.trim() || !password.trim()) {
+      alert('이메일과 비밀번호를 입력해 주세요.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // /members/ulogin API 호출 (a, b, c 공용 규격 자동 적용)
+      const response = await apiCommonClient.post<LoginResponse, LoginParam>(
+        '/members/ulogin',
+        {
+          userid: email.trim(),
+          upass: password,
+        }
+      );
+
+      console.log('/members/ulogin 응답 결과:', response);
+
+      // 💡 ResultCode 상수를 활용한 분기 처리
+    switch (response.result) {
+      case ResultCode.SUCCESS: // 0: 성공
+        //console.log('sessionid', response.data?.loginfo?.['$session']);
+        if (response.data?.loginfo?.['$session']) {
+          localStorage.setItem('sessionid', response.data?.loginfo?.['$session']);
+          localStorage.setItem('user_info', JSON.stringify(response.data?.userinfo));
+          console.log('response.getItem?.userInfo 응답 결과:', response.data);
+
+          setIsLoggedIn(true);
+          setCurrentTab('home');
+          setCurrentSubScreen(null);
+          showToast(response.message || '로그인되었습니다.');
+          break;
+        }else{
+          alert('로그인에 실패했습니다.');
+          break;
+        }
+        
+
+      case ResultCode.INVALID_PASSWORD: // 12: 비밀번호 불일치
+        alert('비밀번호가 올바르지 않습니다.');
+        break;
+
+      case ResultCode.USER_NOT_FOUND: // 10: 존재하지 않는 계정
+      case ResultCode.INVALID_ID:     // 11: 유효하지 않은 ID
+        alert('존재하지 않거나 유효하지 않은 이메일 계정입니다.');
+        break;
+
+      case ResultCode.SESSION_NOT_EXISTS: // 2: 세션 정보 없음/만료
+        alert('세션이 만료되었습니다. 다시 시도해 주세요.');
+        break;
+
+      default:
+        // 서버에서 전달된 message 출력
+        alert(response.message || `로그인 실패 (에러 코드: ${response.result})`);
+        break;
+      }
+    } catch (error) {
+      if (error instanceof ApiError) {
+        // 서버 HTTP 에러 (400, 401, 500 등) 메시지 알럿
+        alert(error.message || `로그인 실패 (상태 코드: ${error.status})`);
+      } else {
+        alert('로그인 통신 중 오류가 발생했습니다.');
+      }
+      console.error('로그인 API 오류:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      showToast('Google Client ID가 설정되지 않았습니다.');
+      return;
+    }
+
+    setIsLoading(true);
+    let googleAuthenticated = false;
+    let platformUid = '';
+    let platformGid = '';
+    let profileImage = '';
+    let googleProfile: Record<string, unknown> = {};
+    try {
+      if (Capacitor.isNativePlatform()) {
+        await GoogleSignIn.initialize({ clientId });
+        const nativeUser = await GoogleSignIn.signIn();
+        if (!nativeUser.email) throw new Error('Google 계정 이메일을 확인하지 못했습니다.');
+        platformUid = nativeUser.email;
+        platformGid = nativeUser.userId;
+        profileImage = nativeUser.imageUrl ?? '';
+        googleProfile = {
+          userId: nativeUser.userId,
+          email: nativeUser.email,
+          displayName: nativeUser.displayName,
+          givenName: nativeUser.givenName,
+          familyName: nativeUser.familyName,
+          imageUrl: nativeUser.imageUrl,
+        };
+      } else {
+        await loadGoogleIdentityScript();
+        const google = window.google;
+        const oauth2 = google?.accounts?.oauth2;
+        if (!oauth2) throw new Error('Google 로그인 기능을 사용할 수 없습니다.');
+
+        const userInfo = await new Promise<GoogleUserInfo>((resolve, reject) => {
+          const tokenClient = oauth2.initTokenClient({
+            client_id: clientId,
+            scope: 'openid email profile',
+            callback: async (tokenResponse) => {
+              if (tokenResponse.error || !tokenResponse.access_token) {
+                reject(new Error('Google 로그인이 취소되었거나 실패했습니다.'));
+                return;
+              }
+
+              try {
+                resolve(await decodeGoogleUserInfo(tokenResponse.access_token));
+              } catch (error) {
+                reject(error);
+              }
+            },
+          });
+          tokenClient.requestAccessToken();
+        });
+        platformUid = userInfo.email;
+        platformGid = userInfo.sub;
+        profileImage = userInfo.picture ?? '';
+        googleProfile = { ...userInfo };
+      }
+      googleAuthenticated = true;
+
+      const response = await apiCommonClient.post<UAuthResponse, {}>('/members/uAuth', {"userid":platformUid, "upass":"123456"}, {
+        platform: {
+          _platform_uid: platformUid,
+          _platform_gid: platformGid,
+          _platform_bid: 'google',
+        },
+      });
+
+      const sessionId = response.data?.loginfo?.$session || response.sessionid;
+      if (response.result === ResultCode.SUCCESS && sessionId) {
+        localStorage.setItem('sessionid', sessionId);
+        localStorage.setItem('user_info', JSON.stringify(response.data?.userinfo ?? {
+          email: platformUid,
+          sub: platformGid,
+        }));
+        setIsLoggedIn(true);
+        setCurrentTab('home');
+        setCurrentSubScreen(null);
+        showToast(response.message || 'Google 계정으로 로그인되었습니다.');
+      } else {
+        console.log('회원가입 진입 - Google 인증 데이터:', {
+          platformUid,
+          platformGid,
+          platformBid: 'google',
+          profileImage,
+          googleProfile,
+        });
+        setSocialSignupInfo({ platformUid, platformGid, platformBid: 'google', profileImage, googleProfile });
+        setCurrentSubScreen('signup');
+        showToast('회원가입을 완료해 주세요.');
+      }
+    } catch (error) {
+      console.error('Google 로그인 오류:', error);
+      if (googleAuthenticated) {
+        console.log('회원가입 진입 - Google 인증 데이터:', {
+          platformUid,
+          platformGid,
+          platformBid: 'google',
+          profileImage,
+          googleProfile,
+        });
+        setSocialSignupInfo({ platformUid, platformGid, platformBid: 'google', profileImage, googleProfile });
+        setCurrentSubScreen('signup');
+        showToast('Google 인증은 완료되었습니다. 회원가입을 진행해 주세요.');
+      } else {
+        showToast(error instanceof Error ? error.message : 'Google 로그인에 실패했습니다.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSocialLogin = (provider: string) => {
+    if (provider === 'Google') {
+      void handleGoogleLogin();
+      return;
+    }
+
     setIsLoggedIn(true);
     setCurrentTab('home');
     setCurrentSubScreen(null);
@@ -34,7 +289,7 @@ export const LoginScreen: React.FC = () => {
           </div>
           <h1 className="text-2xl font-black text-white tracking-widest font-mono">DOUBLING</h1>
           <p className="text-[11px] text-[#C5A059] font-medium tracking-wide">
-            VIP CASINO & HOTEL FREEPLAY PLATFORM
+            VIP CASINO & HOTEL FREEROOM PLATFORM
           </p>
         </div>
 
@@ -51,6 +306,7 @@ export const LoginScreen: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email Address"
               className="w-full bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 font-medium focus:border-[#C5A059] focus:outline-none transition"
+              disabled={isLoading}
               required
             />
           </div>
@@ -67,6 +323,7 @@ export const LoginScreen: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 className="w-full bg-[#0D1B2A] border border-[#1F334D] rounded-xl pl-3.5 pr-10 py-2.5 text-xs text-white placeholder-slate-500 font-medium focus:border-[#C5A059] focus:outline-none transition"
+                disabled={isLoading}
                 required
               />
               <button
@@ -98,9 +355,10 @@ export const LoginScreen: React.FC = () => {
           {/* Primary Log In Button */}
           <button 
             type="submit"
-            className="w-full py-3 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow-lg hover:brightness-110 active:scale-[0.98] transition mt-1"
+            disabled={isLoading}
+            className="w-full py-3 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow-lg hover:brightness-110 active:scale-[0.98] transition mt-1 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Log In
+            {isLoading ? 'Loggin in...' : 'Log In'}
           </button>
         </form>
 
@@ -183,4 +441,3 @@ export const LoginScreen: React.FC = () => {
     </div>
   );
 };
-

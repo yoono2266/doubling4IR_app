@@ -1,15 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { apiCommonClient, ApiError, ResultCode, CommonResponse } from '../utils/apiClient';
+
+// /members/ulogin API 요청/응답 타입 정의
+interface MemberParam {
+  u_id: string;
+  u_pass?: string;
+  u_profile?: string;
+  u_name: string;
+  u_require_1: boolean;
+  u_require_2: boolean;
+  u_require_3: boolean;
+  u_select_1: boolean;
+}
+
+interface MemberResponse {
+  result: ResultCode;
+  message?: string;
+    data?: any;
+}
 
 export const SignUpScreen: React.FC = () => {
-  const { setCurrentSubScreen, showToast } = useApp();
+  const { setIsLoggedIn, setCurrentTab, setCurrentSubScreen, socialSignupInfo, setSocialSignupInfo, showToast } = useApp();
+  const isSocialSignup = socialSignupInfo !== null;
+
+  useEffect(() => {
+    if (socialSignupInfo?.platformBid === 'google') {
+      //console.log('회원가입 화면 진입 - Google 프로필 전체 데이터:', socialSignupInfo);
+    }
+  }, [socialSignupInfo]);
 
   // Form State
-  const [email, setEmail] = useState('kevin@antigravity.vc');
-  const [nickname, setNickname] = useState('Kevin');
-  const [birthdate, setBirthdate] = useState('1976-08-15');
-  const [gender, setGender] = useState<'male' | 'female' | 'none'>('male');
-  const [referralCode, setReferralCode] = useState('DOUBLING-777');
+  const [email, setEmail] = useState(socialSignupInfo?.platformUid ?? '');
+  const [nickname, setNickname] = useState('');
+  //const [birthdate, setBirthdate] = useState('');
+  //const [gender, setGender] = useState<'male' | 'female' | 'none'>('male');
+  const [referralCode, setReferralCode] = useState('');
 
   // Agreements State
   const [termsRequired1, setTermsRequired1] = useState(true);
@@ -18,6 +44,13 @@ export const SignUpScreen: React.FC = () => {
 
   const allChecked = termsRequired1 && termsRequired2 && termsMarketing;
   const requiredChecked = termsRequired1 && termsRequired2;
+
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleToggleAll = () => {
     if (allChecked) {
@@ -31,14 +64,96 @@ export const SignUpScreen: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!requiredChecked) {
       showToast('필수 이용약관에 동의하셔야 합니다.');
       return;
     }
-    showToast('회원가입 정보가 입력되었습니다. 인증 메일이 발송됩니다.');
-    setCurrentSubScreen('email-verify-request');
+
+    if (!isSocialSignup && password !== passwordConfirm) {
+      showToast('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+          // /members/ulogin API 호출 (a, b, c 공용 규격 자동 적용)
+          const response = await apiCommonClient.post<MemberResponse, MemberParam>(
+            '/members/ucreate',
+            {
+              u_id: email.trim(),
+              ...(!isSocialSignup ? { u_pass: password } : {u_pass: '123456'}),
+              ...(isSocialSignup && socialSignupInfo?.profileImage
+                ? { u_profile: socialSignupInfo.profileImage }
+                : {}),
+              u_name: nickname.trim(),
+              u_require_1: termsRequired1,
+              u_require_2: termsRequired2,
+              u_require_3: true, 
+              u_select_1: termsMarketing,
+            },
+            isSocialSignup && socialSignupInfo
+              ? {
+                  platform: {
+                    _platform_uid: socialSignupInfo.platformUid,
+                    _platform_gid: socialSignupInfo.platformGid,
+                    _platform_bid: socialSignupInfo.platformBid,
+                  },
+                }
+              : undefined
+          );
+    
+          //console.log('/members/ucreate 응답 결과:', response);
+    
+          // 💡 ResultCode 상수를 활용한 분기 처리
+        switch (response.result) {
+          case ResultCode.SUCCESS: // 0: 성공
+              setIsLoggedIn(false);
+              setCurrentTab('home');
+              setCurrentSubScreen('login');
+              showToast('회원가입 정보가 입력되었습니다. 인증 메일이 발송됩니다.');
+              setCurrentSubScreen('email-verify-request');
+              break;
+            
+    
+          case ResultCode.DUPLICATED_ID: // 12: 중복된 ID
+            alert('이미 사용 중인 이메일 주소입니다.');
+            break;
+    
+          case ResultCode.INVALID_PASSWORD: // 10: 존재하지 않는 계정
+            alert('유효하지 패스워드 입니다.');
+            break;
+          case ResultCode.INVALID_ID:     // 11: 유효하지 않은 ID
+            alert('유효하지 않은 이메일 입니다.');
+            break;
+          
+          case ResultCode.INVALID_NAME:     // 18: 유효하지 않은 닉네임
+            alert('유효하지 않은 닉네임 입니다.');
+            break;
+          
+          case ResultCode.DUPLICATED_NICKNAME:     // 17: 중복된 닉네임
+            alert('이미 사용 중인 닉네임입니다.');
+            break;
+    
+          default:
+            // 서버에서 전달된 message 출력
+            alert(response.message || `회원가입 실패 (에러 코드: ${response.result})`);
+            break;
+          }
+        } catch (error) {
+          if (error instanceof ApiError) {
+            // 서버 HTTP 에러 (400, 401, 500 등) 메시지 알럿
+            alert(error.message || `회원가입 실패 (상태 코드: ${error.status})`);
+          } else {
+            alert('회원가입 통신 중 오류가 발생했습니다.');
+          }
+          //console.error('회원가입 API 오류:', error);
+        } finally {
+          setIsLoading(false);
+        }
+
+    
   };
 
   return (
@@ -46,7 +161,10 @@ export const SignUpScreen: React.FC = () => {
       {/* Top Navigation Bar */}
       <div className="flex items-center justify-between pb-3 border-b border-[#1F334D]">
         <button 
-          onClick={() => setCurrentSubScreen('login')}
+          onClick={() => {
+            setSocialSignupInfo(null);
+            setCurrentSubScreen('login');
+          }}
           className="w-8 h-8 rounded-full bg-[#162639] border border-[#1F334D] flex items-center justify-center text-slate-300 hover:text-white transition"
         >
           <span className="material-symbols-outlined text-lg">chevron_left</span>
@@ -79,6 +197,8 @@ export const SignUpScreen: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="example@email.com"
+              readOnly={isSocialSignup}
+              disabled={isSocialSignup}
               className="w-full bg-[#162639] border border-[#1F334D] rounded-xl px-3.5 py-2.5 text-white placeholder-slate-500 font-medium focus:border-[#C5A059] focus:outline-none transition"
               required
             />
@@ -99,7 +219,7 @@ export const SignUpScreen: React.FC = () => {
             />
           </div>
 
-          {/* 3. 생년월일 */}
+          {/* 3. 생년월일 
           <div>
             <label className="text-[11px] font-semibold text-slate-300 block mb-1">
               생년월일
@@ -115,8 +235,8 @@ export const SignUpScreen: React.FC = () => {
               />
             </div>
           </div>
-
-          {/* 4. 성별 Segmented Control */}
+            */}
+          {/* 4. 성별 Segmented Control 
           <div>
             <label className="text-[11px] font-semibold text-slate-300 block mb-1">
               성별
@@ -156,8 +276,65 @@ export const SignUpScreen: React.FC = () => {
                 선택안함
               </button>
             </div>
+            
           </div>
-
+          */}
+          {!isSocialSignup && (
+            <>
+          {/* Password Input with Show/Hide Toggle */}
+          <div>
+            <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+              Password
+            </label>
+            <div className="relative">
+              <input 
+                type={showPassword ? 'text' : 'password'} 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                className="w-full bg-[#0D1B2A] border border-[#1F334D] rounded-xl pl-3.5 pr-10 py-2.5 text-xs text-white placeholder-slate-500 font-medium focus:border-[#C5A059] focus:outline-none transition"
+                disabled={isLoading}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition"
+              >
+                <span className="material-symbols-outlined text-lg">
+                  {showPassword ? 'visibility_off' : 'visibility'}
+                </span>
+              </button>
+            </div>
+          </div>
+          {/* Password Confirm Input with Show/Hide Toggle */}
+          <div>
+            <label className="text-[11px] font-semibold text-slate-300 block mb-1">
+              Password Confirm
+            </label>
+            <div className="relative">
+              <input 
+                type={showPasswordConfirm ? 'text' : 'password'} 
+                value={passwordConfirm}
+                onChange={(e) => setPasswordConfirm(e.target.value)}
+                placeholder="Password Confirm"
+                className="w-full bg-[#0D1B2A] border border-[#1F334D] rounded-xl pl-3.5 pr-10 py-2.5 text-xs text-white placeholder-slate-500 font-medium focus:border-[#C5A059] focus:outline-none transition"
+                disabled={isLoading}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition"
+              >
+                <span className="material-symbols-outlined text-lg">
+                  {showPasswordConfirm ? 'visibility_off' : 'visibility'}
+                </span>
+              </button>
+            </div>
+          </div>
+            </>
+          )}
           {/* 5. 추천인코드 (선택) */}
           <div>
             <div className="flex justify-between items-center mb-1">

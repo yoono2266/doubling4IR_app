@@ -1,0 +1,8 @@
+node_modules/
+/build
+/dist
+.DS_Store
+
+# Android signing keystores — never commit private signing keys
+*.jks
+*.keystore

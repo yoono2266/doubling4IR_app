@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
@@ -6,34 +8,100 @@ import { FreeRoomStickyBanner } from './components/FreeRoomStickyBanner';
 import { HomeScreen } from './screens/HomeScreen';
 import { JackpotMapScreen } from './screens/JackpotMapScreen';
 import { PolyMarketScreen } from './screens/PolyMarketScreen';
-import { PolyMarketDetailScreen } from './screens/PolyMarketDetailScreen';
-import { PolyLeaderboardScreen } from './screens/PolyLeaderboardScreen';
 import { FreeRoomScreen } from './screens/FreeRoomScreen';
 import { MyPageScreen } from './screens/MyPageScreen';
 import { FreeRoomBookingModal } from './screens/FreeRoomBookingModal';
-import { GamingRoomBookingModal } from './screens/GamingRoomBookingModal';
-import { DiningBookingModal } from './screens/DiningBookingModal';
 import { WritePostModal } from './screens/WritePostModal';
 import { PostDetailScreen } from './screens/PostDetailScreen';
-import { HotelJackpotDetailScreen } from './screens/HotelJackpotDetailScreen';
 import { LoginScreen } from './screens/LoginScreen';
 import { SignUpScreen } from './screens/SignUpScreen';
 import { EmailVerifyScreen } from './screens/EmailVerifyScreen';
-import { CurrentTripSummaryScreen } from './screens/CurrentTripSummaryScreen';
+import { LandingScreen } from './screens/LandingScreen';
 import { PwaInstallBanner } from './components/PwaInstallBanner';
-import { DailyLoginBonusModal } from './components/DailyLoginBonusModal';
+import { hasStoredSession } from './utils/auth';
 
 const AppContent: React.FC = () => {
   const {
     isLoggedIn,
+    setIsLoggedIn,
     currentTab,
     currentSubScreen,
-    hasActiveTrip,
     showWriteModal,
-    toastMessage
+    toastMessage,
+    setCurrentTab,
+    setCurrentSubScreen,
+    showToast
   } = useApp();
 
-  // Render current tab main screen
+  const [fcmToken, setFcmToken] = useState<string>('');
+  // 페이지 새로고침(웹) / 앱 재실행(Capacitor)마다 다시 초기화되는 화면 상태이므로
+  // 별도 영속 저장 없이 매 마운트 시 랜딩 화면부터 보여준다.
+  // 단, 로그인 세션(sessionid)이 이미 남아있는 사용자는 랜딩 화면을 건너뛴다.
+  const [showLanding, setShowLanding] = useState<boolean>(() => !hasStoredSession());
+
+  const handleLandingStart = () => {
+    setShowLanding(false);
+  };
+
+  useEffect(() => {
+    // 모바일 네이티브 푸시 알림 설정
+    if (Capacitor.isNativePlatform()) {
+      const initPushNotifications = async () => {
+        try {
+          let permStatus = await PushNotifications.checkPermissions();
+
+          if (permStatus.receive === 'prompt') {
+            permStatus = await PushNotifications.requestPermissions();
+          }
+
+          if (permStatus.receive === 'granted') {
+            await PushNotifications.register();
+          }
+        } catch (error) {
+          console.error('푸시 알림 초기화 실패:', error);
+        }
+      };
+
+      initPushNotifications();
+
+      const registrationListener = PushNotifications.addListener(
+        'registration',
+        (token) => {
+          console.log('발급된 FCM 토큰:', token.value);
+          setFcmToken(token.value);
+        }
+      );
+
+      const registrationErrorListener = PushNotifications.addListener(
+        'registrationError',
+        (error) => {
+          console.error('FCM 등록 에러:', error);
+        }
+      );
+
+      const notificationReceivedListener = PushNotifications.addListener(
+        'pushNotificationReceived',
+        (notification) => {
+          console.log('앱 열린 상태에서 푸시 수신:', notification);
+        }
+      );
+
+      const notificationActionListener = PushNotifications.addListener(
+        'pushNotificationActionPerformed',
+        (notificationAction) => {
+          console.log('알림 클릭하여 앱 오픈:', notificationAction);
+        }
+      );
+
+      return () => {
+        registrationListener.then((l) => l.remove());
+        registrationErrorListener.then((l) => l.remove());
+        notificationReceivedListener.then((l) => l.remove());
+        notificationActionListener.then((l) => l.remove());
+      };
+    }
+  }, []);
+
   const renderTabContent = () => {
     switch (currentTab) {
       case 'jackpot':
@@ -58,54 +126,42 @@ const AppContent: React.FC = () => {
         {/* PWA Install Banner */}
         <PwaInstallBanner />
 
-        {/* App Header */}
-        <Header />
-
-        {/* Main Body Viewport */}
-        <main className="flex-1 px-4 overflow-y-auto no-scrollbar relative">
-          {currentSubScreen === 'signup' ? (
-            <SignUpScreen />
-          ) : currentSubScreen === 'email-verify-request' ||
-            currentSubScreen === 'email-verify-receipt' ||
-            currentSubScreen === 'email-verify-success' ||
-            currentSubScreen === 'email-verify-fail' ? (
-            <EmailVerifyScreen />
-          ) : !isLoggedIn || currentSubScreen === 'login' ? (
-            <LoginScreen />
-          ) : currentSubScreen === 'post-detail' ? (
-            <PostDetailScreen />
-          ) : currentSubScreen === 'hotel-jackpot-detail' ? (
-            <HotelJackpotDetailScreen />
-          ) : currentSubScreen === 'poly-market-detail' ? (
-            <PolyMarketDetailScreen />
-          ) : currentSubScreen === 'poly-leaderboard' ? (
-            <PolyLeaderboardScreen />
-          ) : currentSubScreen === 'current-trip-summary' && hasActiveTrip ? (
-            <CurrentTripSummaryScreen />
-          ) : (
-            renderTabContent()
-          )}
-        </main>
-
-        {/* Subscreen Modals */}
-        {currentSubScreen === 'freeroom-booking' && <FreeRoomBookingModal />}
-        {currentSubScreen === 'gaming-room-booking' && <GamingRoomBookingModal />}
-        {currentSubScreen === 'dining-booking' && <DiningBookingModal />}
-        {showWriteModal && <WritePostModal />}
-        <DailyLoginBonusModal />
-
-        {/* Toast Notification */}
-        {toastMessage && (
-          <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-[#C5A059] text-[#0D1B2A] px-4 py-2 rounded-full font-bold text-xs shadow-2xl border border-white/20 animate-in fade-in slide-in-from-top-4">
-            {toastMessage}
-          </div>
-        )}
-
-        {/* FreeRoom Sticky Voucher Banner & Bottom Navigation */}
-        {isLoggedIn && (
+        {showLanding ? (
+          <LandingScreen onStart={handleLandingStart} />
+        ) : (
           <>
-            <FreeRoomStickyBanner />
-            <BottomNav />
+            <Header />
+
+            <main className="flex-1 px-4 overflow-y-auto no-scrollbar relative">
+              {currentSubScreen === 'signup' ? (
+                <SignUpScreen />
+              ) : currentSubScreen === 'email-verify-request' ||
+                currentSubScreen === 'email-verify-receipt' ||
+                currentSubScreen === 'email-verify-success' ||
+                currentSubScreen === 'email-verify-fail' ? (
+                <EmailVerifyScreen />
+              ) : currentSubScreen === 'login' ? (
+                <LoginScreen />
+              ) : currentSubScreen === 'post-detail' ? (
+                <PostDetailScreen />
+              ) : (
+                renderTabContent()
+              )}
+            </main>
+
+            {currentSubScreen === 'freeroom-booking' && <FreeRoomBookingModal />}
+            {showWriteModal && <WritePostModal />}
+
+            {toastMessage && (
+              <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-[#C5A059] text-[#0D1B2A] px-4 py-2 rounded-full font-bold text-xs shadow-2xl border border-white/20 animate-in fade-in slide-in-from-top-4">
+                {toastMessage}
+              </div>
+            )}
+
+            <>
+              {/* <FreeRoomStickyBanner /> */}
+              <BottomNav />
+            </>
           </>
         )}
       </div>

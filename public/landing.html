@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>더블링(DOUBLING) - 숏폼 여행 플랫폼 & 커뮤니티</title>
+    <meta name="description" content="더블링은 마카오, 필리핀등의 재미있는 영상을 통한 실시간 호텔 정보와 매일 매일 즐길수 있는 예측 커뮤니티를 하나로 모은 여행 플랫폼입니다.">
+    <link rel="icon" href="/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              background: '#0D1B2A',
+              'background-deep': '#070E17',
+              surface: '#162639',
+              'surface-high': '#1F334D',
+              'surface-card': '#122030',
+              primary: '#C5A059',
+              'primary-light': '#E2C28E',
+              'primary-dark': '#9A7B3E',
+              'on-background': '#F8F9FA'
+            },
+            fontFamily: {
+              sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif']
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #FFF0D0 0%, #C5A059 50%, #E2C28E 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .gold-button-gradient {
+            background: linear-gradient(135deg, #C5A059 0%, #D4AF67 50%, #B89248 100%);
+        }
+        .gold-card-border {
+            border: 1px solid rgba(197, 160, 89, 0.25);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at 50% 0%, rgba(197, 160, 89, 0.18) 0%, rgba(13, 27, 42, 0) 55%), linear-gradient(180deg, #0D1B2A 0%, #070E17 100%);
+        }
+    </style>
+</head>
+<body class="bg-[#070E17] text-[#F8F9FA]">
+
+    <!-- 1. 상단 내비게이션 -->
+    <header class="bg-[#0D1B2A]/95 backdrop-blur-xl border-b border-[#1F334D] sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-5">
+            <div class="flex items-center justify-between h-[70px]">
+                <a href="/landing.html" class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-lg gold-button-gradient flex items-center justify-center text-[#0D1B2A] font-black text-sm">
+                        <img src="/icons/icon-512-maskable.png" className='rounded-2xl'/>
+                    </div>
+                    <span class="font-black tracking-[0.18em] gold-gradient-text text-base">DOUBLING</span>
+                </a>
+                <nav class="flex items-center gap-6 text-sm">
+                    <a href="#features" class="hidden sm:inline text-slate-300 hover:text-[#E2C28E] font-medium">주요 기능</a>
+                    <a href="#about" class="hidden sm:inline text-slate-300 hover:text-[#E2C28E] font-medium">구글 계정 연동 안내</a>
+                    <a href="/" class="gold-button-gradient text-[#0D1B2A] font-bold text-sm px-5 py-2 rounded-full hover:opacity-90 transition-opacity">앱 시작하기</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. 히어로 -->
+    <section class="hero-gradient px-5 py-20 text-center">
+        <div class="max-w-3xl mx-auto">
+            <h1 class="text-3xl sm:text-4xl font-black leading-tight mb-5">
+                숏폼으로 만나는<br>
+                <span class="gold-gradient-text">여행 플랫폼 & 커뮤니티</span>
+            </h1>
+            <p class="text-slate-300 text-base sm:text-lg max-w-xl mx-auto mb-8">
+                재미있는 영상을 통한 실시간 호텔 정보와 매일 매일 즐길수 있는 예측 커뮤니티를<br class="hidden sm:block">
+                하나의 앱, 더블링에서 경험하세요.
+            </p>
+            <div class="flex flex-wrap items-center justify-center gap-2 mb-10">
+                <span class="inline-block bg-[#C5A059]/15 border border-[#C5A059]/30 text-[#E2C28E] px-4 py-1.5 rounded-full text-xs font-medium">🎰 실시간 호텔정보</span>
+                <span class="inline-block bg-[#C5A059]/15 border border-[#C5A059]/30 text-[#E2C28E] px-4 py-1.5 rounded-full text-xs font-medium">📊 매일 매일 논쟁: 예측 커뮤니티</span>
+                <span class="inline-block bg-[#C5A059]/15 border border-[#C5A059]/30 text-[#E2C28E] px-4 py-1.5 rounded-full text-xs font-medium">🏨 프리룸 응모</span>
+            </div>
+            <a href="/" class="inline-block gold-button-gradient text-[#0D1B2A] font-bold text-sm px-8 py-3.5 rounded-full hover:opacity-90 transition-opacity shadow-lg shadow-[#C5A059]/20">
+                지금 더블링 시작하기
+            </a>
+        </div>
+    </section>
+
+    <!-- 3. 주요 기능 -->
+    <section class="px-5 py-16" id="features">
+        <div class="max-w-5xl mx-auto">
+            <h2 class="text-center text-2xl sm:text-[28px] font-bold mb-3">더블링 서비스 안내</h2>
+            <p class="text-center text-slate-400 mb-10">실시간 호텔 정보 확인부터 예측, 응모, 여행 기록까지 한눈에</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div class="bg-[#122030] gold-card-border rounded-2xl p-6">
+                    <div class="w-11 h-11 rounded-xl bg-[#C5A059]/15 flex items-center justify-center text-2xl mb-4">🎰</div>
+                    <h3 class="text-base font-bold text-[#F8F9FA] mb-2">실시간 호텔 영상 컨텐츠</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">실시간으로 빠르게 제작된 재밌는 호텔 정보 영상을 확인하세요.</p>
+                </div>
+                <div class="bg-[#122030] gold-card-border rounded-2xl p-6">
+                    <div class="w-11 h-11 rounded-xl bg-[#C5A059]/15 flex items-center justify-center text-2xl mb-4">📊</div>
+                    <h3 class="text-base font-bold text-[#F8F9FA] mb-2">예측 커뮤니티</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">여행 트렌드와 사회 이슈에 대한 예측에 참여하고 결과를 지켜보세요.</p>
+                </div>
+                <div class="bg-[#122030] gold-card-border rounded-2xl p-6">
+                    <div class="w-11 h-11 rounded-xl bg-[#C5A059]/15 flex items-center justify-center text-2xl mb-4">🏨</div>
+                    <h3 class="text-base font-bold text-[#F8F9FA] mb-2">프리룸</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">호텔 무료 객실에 응모하고 당첨 여부를 확인하세요.</p>
+                </div>
+                <div class="bg-[#122030] gold-card-border rounded-2xl p-6">
+                    <div class="w-11 h-11 rounded-xl bg-[#C5A059]/15 flex items-center justify-center text-2xl mb-4">🎬</div>
+                    <h3 class="text-base font-bold text-[#F8F9FA] mb-2">커뮤니티</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">다양한 호텔에서 일어나고 할 수 있는 것을 영상으로 직접 경험하세요.</p>
+                </div>
+            </div>
+
+            <!-- Google OAuth 목적 설명 박스 (구글 심사관 확인용) -->
+            <div class="bg-[#122030] gold-card-border rounded-2xl p-8 mt-10" id="about">
+                <h3 class="text-[#E2C28E] text-lg font-bold mb-3 flex items-center gap-2">
+                    <span>🔒</span> 안전한 구글 계정 연동 안내
+                </h3>
+                <p class="text-slate-300 text-sm leading-relaxed">
+                    <strong class="text-[#F8F9FA]">더블링(DOUBLING)</strong>은 사용자의 편리하고 안전한 서비스 이용을 위해 <strong class="text-[#F8F9FA]">Google 계정 로그인</strong>을 지원합니다.<br>
+                    Google 연동 시에는 간편 로그인 및 사용자가 저장한 게시물의 좋아요·북마크 데이터를 계정과 동기화하는 목적으로만 이메일, 프로필 이름, 프로필 사진 정보를 이용하며, 그 외 다른 목적으로 개인정보를 수집하거나 제3자에게 제공하지 않습니다. 로그인 없이도 언제든지 앱 내 호텔정보영장, 예측커뮤니티, 기타 커뮤니티 콘텐츠를 둘러보실 수 있습니다.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. 이용약관 / 개인정보처리방침 -->
+    <section class="px-5 py-16 bg-[#0D1B2A] border-t border-[#1F334D]">
+        <div class="max-w-3xl mx-auto space-y-14">
+            <div id="terms">
+                <h2 class="text-xl font-bold text-[#E2C28E] mb-4">서비스 이용약관</h2>
+                <div class="text-slate-400 text-sm leading-relaxed space-y-3">
+                    <p>본 약관은 더블링(이하 "회사")이 제공하는 더블링 앱 및 관련 서비스(이하 "서비스")의 이용 조건과 절차, 회사와 이용자의 권리·의무 및 책임사항을 규정함을 목적으로 합니다.</p>
+                    <p>이용자는 Google 등 소셜 계정을 통해 간편하게 회원가입 및 로그인할 수 있으며, 서비스 내 프리룸 응모, 예측 커뮤니티 참여, 게시물 작성 등 기능은 로그인 후 이용할 수 있습니다.</p>
+                    <p>회사는 관련 법령 및 본 약관이 정하는 절차에 따라 이용자에게 사전 공지 후 서비스 내용을 변경하거나 중단할 수 있습니다.</p>
+                </div>
+            </div>
+
+            <div id="privacy">
+                <h2 class="text-xl font-bold text-[#E2C28E] mb-4">개인정보처리방침</h2>
+                <div class="text-slate-400 text-sm leading-relaxed space-y-3">
+                    <p><strong class="text-slate-200">1. 수집하는 개인정보 항목</strong><br>
+                    Google 계정 연동 로그인 시 이메일 주소, 프로필 이름, 프로필 사진을 수집합니다. 그 외 서비스 이용 과정에서 닉네임, 예약·응모 내역 등이 추가로 수집될 수 있습니다.</p>
+                    <p><strong class="text-slate-200">2. 개인정보의 수집 및 이용 목적</strong><br>
+                    회원 식별 및 간편 로그인, 좋아요·북마크 등 이용자 활동 데이터 동기화, 프리룸 응모 및 예약 처리, 고객 문의 응대를 위해 이용합니다.</p>
+                    <p><strong class="text-slate-200">3. 개인정보의 보유 및 이용 기간</strong><br>
+                    회원 탈퇴 시 지체 없이 파기하며, 관계 법령에 따라 보존이 필요한 경우 해당 법령이 정한 기간 동안 보관합니다.</p>
+                    <p><strong class="text-slate-200">4. 제3자 제공 및 위탁</strong><br>
+                    법령에 근거하거나 이용자의 별도 동의가 있는 경우를 제외하고 개인정보를 외부에 제공하지 않습니다.</p>
+                    <p><strong class="text-slate-200">5. 이용자의 권리</strong><br>
+                    이용자는 언제든지 자신의 개인정보 열람, 정정, 삭제, 처리정지를 요청할 수 있으며, 마이페이지 또는 아래 문의처를 통해 요청할 수 있습니다.</p>
+                    <p class="text-slate-500 text-xs">※ 위 내용은 안내용 기본 문서이며, 실제 서비스 운영 정책 및 사업자 정보에 맞춰 검토 후 게시해 주세요.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. 푸터 -->
+    <footer class="bg-[#070E17] text-slate-400 py-10 px-5">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6 text-sm">
+            <div>
+                <strong class="text-slate-200">DOUBLING</strong><br>
+                운영자: Wildwynn<br>
+                문의: <a href="mailto:master@wildwynn.com" class="text-[#E2C28E] hover:underline">master@wildwynn.com</a>
+            </div>
+            <div class="flex flex-wrap gap-x-4 gap-y-2">
+                <a href="#terms" class="text-slate-300 hover:text-[#E2C28E]">서비스 이용약관</a>
+                <a href="#privacy" class="text-slate-300 hover:text-[#E2C28E] font-bold">개인정보처리방침</a>
+                <a href="mailto:master@wildwynn.com" class="text-slate-300 hover:text-[#E2C28E]">문의하기</a>
+            </div>
+        </div>
+        <div class="max-w-5xl mx-auto mt-6 text-xs text-slate-600">
+            © 2026 DOUBLING (Wildwynn). All rights reserved.
+        </div>
+    </footer>
+
+</body>
+</html>

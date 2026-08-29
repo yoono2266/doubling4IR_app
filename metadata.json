@@ -1,6 +1,6 @@
 {
-  "name": "Doubling Mobile",
-  "description": "Doubling luxury casino hotel FreePlay comp benefits application featuring Home, Prediction Challenge, Doubling Membership Tier System, Hotel Details, Jackpot Map, Comp Benefit Selection, Referral System, Authentication, and Settings.",
+  "name": "더블링",
+  "description": "여행 플랫폼",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

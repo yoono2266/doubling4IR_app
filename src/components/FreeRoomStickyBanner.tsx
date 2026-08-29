@@ -2,15 +2,11 @@ import React, { useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 
 export const FreeRoomStickyBanner: React.FC = () => {
-  const { setCurrentTab, setCurrentSubScreen, currentSubScreen } = useApp();
+  const { startBooking } = useApp();
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const updateBannerHeight = () => {
-      if (currentSubScreen === 'comp-benefits' || currentSubScreen === 'current-trip-summary') {
-        document.documentElement.style.setProperty('--freeroom-banner-height', '0px');
-        return;
-      }
       if (bannerRef.current) {
         const height = bannerRef.current.getBoundingClientRect().height;
         if (height > 0) {
@@ -32,16 +28,16 @@ export const FreeRoomStickyBanner: React.FC = () => {
     return () => {
       observer.disconnect();
     };
-  }, [currentSubScreen]);
-
-  // Hide sticky banner completely when inside Comp 3 selection screen or Current Trip Summary screen
-  if (currentSubScreen === 'comp-benefits' || currentSubScreen === 'current-trip-summary') {
-    return null;
-  }
+  }, []);
 
   const handleBannerClick = () => {
-    setCurrentTab('my');
-    setCurrentSubScreen('comp-benefits');
+    startBooking({
+      name: 'Okada Manila (오카다 마닐라)',
+      location: 'New Manila Bay, Philippines',
+      roomType: 'Executive Ocean View Suite',
+      pricePerNightUsdt: 600,
+      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80'
+    });
   };
 
   return (
@@ -56,23 +52,23 @@ export const FreeRoomStickyBanner: React.FC = () => {
       >
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#C5A059] to-[#E2C28E] text-[#0D1B2A] flex items-center justify-center font-bold shadow-md group-hover:scale-105 transition-transform flex-shrink-0">
-            <span className="material-symbols-outlined text-2xl">diamond</span>
+            <span className="material-symbols-outlined text-2xl">workspace_premium</span>
           </div>
           <div className="overflow-hidden">
             <div className="flex items-center gap-1.5">
               <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#C5A059] text-[#0D1B2A] font-extrabold uppercase tracking-tight">
-                멤버십 혜택 받기
+                FreeRoom 바우처
               </span>
-              <span className="text-[10px] text-[#E2C28E] font-medium font-mono">Comp 3종 특별 의전</span>
+              <span className="text-[10px] text-[#E2C28E] font-medium font-mono">2박 무료 / 버틀러 특전</span>
             </div>
             <h4 className="text-xs font-extrabold text-white truncate mt-0.5 group-hover:text-[#E2C28E] transition">
-              이번 방문에 준비된 3대 VIP 혜택을 확인하세요
+              오카다 마닐라 오션뷰 스위트 즉시 예약
             </h4>
           </div>
         </div>
 
         <button className="flex-shrink-0 px-3 py-1.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-black text-xs shadow-md group-hover:brightness-110 transition">
-          혜택 보기
+          예약하기
         </button>
       </div>
     </div>

@@ -1,7 +1,7 @@
 {
-  "name": "DOUBLING - Casino Hotel FreeRoom",
-  "short_name": "DOUBLING",
-  "description": "VIP CASINO & HOTEL FREEROOM PLATFORM",
+  "name": "더블링 : 여행플랫폼",
+  "short_name": "더블링",
+  "description": "여행 플랫폼",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0D1B2A",

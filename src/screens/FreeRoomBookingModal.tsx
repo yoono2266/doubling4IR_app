@@ -17,7 +17,7 @@ export const FreeRoomBookingModal: React.FC = () => {
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setInterval>;
     if (booking.step === 'payment' && timeLeft > 0) {
       timer = setInterval(() => {
         setTimeLeft(prev => prev - 1);
@@ -64,7 +64,7 @@ export const FreeRoomBookingModal: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-[#C5A059]">calendar_today</span>
             <div>
-              <h3 className="text-sm font-bold text-white">FreePlay 신청 시스템</h3>
+              <h3 className="text-sm font-bold text-white">FreeRoom 예약 시스템</h3>
               <p className="text-[10px] text-slate-400">{booking.hotelName}</p>
             </div>
           </div>
@@ -82,7 +82,7 @@ export const FreeRoomBookingModal: React.FC = () => {
           <span className="text-slate-600">→</span>
           <span className={booking.step === 'options' ? 'text-[#C5A059]' : 'text-slate-500'}>2. 옵션 설정</span>
           <span className="text-slate-600">→</span>
-          <span className={booking.step === 'payment' ? 'text-[#C5A059]' : 'text-slate-500'}>3. 디포짓</span>
+          <span className={booking.step === 'payment' ? 'text-[#C5A059]' : 'text-slate-500'}>3. 코인 결제</span>
           <span className="text-slate-600">→</span>
           <span className={booking.step === 'success' ? 'text-emerald-400' : 'text-slate-500'}>4. 완료</span>
         </div>
@@ -94,7 +94,7 @@ export const FreeRoomBookingModal: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <h4 className="text-sm font-bold text-white mb-1">투숙 희망 일정을 선택하세요</h4>
-                <p className="text-xs text-slate-300">FreePlay 멤버십 자격으로 코인 디포짓 신청이 진행됩니다.</p>
+                <p className="text-xs text-slate-300">FreeRoom 멤버십 자격으로 100% 코인 디포짓 예약이 진행됩니다.</p>
               </div>
 
               <div className="space-y-2">
@@ -129,7 +129,7 @@ export const FreeRoomBookingModal: React.FC = () => {
                         </div>
                       </div>
                       <span className="text-xs font-extrabold text-[#E2C28E] font-mono">
-                        {(booking.pricePerNightCoins * d.nights).toLocaleString()} 코인
+                        ${booking.pricePerNightUsdt * d.nights} USDT
                       </span>
                     </div>
                   );
@@ -151,7 +151,7 @@ export const FreeRoomBookingModal: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <h4 className="text-sm font-bold text-white mb-1">투숙 인원 및 VIP 옵션 확인</h4>
-                <p className="text-xs text-slate-300">인원과 추가 옵션에 따라 코인 디포짓 금액이 실시간 계산됩니다.</p>
+                <p className="text-xs text-slate-300">인원과 추가 옵션에 따라 코인 결제 금액이 실시간 계산됩니다.</p>
               </div>
 
               {/* Guests Stepper */}
@@ -190,7 +190,7 @@ export const FreeRoomBookingModal: React.FC = () => {
                     <span className="material-symbols-outlined text-[#C5A059] text-lg">restaurant</span>
                     <div>
                       <p className="text-xs font-bold text-white">조식 뷔페 포함</p>
-                      <p className="text-[10px] text-slate-400">박당 1인 50 코인 추가</p>
+                      <p className="text-[10px] text-slate-400">박당 1인 50 USDT 추가</p>
                     </div>
                   </div>
                   <input type="checkbox" checked={booking.options.breakfast} readOnly className="w-4 h-4 accent-[#C5A059]" />
@@ -205,7 +205,7 @@ export const FreeRoomBookingModal: React.FC = () => {
                     <span className="material-symbols-outlined text-[#C5A059] text-lg">local_bar</span>
                     <div>
                       <p className="text-xs font-bold text-white">VIP 클럽 라운지 패스</p>
-                      <p className="text-[10px] text-slate-400">박당 100 코인 추가</p>
+                      <p className="text-[10px] text-slate-400">박당 100 USDT 추가</p>
                     </div>
                   </div>
                   <input type="checkbox" checked={booking.options.loungeAccess} readOnly className="w-4 h-4 accent-[#C5A059]" />
@@ -220,7 +220,7 @@ export const FreeRoomBookingModal: React.FC = () => {
                     <span className="material-symbols-outlined text-[#C5A059] text-lg">airport_shuttle</span>
                     <div>
                       <p className="text-xs font-bold text-white">공항 VIP 샌딩 서비스</p>
-                      <p className="text-[10px] text-slate-400">1회 80 코인 추가</p>
+                      <p className="text-[10px] text-slate-400">1회 80 USDT 추가</p>
                     </div>
                   </div>
                   <input type="checkbox" checked={booking.options.airportTransfer} readOnly className="w-4 h-4 accent-[#C5A059]" />
@@ -230,11 +230,11 @@ export const FreeRoomBookingModal: React.FC = () => {
               {/* Total Calculation Display */}
               <div className="bg-[#0D1B2A] p-3.5 rounded-2xl border border-[#C5A059]/40 flex justify-between items-center">
                 <div>
-                  <span className="text-[10px] text-slate-400 font-bold block">최종 디포짓 코인 합계</span>
+                  <span className="text-[10px] text-slate-400 font-bold block">최종 합계 금액</span>
                   <span className="text-xs text-slate-300">{booking.nights}박 / {booking.guests}인 투숙</span>
                 </div>
                 <span className="text-lg font-extrabold text-[#E2C28E] font-mono">
-                  {booking.totalCoins.toLocaleString()} 코인
+                  {booking.totalUsdt.toLocaleString()} USDT
                 </span>
               </div>
 
@@ -249,7 +249,7 @@ export const FreeRoomBookingModal: React.FC = () => {
                   onClick={() => setBooking(prev => ({ ...prev, step: 'payment' }))}
                   className="w-2/3 py-3 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow-md hover:brightness-110 transition"
                 >
-                  코인 디포짓 단계 이동
+                  코인 결제 단계 이동
                 </button>
               </div>
             </div>
@@ -261,7 +261,7 @@ export const FreeRoomBookingModal: React.FC = () => {
               <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-2xl flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-amber-400 text-lg">timer</span>
-                  <span className="text-xs font-bold text-amber-200">디포짓 유효 시간</span>
+                  <span className="text-xs font-bold text-amber-200">결제 유효 시간</span>
                 </div>
                 <span className="text-base font-extrabold font-mono text-amber-400 animate-pulse">
                   {formatTimer(timeLeft)}
@@ -269,8 +269,8 @@ export const FreeRoomBookingModal: React.FC = () => {
               </div>
 
               <div className="bg-[#162639] border border-[#1F334D] p-3.5 rounded-2xl text-center space-y-2">
-                <p className="text-xs text-slate-300">코인 지갑 주소 또는 QR 코드를 탭하세요</p>
-                <p className="text-[10px] text-[#C5A059] font-medium">(IR 라이브 데모: 영역 탭 시 2초 후 코인 월렛 자동 디포짓 예치)</p>
+                <p className="text-xs text-slate-300">결제 지갑 주소 또는 QR 코드를 탭하세요</p>
+                <p className="text-[10px] text-[#C5A059] font-medium">(IR 라이브 데모: 영역 탭 시 2초 후 결제 승인)</p>
 
                 {/* TAP TARGET: QR / Address Area */}
                 <div
@@ -282,14 +282,14 @@ export const FreeRoomBookingModal: React.FC = () => {
                   {isVerifying ? (
                     <div className="py-6 flex flex-col items-center gap-2">
                       <div className="w-8 h-8 border-3 border-[#C5A059] border-t-transparent rounded-full animate-spin"></div>
-                      <span className="text-xs font-bold text-[#E2C28E]">블록체인 코인 디포짓 검증 중...</span>
+                      <span className="text-xs font-bold text-[#E2C28E]">블록체인 트랜잭션 검증 중...</span>
                     </div>
                   ) : (
                     <>
                       {/* Mock QR graphic */}
                       <div className="w-28 h-28 bg-white p-2 rounded-xl flex items-center justify-center shadow-md">
                         <div className="w-full h-full bg-[#0D1B2A] rounded flex items-center justify-center text-white text-[10px] font-mono font-bold text-center p-1">
-                          [TAP TO DEPOSIT]<br/>0x8F2A...91B4
+                          [TAP TO PAY]<br/>0x8F2A...91B4
                         </div>
                       </div>
                       <div className="text-center">
@@ -297,7 +297,7 @@ export const FreeRoomBookingModal: React.FC = () => {
                           0x8F2A381940192A0291B4
                         </span>
                         <span className="text-[10px] text-[#C5A059] font-bold mt-1 block">
-                          터치하여 즉시 코인 월렛 디포짓 완료 시뮬레이션 →
+                          터치하여 즉시 결제 완료 시뮬레이션 →
                         </span>
                       </div>
                     </>
@@ -307,12 +307,12 @@ export const FreeRoomBookingModal: React.FC = () => {
 
               <div className="bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D] text-xs space-y-1">
                 <div className="flex justify-between text-slate-400">
-                  <span>디포짓 예정 금액:</span>
-                  <span className="font-mono font-bold text-white">{booking.totalCoins.toLocaleString()} 코인</span>
+                  <span>결제 예정 금액:</span>
+                  <span className="font-mono font-bold text-white">{booking.totalUsdt.toLocaleString()} USDT</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
-                  <span>현재 보유 코인 잔액:</span>
-                  <span className="font-mono font-bold text-[#E2C28E]">{user.walletCoin.toLocaleString()} 코인</span>
+                  <span>현재 보유 코인:</span>
+                  <span className="font-mono font-bold text-[#E2C28E]">{user.walletUsdt.toLocaleString()} USDT</span>
                 </div>
               </div>
 
@@ -322,7 +322,7 @@ export const FreeRoomBookingModal: React.FC = () => {
                 className="w-full py-3.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow-xl hover:brightness-110 active:scale-[0.98] transition flex items-center justify-center gap-2"
               >
                 <span className="material-symbols-outlined text-base">task_alt</span>
-                <span>{isVerifying ? '디포짓 승인 처리 중...' : '디포짓 확인 (터치)'}</span>
+                <span>{isVerifying ? '결제 승인 처리 중...' : '코인 지불 확인 (터치)'}</span>
               </button>
             </div>
           )}
@@ -335,15 +335,15 @@ export const FreeRoomBookingModal: React.FC = () => {
               </div>
 
               <div>
-                <h4 className="text-lg font-bold text-white">FreePlay 신청 및 디포짓 완료!</h4>
+                <h4 className="text-lg font-bold text-white">FreeRoom 예약 및 결제 완료!</h4>
                 <p className="text-xs text-slate-300 mt-1">
-                  신청 내역이 즉시 확정되었으며 코인 월렛 차감이 완료되었습니다.
+                  예약 내역이 즉시 확정되었으며 코인 월렛 차감이 완료되었습니다.
                 </p>
               </div>
 
               <div className="bg-[#162639] border border-[#1F334D] p-4 rounded-2xl text-left space-y-2 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">신청 호텔:</span>
+                  <span className="text-slate-400">예약 호텔:</span>
                   <span className="font-bold text-white">{booking.hotelName}</span>
                 </div>
                 <div className="flex justify-between">
@@ -351,11 +351,11 @@ export const FreeRoomBookingModal: React.FC = () => {
                   <span className="font-bold text-white">{booking.startDate} ~ {booking.endDate}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">디포짓 금액:</span>
-                  <span className="font-mono font-bold text-[#E2C28E]">{booking.totalCoins.toLocaleString()} 코인</span>
+                  <span className="text-slate-400">결제 금액:</span>
+                  <span className="font-mono font-bold text-[#E2C28E]">{booking.totalUsdt.toLocaleString()} USDT</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">신청 상태:</span>
+                  <span className="text-slate-400">예약 상태:</span>
                   <span className="font-bold text-emerald-400">확정 (Confirmed)</span>
                 </div>
               </div>
@@ -368,7 +368,7 @@ export const FreeRoomBookingModal: React.FC = () => {
                   }}
                   className="py-3 rounded-xl bg-[#162639] border border-[#C5A059] text-[#C5A059] font-bold text-xs hover:bg-[#1F334D]"
                 >
-                  마이 &gt; 신청 내역 확인
+                  마이 &gt; 예약 내역 확인
                 </button>
                 <button
                   onClick={() => setCurrentSubScreen(null)}

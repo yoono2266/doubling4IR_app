@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 export const PostDetailScreen: React.FC = () => {
-  const { selectedPost, setCurrentSubScreen, toggleLikePost, showToast } = useApp();
+  const { selectedPost, setCurrentSubScreen, toggleLikePost, showToast, requireLogin } = useApp();
   const [commentInput, setCommentInput] = useState('');
   const [comments, setComments] = useState([
     { id: 'c1', author: 'Alexander Kim', text: '스위트룸 버틀러 서비스 정보 유용하네요!', time: '10분 전' },
@@ -13,6 +13,7 @@ export const PostDetailScreen: React.FC = () => {
 
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!requireLogin()) return;
     if (!commentInput.trim()) return;
 
     setComments(prev => [
@@ -35,89 +36,99 @@ export const PostDetailScreen: React.FC = () => {
 
       <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-5 flex flex-col gap-4 shadow-xl">
         {/* Author Header */}
-        {selectedPost.postType === 'video_promo' ? (
+        {selectedPost.tb_type === 1 ? (
           <div className="flex items-center justify-between border-b border-[#1F334D] pb-3">
             <div>
               <span className="text-xs text-slate-400 font-mono flex items-center gap-1">
                 <span className="material-symbols-outlined text-[13px] text-slate-500">schedule</span>
-                <span>{selectedPost.publishedAt || '2026-08-12 10:01:58'}</span>
+                <span>{selectedPost.tb_reg_datetime || '방금 전'}</span>
               </span>
             </div>
             <span className="text-xs font-bold text-[#0D1B2A] bg-[#C5A059] px-2.5 py-1 rounded-full shadow-sm">
-              {selectedPost.category || '더블링 뉴스'}
+              {selectedPost.cate_name}
             </span>
           </div>
         ) : (
           <div className="flex items-center justify-between border-b border-[#1F334D] pb-3">
             <div className="flex items-center gap-3">
-              <img src={selectedPost.avatar} alt={selectedPost.author} className="w-10 h-10 rounded-full border border-[#C5A059]" />
+              <img src={`https://dou-cdn.wildwynn.com/static/upload/aimanager/logo/${selectedPost.tb_logo}`} alt={selectedPost.cate_name} className="w-10 h-10 rounded-full border border-[#C5A059]" />
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-bold text-white">{selectedPost.author}</span>
+                  <span className="text-sm font-bold text-white">{selectedPost.cate_name}</span>
                   <span className="text-[10px] text-[#C5A059] bg-[#C5A059]/15 px-1.5 py-0.2 rounded">
-                    {selectedPost.authorRole}
+                    {selectedPost.tb_desc}
                   </span>
                 </div>
-                <span className="text-[10px] text-slate-400">{selectedPost.timeAgo}</span>
+                <span className="text-[10px] text-slate-400">{selectedPost.tb_reg_datetime || '방금 전'}</span>
               </div>
             </div>
             <span className="text-xs font-semibold text-[#C5A059] bg-[#0D1B2A] px-2.5 py-1 rounded-full border border-[#1F334D]">
-              #{selectedPost.category}
+            #{selectedPost.cate_name}
             </span>
+            <span className="text-xs font-semibold text-[#C5A059] bg-[#0D1B2A] px-2.5 py-1 rounded-full border border-[#1F334D]">
+            #{selectedPost.cate_sub_name}
+            </span>
+            <span className="text-xs font-semibold text-[#C5A059] bg-[#0D1B2A] px-2.5 py-1 rounded-full border border-[#1F334D]">
+            #{selectedPost.class_name}
+            </span>
+
           </div>
         )}
 
         {/* Post Title & Body */}
         <div>
-          <h2 className="text-base font-bold text-white mb-2">{selectedPost.title}</h2>
-          {selectedPost.postType !== 'video_promo' && (
-            <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-line">{selectedPost.content}</p>
+          <h2 className="text-base font-bold text-white mb-2">{selectedPost.tb_title}</h2>
+          {selectedPost.tb_type !== 1 && (
+            <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-line">{selectedPost.tb_title}</p>
           )}
         </div>
 
         {/* Video / Attached Image */}
-        {selectedPost.postType === 'video_promo' ? (
+        {selectedPost.tb_type === 1 ? (
           <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-[#0D1B2A] border border-[#1F334D] my-1">
-            <img 
-              src={selectedPost.videoThumbnail || selectedPost.image || 'https://images.unsplash.com/photo-1511193311914-0346f16efe90?w=1000&auto=format&fit=crop&q=80'} 
-              alt={selectedPost.title} 
-              className="w-full h-full object-cover" 
+            <video 
+              src={`https://dou-cdn.wildwynn.com/static/upload/contents/${selectedPost.tb_file_url}`} 
+              poster={`https://dou-cdn.wildwynn.com/static/upload/contents/thumb/${selectedPost.tb_thumb_url}`}
+              controls 
+              autoPlay 
+              className="w-full h-full object-contain"
             />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-md border border-white/30 flex items-center justify-center text-[#FFF0D0] shadow-2xl">
-                <span className="material-symbols-outlined text-4xl font-bold ml-1">play_arrow</span>
-              </div>
-            </div>
           </div>
         ) : (
-          selectedPost.image && (
+          selectedPost.tb_thumb_url && (
             <div className="rounded-xl overflow-hidden max-h-60 w-full my-1">
-              <img src={selectedPost.image} alt={selectedPost.title} className="w-full h-full object-cover" />
+              <img src={`https://dou-cdn.wildwynn.com/static/upload/contents/thumb/${selectedPost.tb_thumb_url}`} alt={selectedPost.tb_title} className="w-full h-full object-cover" />
             </div>
           )
         )}
 
         {/* Hashtags for video promo */}
-        {selectedPost.postType === 'video_promo' && selectedPost.hashtags && (
+        {selectedPost.tb_type === 1  && (
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            {selectedPost.hashtags.map((tag, idx) => (
-              <span key={idx} className="text-xs font-semibold text-[#E2C28E] bg-[#0D1B2A] px-2.5 py-1 rounded border border-[#1F334D]">
-                #{tag}
-              </span>
-            ))}
+            <span className="text-xs font-semibold text-[#E2C28E] bg-[#0D1B2A] px-2.5 py-1 rounded border border-[#1F334D]">
+            #{selectedPost.cate_name}
+            </span>
+            <span className="text-xs font-semibold text-[#E2C28E] bg-[#0D1B2A] px-2.5 py-1 rounded border border-[#1F334D]">
+            #{selectedPost.cate_sub_name}
+            </span>
+            <span className="text-xs font-semibold text-[#E2C28E] bg-[#0D1B2A] px-2.5 py-1 rounded border border-[#1F334D]">
+            #{selectedPost.class_name}
+            </span>
           </div>
         )}
 
         {/* Like & Share Action bar */}
         <div className="flex items-center justify-between pt-2 border-t border-[#1F334D] text-xs">
           <button 
-            onClick={() => toggleLikePost(selectedPost.id)}
-            className={`flex items-center gap-1.5 ${selectedPost.isLiked ? 'text-rose-400 font-bold' : 'text-slate-400'}`}
+            onClick={() => {
+              if (requireLogin()) void toggleLikePost(selectedPost.tb_index);
+            }}
+            className={`flex items-center gap-1.5 ${selectedPost.is_user_liked ? 'text-rose-400 font-bold' : 'text-slate-400'}`}
           >
-            <span className={`material-symbols-outlined text-base ${selectedPost.isLiked ? 'fill-1' : ''}`}>
+            <span className={`material-symbols-outlined text-base ${selectedPost.is_user_liked ? 'fill-1' : ''}`}>
               favorite
             </span>
-            <span>좋아요 ({selectedPost.likes})</span>
+            <span>좋아요 ({selectedPost.is_user_liked})</span>
           </button>
 
           <button 

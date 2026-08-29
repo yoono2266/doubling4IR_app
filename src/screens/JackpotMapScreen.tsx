@@ -1,27 +1,186 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { HOTELS_JACKPOT_DATA, HotelJackpotData, RegionCode, formatUsd, formatKrw } from '../data/jackpotData';
+import { RegionCode, formatUsd, formatKrw } from '../data/jackpotData';
+import { apiCommonClient, CommonResponse, ResultCode } from '../utils/apiClient';
 
-const REGIONS: { code: RegionCode; label: string; count: number }[] = [
-  { code: 'ALL', label: 'ALL', count: 18 },
-  { code: 'KR', label: 'KR', count: 3 },
-  { code: 'MO', label: 'MO', count: 7 },
-  { code: 'SG', label: 'SG', count: 2 },
-  { code: 'PH', label: 'PH', count: 5 },
-  { code: 'JP', label: 'JP', count: 1 },
-];
+// /contents/main-content API 요청/응답 타입
+interface MainContentParam {
+  jp_index: number;
+}
+
+interface Region {
+  jp_index: number;
+  code: RegionCode;
+  label: string;
+  count: number;
+}
+
+interface JackpotCountry {
+  jp_index: number;
+  country_name_ko: string;
+  country_name_en: string;
+  country_name_en_short: string;
+  country_code: string;
+  jp_view: number;
+  jp_sort: number;
+  hotel_count: number;
+}
+
+interface JackpotHotel {
+  jp_index: number;
+  country_index: number;
+  hotel_name_ko: string;
+  hotel_name_en: string;
+  hotel_code: string;
+  jp_view: number;
+  jp_sort: number;
+  jp_thumb_url: string;
+}
+
+interface JackpotItemResponse {
+  jp_index: number;
+  hotel_index: number;
+  jp_name_ko: string;
+  jp_name_en: string;
+  jp_sub_name: string;
+  jp_desc: string;
+  jp_type: number;
+  jp_thumb_url:string;
+  jp_amount: number | string;
+  jp_currency: string;
+  jp_sort: number;
+}
+
+interface JackpotApiResponse {
+  country: JackpotCountry[];
+  hotels: JackpotHotel[];
+  jackpots: JackpotItemResponse[];
+}
+
+interface HotelJackpotData {
+  id: string;
+  name: string;
+  nameEn: string;
+  region: Exclude<RegionCode, 'ALL'>;
+  regionLabel: string;
+  desc: string;
+  image: string;
+  badge?: string;
+  rating: number;
+  jackpots: {
+    id: string;
+    name: string;
+    amountUsd: number;
+    type: number;
+  }[];
+  totalJackpotUsd: number;
+}
+
+const toNumber = (value: number | string): number => {
+  const parsed = typeof value === 'number' ? value : Number(value.replace(/,/g, ''));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const mapRegionCode = (countryCode: string): Exclude<RegionCode, 'ALL'> => {
+  return countryCode.toUpperCase() as Exclude<RegionCode, 'ALL'>;
+};
+
+const mapHotels = (data: JackpotApiResponse): HotelJackpotData[] => {
+  const countryByIndex = new Map(data.country.map(country => [country.jp_index, country]));
+  const jackpotsByHotel = new Map<number, JackpotItemResponse[]>();
+
+  [...data.jackpots]
+    .sort((a, b) => a.jp_sort - b.jp_sort)
+    .forEach(jackpot => {
+      const items = jackpotsByHotel.get(jackpot.hotel_index) ?? [];
+      items.push(jackpot);
+      jackpotsByHotel.set(jackpot.hotel_index, items);
+    });
+
+  return [...data.hotels]
+    .sort((a, b) => a.jp_sort - b.jp_sort)
+    .filter(hotel => hotel.jp_view !== 0)
+    .map(hotel => {
+      const country = countryByIndex.get(hotel.country_index);
+      const jackpots = jackpotsByHotel.get(hotel.jp_index) ?? [];
+
+      return {
+        id: hotel.hotel_code || String(hotel.jp_index),
+        name: hotel.hotel_name_ko,
+        nameEn: hotel.hotel_name_en,
+        region: mapRegionCode(country?.country_code ?? ''),
+        regionLabel: country?.country_name_ko ?? '',
+        desc: '',
+        image: hotel.jp_thumb_url ? `https://dou-cdn.wildwynn.com/static/upload/hotels/${hotel.jp_thumb_url}`: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop&q=80',
+        rating: 0,
+        jackpots: jackpots.map(jackpot => ({
+          id: String(jackpot.jp_index),
+          name: jackpot.jp_name_ko,
+          amountUsd: toNumber(jackpot.jp_amount),
+          type: jackpot.jp_type,
+        })),
+        totalJackpotUsd: jackpots.reduce((sum, jackpot) => sum + toNumber(jackpot.jp_amount), 0),
+      };
+    });
+};
 
 export const JackpotMapScreen: React.FC = () => {
   const { setSelectedHotelId, setCurrentSubScreen } = useApp();
-  const [activeRegion, setActiveRegion] = useState<RegionCode>('ALL');
+  const [activeCountryIndex, setActiveCountryIndex] = useState<number>(0);
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [hotels, setHotels] = useState<HotelJackpotData[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Filter hotels by active region
-  const filteredHotels = useMemo(() => {
-    if (activeRegion === 'ALL') {
-      return HOTELS_JACKPOT_DATA;
-    }
-    return HOTELS_JACKPOT_DATA.filter(h => h.region === activeRegion);
-  }, [activeRegion]);
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchJackpots = async (countryIndex: number) => {
+      setIsLoading(true);
+      try {
+        const response = await apiCommonClient.post<CommonResponse<JackpotApiResponse>, MainContentParam>(
+              `/jackpot/${countryIndex}`,
+              { jp_index: countryIndex}
+            );
+
+        
+        
+        console.log('response : ', response);
+        if (response.result === ResultCode.SUCCESS && response.data && isMounted) {
+          const countries = [...response.data.country]
+            .filter(country => country.jp_view !== 0)
+            .sort((a, b) => a.jp_sort - b.jp_sort);
+          const apiHotels = mapHotels({ ...response.data, country: countries });
+          const allCount = countryIndex === 0 ? apiHotels.length : countries.reduce(
+            (count, country) => count + country.hotel_count,
+            0
+          );
+
+          setRegions([
+            { jp_index: 0, code: 'ALL', label: 'ALL', count: allCount },
+            ...countries.map(country => ({
+              jp_index: country.jp_index,
+              code: mapRegionCode(country.country_code),
+              label: country.country_name_ko || country.country_name_en_short ,
+              count: country.hotel_count,
+            })),
+          ]);
+          setHotels(apiHotels);
+        }
+      } catch (error) {
+        console.error(`/jackpot/${countryIndex} API 통신 오류:`, error);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    fetchJackpots(activeCountryIndex);
+    return () => {
+      isMounted = false;
+    };
+  }, [activeCountryIndex]);
+
+  const activeRegion = regions.find(region => region.jp_index === activeCountryIndex)?.label ?? 'ALL';
+  const filteredHotels = hotels;
 
   // Total jackpot sum for filtered hotels
   const totalRegionJackpot = useMemo(() => {
@@ -34,10 +193,18 @@ export const JackpotMapScreen: React.FC = () => {
     setCurrentSubScreen('hotel-jackpot-detail');
   };
 
-  // Sort hotels by total jackpot descending for display
+  // API jp_sort 순서를 유지합니다.
   const sortedHotels = useMemo(() => {
-    return [...filteredHotels].sort((a, b) => b.totalJackpotUsd - a.totalJackpotUsd);
+    return [...filteredHotels];
   }, [filteredHotels]);
+
+  if (isLoading) {
+    return <div className="flex min-h-56 items-center justify-center text-sm text-slate-400">잭팟 정보를 불러오는 중...</div>;
+  }
+
+  if (sortedHotels.length === 0) {
+    return <div className="flex min-h-56 items-center justify-center text-sm text-slate-400">표시할 잭팟 정보가 없습니다.</div>;
+  }
 
   return (
     <div className="flex flex-col gap-4 pb-44 pt-2">
@@ -46,23 +213,24 @@ export const JackpotMapScreen: React.FC = () => {
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-[#C5A059]">grid_view</span>
-            Jackpot Tree-map
+            Jackpot Zone
           </h2>
-          <p className="text-xs text-slate-400">아시아 주요 카지노 & 리조트 누적 잭팟 시각화</p>
+          <p className="text-xs text-slate-400">아시아 주요 호텔 & 리조트 잭팟</p>
         </div>
+        {/*         
         <span className="text-xs font-mono font-bold text-[#E2C28E] bg-[#162639] px-2.5 py-1 rounded-full border border-[#C5A059]/30">
           TREEMAP
-        </span>
+        </span> */}
       </div>
 
       {/* 1. Region Filter Tabs (ALL / KR / MO / SG / PH / JP) */}
       <div className="flex items-center gap-1.5 p-1 bg-[#162639] rounded-xl border border-[#1F334D] overflow-x-auto no-scrollbar">
-        {REGIONS.map((reg) => {
-          const isActive = activeRegion === reg.code;
+        {regions.map((reg) => {
+          const isActive = activeCountryIndex === reg.jp_index;
           return (
             <button
-              key={reg.code}
-              onClick={() => setActiveRegion(reg.code)}
+              key={reg.jp_index}
+              onClick={() => setActiveCountryIndex(reg.jp_index)}
               className={`flex-1 min-w-[54px] py-2 rounded-lg text-xs font-extrabold transition-all flex flex-col items-center justify-center gap-0.5 ${
                 isActive
                   ? 'bg-[#C5A059] text-[#0D1B2A] shadow-md scale-[1.02]'
@@ -82,7 +250,7 @@ export const JackpotMapScreen: React.FC = () => {
       <div className="bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3.5 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-slate-300">
-            {activeRegion === 'ALL' ? '아시아 전체 18개 호텔' : `${activeRegion} 지역 ${filteredHotels.length}개 호텔`}
+            {activeCountryIndex === 0 ? `아시아 전체 ${regions[0]?.count ?? regions[0]?.count}개 호텔` : `${activeRegion} 지역 ${filteredHotels.length}개 호텔`}
           </span>
           <span className="text-[10px] text-[#C5A059] font-mono bg-[#C5A059]/10 px-2 py-0.5 rounded">
             합계 {formatUsd(totalRegionJackpot)}
@@ -95,142 +263,15 @@ export const JackpotMapScreen: React.FC = () => {
 
       {/* 2. Treemap (Mosaic) Visualization Section */}
       <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between px-1">
+        {/* <div className="flex items-center justify-between px-1">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
             잭팟 규모 트리맵 (터치 시 상세 잭팟 이동)
           </span>
           <span className="text-[10px] text-slate-500">타일 크기: 잭팟 총액 비례</span>
-        </div>
+        </div> */}
 
-        {/* Dynamic Responsive Treemap Layout */}
-        {activeRegion === 'ALL' ? (
-          /* ALL Region 18 Hotels Treemap */
-          <div className="grid grid-cols-12 gap-1.5 h-80 w-full bg-[#0D1B2A] p-2 rounded-2xl border border-[#1F334D]">
-            {/* Top 1: Okada Manila ($53.7M - Largest Tile) */}
-            <button
-              onClick={() => handleHotelClick(sortedHotels[0].id)}
-              className="col-span-7 row-span-2 rounded-xl p-3 flex flex-col justify-between relative overflow-hidden text-left border border-[#C5A059]/60 hover:border-[#C5A059] bg-[#1a2839] group transition"
-            >
-              <img
-                src={sortedHotels[0].image}
-                alt={sortedHotels[0].name}
-                className="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-luminosity group-hover:scale-105 transition duration-500"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0D1B2A] via-[#0D1B2A]/40 to-transparent"></div>
-              
-              <div className="relative z-10 flex items-center justify-between">
-                <span className="text-[10px] font-extrabold text-[#0D1B2A] bg-[#C5A059] px-2 py-0.5 rounded shadow">
-                  #1 {sortedHotels[0].region}
-                </span>
-                <span className="text-[10px] font-mono text-[#E2C28E]">
-                  {((sortedHotels[0].totalJackpotUsd / totalRegionJackpot) * 100).toFixed(1)}%
-                </span>
-              </div>
-              <div className="relative z-10">
-                <h3 className="text-xs font-black text-white line-clamp-1">{sortedHotels[0].name}</h3>
-                <p className="text-sm font-black text-[#E2C28E] font-mono mt-0.5">
-                  {formatUsd(sortedHotels[0].totalJackpotUsd)}
-                </p>
-                <p className="text-[9px] text-slate-300 font-mono">
-                  {formatKrw(sortedHotels[0].totalJackpotUsd)}
-                </p>
-              </div>
-            </button>
-
-            {/* Top 2: Marina Bay Sands ($40.8M) */}
-            <button
-              onClick={() => handleHotelClick(sortedHotels[1].id)}
-              className="col-span-5 row-span-1 rounded-xl p-2 flex flex-col justify-between relative overflow-hidden text-left border border-[#1F334D] hover:border-[#C5A059]/60 bg-[#162639] group transition"
-            >
-              <img
-                src={sortedHotels[1].image}
-                alt={sortedHotels[1].name}
-                className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:scale-105 transition"
-                referrerPolicy="no-referrer"
-              />
-              <div className="relative z-10 flex justify-between items-center">
-                <span className="text-[9px] font-bold text-[#E2C28E] bg-[#C5A059]/20 px-1.5 py-0.2 rounded">
-                  #2 {sortedHotels[1].region}
-                </span>
-                <span className="text-[9px] font-mono text-slate-400">
-                  {((sortedHotels[1].totalJackpotUsd / totalRegionJackpot) * 100).toFixed(1)}%
-                </span>
-              </div>
-              <div className="relative z-10">
-                <h4 className="text-[11px] font-bold text-white line-clamp-1">{sortedHotels[1].name}</h4>
-                <p className="text-xs font-bold text-[#E2C28E] font-mono">
-                  {formatUsd(sortedHotels[1].totalJackpotUsd)}
-                </p>
-              </div>
-            </button>
-
-            {/* Top 3: Galaxy Macau ($38.7M) */}
-            <button
-              onClick={() => handleHotelClick(sortedHotels[2].id)}
-              className="col-span-5 row-span-1 rounded-xl p-2 flex flex-col justify-between relative overflow-hidden text-left border border-[#1F334D] hover:border-[#C5A059]/60 bg-[#162639] group transition"
-            >
-              <img
-                src={sortedHotels[2].image}
-                alt={sortedHotels[2].name}
-                className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:scale-105 transition"
-                referrerPolicy="no-referrer"
-              />
-              <div className="relative z-10 flex justify-between items-center">
-                <span className="text-[9px] font-bold text-slate-300 bg-[#0D1B2A] px-1.5 py-0.2 rounded">
-                  #3 {sortedHotels[2].region}
-                </span>
-                <span className="text-[9px] font-mono text-slate-400">
-                  {((sortedHotels[2].totalJackpotUsd / totalRegionJackpot) * 100).toFixed(1)}%
-                </span>
-              </div>
-              <div className="relative z-10">
-                <h4 className="text-[11px] font-bold text-white line-clamp-1">{sortedHotels[2].name}</h4>
-                <p className="text-xs font-bold text-[#E2C28E] font-mono">
-                  {formatUsd(sortedHotels[2].totalJackpotUsd)}
-                </p>
-              </div>
-            </button>
-
-            {/* Top 4 ~ 6 Mid Tiles */}
-            {sortedHotels.slice(3, 6).map((h, idx) => (
-              <button
-                key={h.id}
-                onClick={() => handleHotelClick(h.id)}
-                className="col-span-4 rounded-lg p-2 flex flex-col justify-between text-left border border-[#1F334D] hover:border-[#C5A059]/50 bg-[#142336] transition"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[8px] font-bold text-[#C5A059]">{h.region}</span>
-                  <span className="text-[8px] text-slate-400 font-mono">#{idx + 4}</span>
-                </div>
-                <div>
-                  <h5 className="text-[10px] font-bold text-white truncate">{h.name}</h5>
-                  <p className="text-[10px] font-bold text-[#E2C28E] font-mono">{formatUsd(h.totalJackpotUsd)}</p>
-                </div>
-              </button>
-            ))}
-
-            {/* Top 7 ~ 18 Mini Grid */}
-            <div className="col-span-12 grid grid-cols-6 gap-1">
-              {sortedHotels.slice(6, 18).map((h, idx) => (
-                <button
-                  key={h.id}
-                  onClick={() => handleHotelClick(h.id)}
-                  className="rounded p-1 text-center bg-[#0E1A29] hover:bg-[#162639] border border-[#1F334D]/60 transition"
-                  title={`${h.name} (${h.region}) - ${formatUsd(h.totalJackpotUsd)}`}
-                >
-                  <span className="text-[8px] text-slate-400 block truncate">
-                    {h.region} • {h.name.split(' ')[0]}
-                  </span>
-                  <span className="text-[8px] font-mono font-bold text-[#E2C28E] block">
-                    ${(h.totalJackpotUsd / 1_000_000).toFixed(1)}M
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          /* Single Region Treemap */
+        {/* Single Region Treemap */}
+        
           <div className="grid grid-cols-2 gap-2 min-h-56 w-full bg-[#0D1B2A] p-2.5 rounded-2xl border border-[#1F334D]">
             {/* Region #1 Big Tile */}
             <button
@@ -240,7 +281,7 @@ export const JackpotMapScreen: React.FC = () => {
               }`}
             >
               <img
-                src={sortedHotels[0].image}
+                src={sortedHotels[0].image }
                 alt={sortedHotels[0].name}
                 className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-luminosity group-hover:scale-105 transition duration-500"
                 referrerPolicy="no-referrer"
@@ -268,7 +309,7 @@ export const JackpotMapScreen: React.FC = () => {
             </button>
 
             {/* Other hotels in the region */}
-            {sortedHotels.slice(1).map((h, idx) => (
+            {sortedHotels.slice(1, 3).map((h, idx) => (
               <button
                 key={h.id}
                 onClick={() => handleHotelClick(h.id)}
@@ -296,7 +337,6 @@ export const JackpotMapScreen: React.FC = () => {
               </button>
             ))}
           </div>
-        )}
       </div>
 
       {/* 3. Major Casinos List Section */}
@@ -305,7 +345,7 @@ export const JackpotMapScreen: React.FC = () => {
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <span className="material-symbols-outlined text-sm text-[#C5A059]">list_alt</span>
             <span>
-              {activeRegion === 'ALL' ? '전체 카지노 목록 (18개)' : `${activeRegion} 카지노 목록 (${filteredHotels.length}개)`}
+              {activeCountryIndex === 0 ? `전체 카지노 목록 (${filteredHotels.length}개)` : `${activeRegion} 카지노 목록 (${filteredHotels.length}개)`}
             </span>
           </h3>
           <span className="text-[11px] text-[#C5A059] font-mono">누적 잭팟 순</span>
@@ -321,7 +361,7 @@ export const JackpotMapScreen: React.FC = () => {
               <div className="flex items-center gap-3 overflow-hidden pr-2">
                 <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-[#1F334D]">
                   <img
-                    src={h.image}
+                    src={h.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80'}
                     alt={h.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                     referrerPolicy="no-referrer"

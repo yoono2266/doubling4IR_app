@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 
 export const BottomNav: React.FC = () => {
-  const { currentTab, setCurrentTab, setCurrentSubScreen } = useApp();
+  const { currentTab, setCurrentTab, setCurrentSubScreen, requireLogin } = useApp();
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -34,6 +34,7 @@ export const BottomNav: React.FC = () => {
   }, []);
 
   const handleTabClick = (tab: 'jackpot' | 'poly' | 'home' | 'freeroom' | 'my') => {
+    if (tab === 'my' && !requireLogin()) return;
     setCurrentTab(tab);
     setCurrentSubScreen(null);
   };
@@ -58,7 +59,7 @@ export const BottomNav: React.FC = () => {
         <span className="text-[11px] mt-0.5 tracking-tight">잭팟</span>
       </button>
 
-      {/* 2. Challenge (Prediction) */}
+      {/* 2. Poly Market */}
       <button
         onClick={() => handleTabClick('poly')}
         className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
@@ -70,7 +71,7 @@ export const BottomNav: React.FC = () => {
         <span className={`material-symbols-outlined text-2xl ${currentTab === 'poly' ? 'fill-1' : ''}`}>
           query_stats
         </span>
-        <span className="text-[11px] mt-0.5 tracking-tight">챌린지</span>
+        <span className="text-[11px] mt-0.5 tracking-tight">폴리</span>
       </button>
 
       {/* 3. Home (Center Highlight) */}
