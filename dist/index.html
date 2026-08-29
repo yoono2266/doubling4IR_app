@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>DOUBLING - Casino Hotel FreeRoom</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-512-maskable.png" />
+    <meta name="theme-color" content="#0D1B2A" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" rel="stylesheet" />
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              background: '#0D1B2A',
+              'background-deep': '#070E17',
+              surface: '#162639',
+              'surface-high': '#1F334D',
+              'surface-card': '#122030',
+              primary: '#C5A059',
+              'primary-light': '#E2C28E',
+              'primary-dark': '#9A7B3E',
+              tertiary: '#E2C28E',
+              'gold-border': 'rgba(197, 160, 89, 0.25)',
+              'gold-glow': 'rgba(197, 160, 89, 0.15)',
+              'on-background': '#F8F9FA'
+            },
+            fontFamily: {
+              sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif']
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #070e17;
+        color: #F8F9FA;
+        font-family: 'Pretendard', sans-serif;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        display: inline-block;
+        vertical-align: middle;
+      }
+      .material-symbols-outlined.fill-1 {
+        font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      
+      /* Hide scrollbar for Chrome, Safari and Opera */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      /* Hide scrollbar for IE, Edge and Firefox */
+      .no-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+      }
+
+      .gold-gradient-text {
+        background: linear-gradient(135deg, #FFF0D0 0%, #C5A059 50%, #E2C28E 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .gold-button-gradient {
+        background: linear-gradient(135deg, #C5A059 0%, #D4AF67 50%, #B89248 100%);
+      }
+
+      .gold-card-border {
+        border: 1px solid rgba(197, 160, 89, 0.25);
+      }
+
+      .shimmer {
+        background: linear-gradient(90deg, #c5a059 25%, #e2c28e 50%, #c5a059 75%);
+        background-size: 200% 100%;
+        animation: shimmer 2.5s infinite linear;
+      }
+      @keyframes shimmer {
+        to { background-position: -200% 0; }
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-Bs6eepjh.js"></script>
+  </head>
+  <body class="bg-[#070e17] text-white min-h-screen">
+    <div id="root"></div>
+  </body>
+</html>
