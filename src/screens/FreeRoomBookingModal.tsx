@@ -64,7 +64,7 @@ export const FreeRoomBookingModal: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-[#C5A059]">calendar_today</span>
             <div>
-              <h3 className="text-sm font-bold text-white">FreeRoom 예약 시스템</h3>
+              <h3 className="text-sm font-bold text-white">FreePlay 신청 시스템</h3>
               <p className="text-[10px] text-slate-400">{booking.hotelName}</p>
             </div>
           </div>
@@ -94,7 +94,7 @@ export const FreeRoomBookingModal: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <h4 className="text-sm font-bold text-white mb-1">투숙 희망 일정을 선택하세요</h4>
-                <p className="text-xs text-slate-300">FreeRoom 멤버십 자격으로 100% 코인 디포짓 예약이 진행됩니다.</p>
+                <p className="text-xs text-slate-300">FreePlay 멤버십 자격으로 100% 코인 디포짓 신청이 진행됩니다.</p>
               </div>
 
               <div className="space-y-2">
@@ -129,7 +129,7 @@ export const FreeRoomBookingModal: React.FC = () => {
                         </div>
                       </div>
                       <span className="text-xs font-extrabold text-[#E2C28E] font-mono">
-                        ${booking.pricePerNightUsdt * d.nights} USDT
+                        {(booking.pricePerNightDp * d.nights).toLocaleString()} 코인
                       </span>
                     </div>
                   );
@@ -190,7 +190,7 @@ export const FreeRoomBookingModal: React.FC = () => {
                     <span className="material-symbols-outlined text-[#C5A059] text-lg">restaurant</span>
                     <div>
                       <p className="text-xs font-bold text-white">조식 뷔페 포함</p>
-                      <p className="text-[10px] text-slate-400">박당 1인 50 USDT 추가</p>
+                      <p className="text-[10px] text-slate-400">박당 1인 50 코인 추가</p>
                     </div>
                   </div>
                   <input type="checkbox" checked={booking.options.breakfast} readOnly className="w-4 h-4 accent-[#C5A059]" />
@@ -205,7 +205,7 @@ export const FreeRoomBookingModal: React.FC = () => {
                     <span className="material-symbols-outlined text-[#C5A059] text-lg">local_bar</span>
                     <div>
                       <p className="text-xs font-bold text-white">VIP 클럽 라운지 패스</p>
-                      <p className="text-[10px] text-slate-400">박당 100 USDT 추가</p>
+                      <p className="text-[10px] text-slate-400">박당 100 코인 추가</p>
                     </div>
                   </div>
                   <input type="checkbox" checked={booking.options.loungeAccess} readOnly className="w-4 h-4 accent-[#C5A059]" />
@@ -220,7 +220,7 @@ export const FreeRoomBookingModal: React.FC = () => {
                     <span className="material-symbols-outlined text-[#C5A059] text-lg">airport_shuttle</span>
                     <div>
                       <p className="text-xs font-bold text-white">공항 VIP 샌딩 서비스</p>
-                      <p className="text-[10px] text-slate-400">1회 80 USDT 추가</p>
+                      <p className="text-[10px] text-slate-400">1회 80 코인 추가</p>
                     </div>
                   </div>
                   <input type="checkbox" checked={booking.options.airportTransfer} readOnly className="w-4 h-4 accent-[#C5A059]" />
@@ -234,7 +234,7 @@ export const FreeRoomBookingModal: React.FC = () => {
                   <span className="text-xs text-slate-300">{booking.nights}박 / {booking.guests}인 투숙</span>
                 </div>
                 <span className="text-lg font-extrabold text-[#E2C28E] font-mono">
-                  {booking.totalUsdt.toLocaleString()} USDT
+                  {booking.totalDp.toLocaleString()} 코인
                 </span>
               </div>
 
@@ -308,11 +308,11 @@ export const FreeRoomBookingModal: React.FC = () => {
               <div className="bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D] text-xs space-y-1">
                 <div className="flex justify-between text-slate-400">
                   <span>결제 예정 금액:</span>
-                  <span className="font-mono font-bold text-white">{booking.totalUsdt.toLocaleString()} USDT</span>
+                  <span className="font-mono font-bold text-white">{booking.totalDp.toLocaleString()} 코인</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>현재 보유 코인:</span>
-                  <span className="font-mono font-bold text-[#E2C28E]">{user.walletUsdt.toLocaleString()} USDT</span>
+                  <span className="font-mono font-bold text-[#E2C28E]">{user.walletCoin.toLocaleString()} 코인</span>
                 </div>
               </div>
 
@@ -335,15 +335,15 @@ export const FreeRoomBookingModal: React.FC = () => {
               </div>
 
               <div>
-                <h4 className="text-lg font-bold text-white">FreeRoom 예약 및 결제 완료!</h4>
+                <h4 className="text-lg font-bold text-white">FreePlay 신청 및 결제 완료!</h4>
                 <p className="text-xs text-slate-300 mt-1">
-                  예약 내역이 즉시 확정되었으며 코인 월렛 차감이 완료되었습니다.
+                  신청 내역이 즉시 확정되었으며 코인 월렛 차감이 완료되었습니다.
                 </p>
               </div>
 
               <div className="bg-[#162639] border border-[#1F334D] p-4 rounded-2xl text-left space-y-2 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">예약 호텔:</span>
+                  <span className="text-slate-400">신청 호텔:</span>
                   <span className="font-bold text-white">{booking.hotelName}</span>
                 </div>
                 <div className="flex justify-between">
@@ -352,10 +352,10 @@ export const FreeRoomBookingModal: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">결제 금액:</span>
-                  <span className="font-mono font-bold text-[#E2C28E]">{booking.totalUsdt.toLocaleString()} USDT</span>
+                  <span className="font-mono font-bold text-[#E2C28E]">{booking.totalDp.toLocaleString()} 코인</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">예약 상태:</span>
+                  <span className="text-slate-400">신청 상태:</span>
                   <span className="font-bold text-emerald-400">확정 (Confirmed)</span>
                 </div>
               </div>
@@ -368,7 +368,7 @@ export const FreeRoomBookingModal: React.FC = () => {
                   }}
                   className="py-3 rounded-xl bg-[#162639] border border-[#C5A059] text-[#C5A059] font-bold text-xs hover:bg-[#1F334D]"
                 >
-                  마이 &gt; 예약 내역 확인
+                  마이 &gt; 신청 내역 확인
                 </button>
                 <button
                   onClick={() => setCurrentSubScreen(null)}

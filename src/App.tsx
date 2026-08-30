@@ -7,10 +7,15 @@ import { BottomNav } from './components/BottomNav';
 import { FreeRoomStickyBanner } from './components/FreeRoomStickyBanner';
 import { HomeScreen } from './screens/HomeScreen';
 import { JackpotMapScreen } from './screens/JackpotMapScreen';
+import { HotelJackpotDetailScreen } from './screens/HotelJackpotDetailScreen';
+import { JackpotHistoryScreen } from './screens/JackpotHistoryScreen';
 import { PolyMarketScreen } from './screens/PolyMarketScreen';
+import { PolyMarketDetailScreen } from './screens/PolyMarketDetailScreen';
 import { FreeRoomScreen } from './screens/FreeRoomScreen';
 import { MyPageScreen } from './screens/MyPageScreen';
 import { FreeRoomBookingModal } from './screens/FreeRoomBookingModal';
+import { GamingRoomBookingModal } from './screens/GamingRoomBookingModal';
+import { DiningBookingModal } from './screens/DiningBookingModal';
 import { WritePostModal } from './screens/WritePostModal';
 import { PostDetailScreen } from './screens/PostDetailScreen';
 import { LoginScreen } from './screens/LoginScreen';
@@ -19,6 +24,7 @@ import { EmailVerifyScreen } from './screens/EmailVerifyScreen';
 import { LandingScreen } from './screens/LandingScreen';
 import { PwaInstallBanner } from './components/PwaInstallBanner';
 import { hasStoredSession } from './utils/auth';
+import { useAppHistory } from './hooks/useAppHistory';
 
 const AppContent: React.FC = () => {
   const {
@@ -30,6 +36,7 @@ const AppContent: React.FC = () => {
     toastMessage,
     setCurrentTab,
     setCurrentSubScreen,
+    setShowWriteModal,
     showToast
   } = useApp();
 
@@ -42,6 +49,18 @@ const AppContent: React.FC = () => {
   const handleLandingStart = () => {
     setShowLanding(false);
   };
+
+  // 브라우저/기기 뒤로가기를 앱 내부 이동으로 처리 (라우터가 없어 직접 관리)
+  useAppHistory({
+    location: { showLanding, currentTab, currentSubScreen, showWriteModal },
+    restore: (loc) => {
+      setShowLanding(loc.showLanding);
+      setCurrentTab(loc.currentTab as typeof currentTab);
+      setCurrentSubScreen(loc.currentSubScreen);
+      setShowWriteModal(loc.showWriteModal);
+    },
+    onExitHint: () => showToast('뒤로가기를 한 번 더 누르면 종료됩니다.'),
+  });
 
   useEffect(() => {
     // 모바일 네이티브 푸시 알림 설정
@@ -144,12 +163,20 @@ const AppContent: React.FC = () => {
                 <LoginScreen />
               ) : currentSubScreen === 'post-detail' ? (
                 <PostDetailScreen />
+              ) : currentSubScreen === 'hotel-jackpot-detail' ? (
+                <HotelJackpotDetailScreen />
+              ) : currentSubScreen === 'jackpot-history' ? (
+                <JackpotHistoryScreen />
+              ) : currentSubScreen === 'poly-market-detail' ? (
+                <PolyMarketDetailScreen />
               ) : (
                 renderTabContent()
               )}
             </main>
 
             {currentSubScreen === 'freeroom-booking' && <FreeRoomBookingModal />}
+            {currentSubScreen === 'gaming-room-booking' && <GamingRoomBookingModal />}
+            {currentSubScreen === 'dining-booking' && <DiningBookingModal />}
             {showWriteModal && <WritePostModal />}
 
             {toastMessage && (

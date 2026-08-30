@@ -5,13 +5,44 @@ export interface MyProfile {
   memberReward: any;
 }
 
+// 더블링 5단계 멤버십 등급
+export type MembershipTierId = 'BAND' | 'HALO' | 'ETERNITY' | 'SOLITAIRE' | 'CROWN';
+
+export interface MembershipTierInfo {
+  id: MembershipTierId;
+  name: string;
+  englishName: string;
+  koreanName: string;
+  color: string;
+  trimColor?: string;
+  thresholdScore: number;
+  icon: string;
+  jewelryConcept: string;
+  benefits: string[];
+}
+
+export interface TierAccrualRecord {
+  id: string;
+  sourceType: '체크인' | '객실' | '식음료';
+  hotelName: string;
+  score: number;
+  date: string;
+  description: string;
+}
+
+export type CompBenefitType = 'freeplay_suite' | 'gaming_room' | 'dining';
+
 export interface UserPersona {
   name: string;
   title: string;
   company: string;
   ageGroup: string;
   membership: 'White' | 'Silver' | 'Gold' | 'Diamond';
-  walletDp: number;
+  membershipTier: MembershipTierId;
+  tierScore: number;
+  tierExpiration: string;
+  walletDp: number; // 예측 챌린지 투표 전용 포인트 (무료 지급, 현금화 불가)
+  walletCoin: number; // FreePlay(호텔) 신청 디포짓 및 유료 결제용 코인
   referralCode: string;
   avatar: string;
 }
@@ -48,15 +79,19 @@ export interface Post {
 
 export interface Reservation {
   id: string;
+  benefitType?: CompBenefitType;
   hotelName: string;
   hotelLocation: string;
   roomType: string;
   checkIn: string;
-  checkOut: string;
-  nights: number;
+  checkOut?: string;
+  timeSlot?: string;
+  nights?: number;
   guests: number;
-  totalDp: number;
-  status: '확정' | '대기' | '취소';
+  optionsList?: string[];
+  totalDp?: number;
+  totalCoins?: number;
+  status: '확정' | '대기' | '취소' | '심사중' | '승인완료';
   createdAt: string;
   image: string;
   qrCode?: string;
@@ -80,8 +115,16 @@ export interface PolyVote {
   choice: string; // 'YES', 'NO', or Candidate name
   amountDp: number; // 100 DP
   currentOdds: string;
-  status: '진행중' | '종료';
+  status: '진행중' | '종료' | '완료';
   date: string;
+  // 예측 챌린지 투표 플로우 / 포트폴리오(배포 기준)에서 추가 사용하는 선택 필드
+  initialOdds?: string;
+  oddsChangeText?: string;
+  expectedPayoutDp?: number;
+  unrealizedPnlDp?: number;
+  settleType?: 'MAJORITY_WIN' | 'MINORITY_WIN' | 'LOSS' | 'EARLY_EXIT';
+  settledPayoutDp?: number;
+  settledDate?: string;
 }
 
 export interface SettingsState {

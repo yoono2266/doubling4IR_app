@@ -10,7 +10,7 @@ export const FreeRoomScreen: React.FC = () => {
     subtitle: 'Luxury Oceanfront Resort & Casino Suite',
     location: 'New Manila Bay, Paranaque, Metro Manila',
     roomType: 'Executive Ocean View Suite (110m²)',
-    pricePerNightUsdt: 600,
+    pricePerNightDp: 600, // FreePlay 카탈로그 박당 디포짓 (코인)
     rating: 4.9,
     reviewsCount: 328,
     images: [
@@ -35,7 +35,7 @@ export const FreeRoomScreen: React.FC = () => {
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-[#C5A059]">workspace_premium</span>
-            FreeRoom VIP 호텔 바우처
+            FreePlay VIP 호텔 바우처
           </h2>
           <p className="text-xs text-slate-400">더블링 멤버십 프리미엄 호텔 스위트룸 카탈로그</p>
         </div>
@@ -52,7 +52,7 @@ export const FreeRoomScreen: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-[#0D1B2A] via-transparent to-transparent"></div>
 
           <div className="absolute top-3 left-3 bg-[#C5A059] text-[#0D1B2A] font-extrabold text-[10px] px-2.5 py-1 rounded-full uppercase shadow">
-            FreeRoom 추천 1위
+            FreePlay 추천 1위
           </div>
 
           <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
@@ -81,7 +81,7 @@ export const FreeRoomScreen: React.FC = () => {
           <div className="text-right">
             <span className="text-[10px] text-slate-400 block">박당 디포짓</span>
             <span className="text-base font-extrabold text-[#E2C28E] font-mono">
-              {hotel.pricePerNightUsdt} <span className="text-xs text-slate-400">USDT</span>
+              {hotel.pricePerNightDp.toLocaleString()} <span className="text-xs text-slate-400">코인</span>
             </span>
           </div>
         </div>
@@ -110,14 +110,14 @@ export const FreeRoomScreen: React.FC = () => {
                 name: hotel.name,
                 location: hotel.location,
                 roomType: hotel.roomType,
-                pricePerNightUsdt: hotel.pricePerNightUsdt,
+                pricePerNightDp: hotel.pricePerNightDp,
                 image: hotel.images[0]
               });
             }}
             className="w-full py-3.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-sm shadow-xl hover:brightness-110 active:scale-[0.98] transition flex items-center justify-center gap-2"
           >
             <span className="material-symbols-outlined text-base">calendar_month</span>
-            <span>일정 선택 및 FreeRoom 예약하기</span>
+            <span>일정 선택 및 FreePlay 신청하기</span>
           </button>
         </div>
       </div>

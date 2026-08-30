@@ -35,7 +35,7 @@ export const FreeRoomStickyBanner: React.FC = () => {
       name: 'Okada Manila (오카다 마닐라)',
       location: 'New Manila Bay, Philippines',
       roomType: 'Executive Ocean View Suite',
-      pricePerNightUsdt: 600,
+      pricePerNightDp: 600,
       image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80'
     });
   };
@@ -57,18 +57,18 @@ export const FreeRoomStickyBanner: React.FC = () => {
           <div className="overflow-hidden">
             <div className="flex items-center gap-1.5">
               <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#C5A059] text-[#0D1B2A] font-extrabold uppercase tracking-tight">
-                FreeRoom 바우처
+                FreePlay 바우처
               </span>
               <span className="text-[10px] text-[#E2C28E] font-medium font-mono">2박 무료 / 버틀러 특전</span>
             </div>
             <h4 className="text-xs font-extrabold text-white truncate mt-0.5 group-hover:text-[#E2C28E] transition">
-              오카다 마닐라 오션뷰 스위트 즉시 예약
+              오카다 마닐라 오션뷰 스위트 즉시 신청
             </h4>
           </div>
         </div>
 
         <button className="flex-shrink-0 px-3 py-1.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-black text-xs shadow-md group-hover:brightness-110 transition">
-          예약하기
+          신청하기
         </button>
       </div>
     </div>

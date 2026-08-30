@@ -1,5 +1,6 @@
 import React from 'react';
 import { Post, useApp } from '../context/AppContext';
+import { displayLikeCount, displayBookmarkCount } from '../data/mockCounts';
 
 interface VideoPromoCardProps {
   post: Post;
@@ -98,7 +99,7 @@ export const VideoPromoCard: React.FC<VideoPromoCardProps> = ({ post }) => {
             <span className={`material-symbols-outlined text-base ${post.is_user_liked ? 'text-rose-400 fill-1' : ''}`}>
               favorite
             </span>
-            <span className="text-xs font-mono">{post.count_like || 0}</span>
+            <span className="text-xs font-mono">{displayLikeCount(post.tb_index, post.count_like)}</span>
           </button>
 
           {/* 💡 북마크 토글 버튼 */}
@@ -114,7 +115,7 @@ export const VideoPromoCard: React.FC<VideoPromoCardProps> = ({ post }) => {
             <span className={`material-symbols-outlined text-base ${post.is_user_bookmarked ? 'text-[#C5A059] fill-1' : ''}`}>
               bookmark
             </span>
-            <span className="text-xs font-mono">{post.count_bookmark || 0}</span>
+            <span className="text-xs font-mono">{displayBookmarkCount(post.tb_index, post.count_bookmark)}</span>
           </button>
 
 

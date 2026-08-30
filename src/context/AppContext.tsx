@@ -10,9 +10,12 @@ import {
   PolyVote,
   SettingsState,
   BookingFlowState,
-  SocialSignupInfo
+  SocialSignupInfo,
+  TierAccrualRecord
 } from '../types';
 import { PolyMarketItem, INITIAL_POLY_MARKETS } from '../data/polyMarketData';
+import { INITIAL_TIER_RECORDS } from '../data/membershipData';
+import { STREAK_MILESTONES, STREAK_MAX_DAYS } from '../data/streakData';
 
 interface AppContextType {
   user: UserPersona;
@@ -37,11 +40,20 @@ interface AppContextType {
   reservations: Reservation[];
   addReservation: (res: Omit<Reservation, 'id' | 'createdAt'>) => void;
 
+  // 멤버십 Tier Score 적립 내역 (mock)
+  tierRecords: TierAccrualRecord[];
+  addTierRecord: (record: Omit<TierAccrualRecord, 'id'>) => void;
+
+  // 현재 투숙(체크인) 상태 (IR 데모용 mock)
+  hasActiveTrip: boolean;
+  setHasActiveTrip: React.Dispatch<React.SetStateAction<boolean>>;
+
   walletTransactions: WalletTransaction[];
   polyVotes: PolyVote[];polyMarkets: PolyMarketItem[];
   selectedMarket: PolyMarketItem | null;
   setSelectedMarket: (market: PolyMarketItem | null) => void;
-  castPolyVote: (marketId: string, title: string, category: string, choice: string, odds: string) => { success: boolean; isRevote: boolean; prevChoice?: string; msg?: string };
+  castPolyVote: (marketId: string, title: string, category: string, choice: string, odds: string, amountDp?: number) => { success: boolean; isRevote: boolean; prevChoice?: string; prevAmount?: number; participationRewardDp?: number; msg?: string };
+  earlyExitPolyVote: (voteId: string) => { success: boolean; returnDp: number };
   getUserVoteForMarket: (marketId: string) => PolyVote | undefined;
 
   settings: SettingsState;
@@ -50,7 +62,7 @@ interface AppContextType {
   // Booking Flow State
   booking: BookingFlowState;
   setBooking: React.Dispatch<React.SetStateAction<BookingFlowState>>;
-  startBooking: (hotel: { name: string; location: string; roomType: string; pricePerNightUsdt: number; image: string }) => void;
+  startBooking: (hotel: { name: string; location: string; roomType: string; pricePerNightDp: number; image: string }) => void;
   completePayment: () => void;
 
   // UI state
@@ -67,6 +79,15 @@ interface AppContextType {
 
   // 💡 로그인 세션 확인 및 DP 등 최신 회원 정보 갱신 (/member/uchk)
   refreshLogin: () => Promise<boolean>;
+
+  // 오늘의 로그인 보너스 지급 (mock: walletDp에 +150, 실제 정산 연동 아님)
+  grantLoginBonus: () => void;
+
+  // 연속 출석 스트릭 (mock 상태, 새로고침 시 초기값으로 리셋)
+  attendanceStreak: number;
+  claimedStreakMilestones: number[];
+  checkInStreak: () => void;
+  claimStreakReward: (days: number) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -129,16 +150,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   // Initial Persona Preset
+  // 💡 walletDp / walletCoin 모두 mock 잔액입니다. 실제 결제/충전 연동이 아니라
+  //    AppContext 메모리 시뮬레이션이며, 새로고침 시 초기값으로 리셋됩니다.
+  //    - walletDp: 예측 챌린지 투표 전용 (무료 지급, 현금화 불가)
+  //    - walletCoin: FreePlay 신청 디포짓 및 유료 결제용 (실결제 미연동)
   const [user, setUser] = useState<UserPersona>({
     name: 'Kevin',
     title: '',
     company: 'DOUBLING VIP',
     ageGroup: '50대',
     membership: 'Silver',
+    membershipTier: 'ETERNITY',
+    tierScore: 2150,
+    tierExpiration: '2028년 1월 31일까지',
     walletDp: 20000,
+    walletCoin: 5000,
     referralCode: 'KEVIN-VIP-2026',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
   });
+
+  // 현재 투숙(체크인) 상태 — IR 데모용 mock (초기값 false)
+  const [hasActiveTrip, setHasActiveTrip] = useState<boolean>(false);
+
+  // 멤버십 Tier Score 적립 내역 (mock)
+  const [tierRecords, setTierRecords] = useState<TierAccrualRecord[]>(INITIAL_TIER_RECORDS);
+  const addTierRecord = (record: Omit<TierAccrualRecord, 'id'>) => {
+    const newRecord: TierAccrualRecord = { ...record, id: `tr-${Date.now()}` };
+    setTierRecords(prev => [newRecord, ...prev]);
+    setUser(prev => ({ ...prev, tierScore: prev.tierScore + record.score }));
+  };
 
   // Settings state
   const [settings, setSettings] = useState<SettingsState>({
@@ -295,21 +335,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Reservations with DP
+  // FreePlay 신청 내역 — 배포 기준: FreePlay 스위트 / 멤버십 게이밍룸 / 멤버십 다이닝 3종
   const [reservations, setReservations] = useState<Reservation[]>([
     {
       id: 'RES-8921',
+      benefitType: 'freeplay_suite',
       hotelName: 'Okada Manila (오카다 마닐라)',
       hotelLocation: 'Manila, Philippines',
       roomType: 'Executive Ocean View Suite',
-      checkIn: '2026.07.10',
-      checkOut: '2026.07.12',
+      checkIn: '2026.08.15',
+      checkOut: '2026.08.17',
       nights: 2,
       guests: 2,
-      totalDp: 1200,
+      totalCoins: 1200,
       status: '확정',
-      createdAt: '2026.07.01',
+      createdAt: '2026.08.01',
       image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80'
+    },
+    {
+      id: 'RES-7412',
+      benefitType: 'gaming_room',
+      hotelName: 'Okada Manila (오카다 마닐라)',
+      hotelLocation: 'Manila, Philippines',
+      roomType: '프라이빗 VIP 살롱',
+      checkIn: '2026.09.05',
+      guests: 4,
+      optionsList: ['하이리밋 테이블', 'VIP 케이터링', '전담 호스트 대기'],
+      totalCoins: 0,
+      status: '승인완료',
+      createdAt: '2026.08.18',
+      image: 'https://images.unsplash.com/photo-1511193311914-0346f16efe90?w=800&auto=format&fit=crop&q=80'
+    },
+    {
+      id: 'RES-6190',
+      benefitType: 'dining',
+      hotelName: 'Okada Manila (La Piazza VIP Dining)',
+      hotelLocation: 'Manila, Philippines',
+      roomType: '미쉐린 VIP 파인다이닝',
+      checkIn: '2026.09.12',
+      timeSlot: '디너 1부 (18:00-20:00)',
+      guests: 2,
+      optionsList: ['VIP 프라이빗 룸', '스페셜 테이스팅 코스', '웰컴 샴페인 세트'],
+      totalCoins: 0,
+      status: '승인완료',
+      createdAt: '2026.08.20',
+      image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&auto=format&fit=crop&q=80'
     }
   ]);
 
@@ -335,29 +405,98 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   ]);
 
-  // Poly Market Votes with 100 DP fixed amount
+  // Poly Market Votes — 배포 기준: 100/500/1,000/5,000 DP 프리셋 중 선택하여 매수
   const [polyVotes, setPolyVotes] = useState<PolyVote[]>([
     {
       id: 'pv-1',
-      marketId: 'pm-social-1',
-      title: '비트코인(BTC) 2026 Q3 내 $100,000 도달 여부',
-      category: 'Crypto',
+      marketId: 'pm-ent-2',
+      title: '국내 대형 아이돌 그룹, 2026년 내 도쿄돔 단독 공연 성사',
+      category: '연예',
       choice: 'YES',
-      amountDp: 100,
+      amountDp: 500,
       currentOdds: '68%',
+      initialOdds: '62%',
+      oddsChangeText: '매수 시 62% → 현재 68%',
+      expectedPayoutDp: 735,
+      unrealizedPnlDp: 85,
       status: '진행중',
       date: '2026.08.02'
     },
     {
       id: 'pv-2',
-      marketId: 'pm-social-2',
-      title: '미 연준(Fed) 차기 FOMC 기준금리 50bp 빅컷 단행 여부',
-      category: 'Macro',
+      marketId: 'pm-ent-1',
+      title: '올해 연말 글로벌 팝 시상식, K-POP 아티스트 종합 대상 수상 여부',
+      category: '연예',
       choice: 'NO',
-      amountDp: 100,
-      currentOdds: '58%',
+      amountDp: 1000,
+      currentOdds: '35%',
+      initialOdds: '42%',
+      oddsChangeText: '매수 시 42% → 현재 35%',
+      expectedPayoutDp: 2850,
+      unrealizedPnlDp: -140,
       status: '진행중',
       date: '2026.08.05'
+    },
+    {
+      id: 'pv-3',
+      marketId: 'pm-pol-1',
+      title: '2027 차기 국제 기후정상회의(COP), 아시아 권역 개최국 확정 여부',
+      category: '정치',
+      choice: 'YES',
+      amountDp: 500,
+      currentOdds: '65%',
+      initialOdds: '58%',
+      oddsChangeText: '매수 시 58% → 현재 65%',
+      expectedPayoutDp: 770,
+      unrealizedPnlDp: 55,
+      status: '진행중',
+      date: '2026.08.10'
+    },
+    // 정산 완료된 포지션
+    {
+      id: 'pv-settled-1',
+      marketId: 'pm-old-1',
+      title: '2026 하반기 주요 금융 규제 완화 법안 국회 본회의 통과 여부',
+      category: '사회',
+      choice: 'YES',
+      amountDp: 500,
+      currentOdds: '78%',
+      expectedPayoutDp: 640,
+      status: '완료',
+      settleType: 'MAJORITY_WIN',
+      settledPayoutDp: 140,
+      date: '2026.07.18',
+      settledDate: '2026.07.28'
+    },
+    {
+      id: 'pv-settled-2',
+      marketId: 'pm-old-2',
+      title: '글로벌 AI 컨퍼런스 기조연설자 깜짝 신모델 현장 공개',
+      category: '연예',
+      choice: 'YES',
+      amountDp: 1000,
+      currentOdds: '22%',
+      expectedPayoutDp: 4540,
+      status: '완료',
+      settleType: 'MINORITY_WIN',
+      settledPayoutDp: 3540,
+      date: '2026.07.20',
+      settledDate: '2026.07.25'
+    },
+    {
+      id: 'pv-settled-3',
+      marketId: 'pm-old-3',
+      title: '여름 시즌 개봉 블록버스터 영화 첫 주 관객 500만 돌파 여부',
+      category: '연예',
+      choice: 'YES',
+      amountDp: 500,
+      currentOdds: '55%',
+      expectedPayoutDp: 900,
+      status: '완료',
+      settleType: 'LOSS',
+      settledPayoutDp: -500,
+      date: '2026.07.15',
+      settledDate: '2026.07.22'
     }
   ]);
 
@@ -365,88 +504,121 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return polyVotes.find(v => v.marketId === marketId || v.title === marketId);
   };
 
-  // Fixed 100 DP vote logic supporting re-voting
+  // 예측 챌린지 투표 로직 (배포 기준).
+  // - 신규 투표: 선택한 프리셋 금액(amountDp) 차감 + 참여 즉시 보상 +50 DP 지급
+  // - 재투표: 금액 증감분(netDiff)만 정산하고 선택/오즈/금액 갱신
+  // 💡 walletDp는 AppContext mock 잔액이며 실제 정산 연동이 아닙니다.
   const castPolyVote = (
     marketId: string,
     title: string,
     category: string,
     choice: string,
-    odds: string
-  ): { success: boolean; isRevote: boolean; prevChoice?: string; msg?: string } => {
+    odds: string,
+    amountDp: number = 100
+  ): { success: boolean; isRevote: boolean; prevChoice?: string; prevAmount?: number; participationRewardDp?: number; msg?: string } => {
     const existingVoteIndex = polyVotes.findIndex(v => v.marketId === marketId || v.title === title);
+    const PARTICIPATION_REWARD = 50; // 참여 즉시 보상 +50 DP
+
+    // 오즈 기반 적중 시 예상 획득 DP 계산
+    const oddsNum = parseInt(odds.replace(/[^0-9]/g, '')) || 50;
+    const prob = Math.max(0.05, Math.min(0.95, oddsNum / 100));
+    const calculatedPayout = Math.round(amountDp / prob);
 
     if (existingVoteIndex >= 0) {
       const existingVote = polyVotes[existingVoteIndex];
       const prevChoice = existingVote.choice;
+      const prevAmount = existingVote.amountDp || 100;
+      const newAmount = amountDp || prevAmount;
+      const netDiff = newAmount - prevAmount;
 
-      // Re-voting replaces choice without deducting extra DP (or maintains 100 DP position)
+      // 재투표 시 금액을 늘리면 추가 DP 필요 여부 확인
+      if (netDiff > 0 && user.walletDp < netDiff) {
+        showToast(`보유 DP가 부족합니다. (추가 필요: ${netDiff.toLocaleString()} DP)`);
+        return { success: false, isRevote: true, prevChoice, prevAmount, msg: 'DP 부족' };
+      }
+
+      if (netDiff !== 0) {
+        setUser(prev => ({ ...prev, walletDp: prev.walletDp - netDiff }));
+      }
+
       setPolyVotes(prev => {
         const next = [...prev];
         next[existingVoteIndex] = {
           ...existingVote,
           choice,
+          amountDp: newAmount,
           currentOdds: odds,
+          expectedPayoutDp: calculatedPayout,
           date: new Date().toISOString().split('T')[0].replace(/-/g, '.')
         };
         return next;
       });
 
-      // Add a re-vote transaction log
-      const tx: WalletTransaction = {
-        id: `TX-${Date.now().toString().slice(-4)}`,
-        type: '배팅',
-        title: `폴리마켓 투표 변경: [${prevChoice}] → [${choice}]`,
-        amount: 0,
-        date: new Date().toLocaleString('ko-KR', { hour12: false }),
-        txHash: `0x${Math.random().toString(16).substring(2, 10)}...`,
-        status: '완료'
-      };
-      setWalletTransactions(prev => [tx, ...prev]);
-
-      showToast(`투표가 [${choice}]로 성공적으로 변경되었습니다.`);
-      return { success: true, isRevote: true, prevChoice };
+      showToast(`투표가 [${choice}] (${newAmount.toLocaleString()} DP)로 성공적으로 변경되었습니다.`);
+      return { success: true, isRevote: true, prevChoice, prevAmount };
     }
 
-    // New vote: check DP balance
-    if (user.walletDp < 100) {
-      showToast('보유 DP가 부족합니다. (최소 100 DP 필요)');
+    // 신규 투표: 선택한 프리셋 금액만큼 보유 DP 확인
+    if (user.walletDp < amountDp) {
+      showToast(`보유 DP가 부족합니다. (${amountDp.toLocaleString()} DP 필요)`);
       return { success: false, isRevote: false, msg: 'DP 부족' };
     }
 
-    // Deduct 100 DP
-    setUser(prev => ({ ...prev, walletDp: prev.walletDp - 100 }));
+    // 최종 잔액 = 기존잔액 - 매수액 + 참여 즉시 보상(+50)
+    const netDpChange = -amountDp + PARTICIPATION_REWARD;
+    setUser(prev => ({ ...prev, walletDp: prev.walletDp + netDpChange }));
 
-    // Add transaction
-    const tx: WalletTransaction = {
-      id: `TX-${Date.now().toString().slice(-4)}`,
-      type: '배팅',
-      title: `폴리마켓 투표 참여: ${choice} (${title.slice(0, 16)}...)`,
-      amount: -100,
-      date: new Date().toLocaleString('ko-KR', { hour12: false }),
-      txHash: `0x${Math.random().toString(16).substring(2, 10)}...`,
-      status: '완료'
-    };
-    setWalletTransactions(prev => [tx, ...prev]);
-
-    // Add new vote record
     const newVote: PolyVote = {
       id: `pv-${Date.now()}`,
       marketId,
       title,
       category,
       choice,
-      amountDp: 100,
+      amountDp,
       currentOdds: odds,
+      initialOdds: odds,
+      oddsChangeText: `매수 시 ${odds} → 현재 ${odds}`,
+      expectedPayoutDp: calculatedPayout,
+      unrealizedPnlDp: Math.round(amountDp * 0.08),
       status: '진행중',
       date: new Date().toISOString().split('T')[0].replace(/-/g, '.')
     };
     setPolyVotes(prev => [newVote, ...prev]);
 
-    showToast(`폴리마켓 [${choice}]에 100 DP 투표가 완료되었습니다!`);
-    return { success: true, isRevote: false };
+    showToast(`예측 투표 완료! 참여 즉시 보상 +${PARTICIPATION_REWARD} DP가 지급되었습니다.`);
+    return { success: true, isRevote: false, participationRewardDp: PARTICIPATION_REWARD };
   };
 
-  // FreeRoom Interactive Booking State Flow with DP
+  // 진행중 포지션 조기 정리 (원금 + 잠재손익 즉시 반환, 정산 완료 처리)
+  const earlyExitPolyVote = (voteId: string): { success: boolean; returnDp: number } => {
+    const voteIndex = polyVotes.findIndex(v => v.id === voteId);
+    if (voteIndex < 0) return { success: false, returnDp: 0 };
+
+    const vote = polyVotes[voteIndex];
+    if (vote.status !== '진행중') return { success: false, returnDp: 0 };
+
+    const returnDp = Math.max(10, (vote.amountDp || 100) + (vote.unrealizedPnlDp || 0));
+    setUser(prev => ({ ...prev, walletDp: prev.walletDp + returnDp }));
+
+    setPolyVotes(prev => {
+      const next = [...prev];
+      next[voteIndex] = {
+        ...vote,
+        status: '완료',
+        settleType: 'EARLY_EXIT',
+        settledPayoutDp: vote.unrealizedPnlDp || 0,
+        settledDate: new Date().toISOString().split('T')[0].replace(/-/g, '.')
+      };
+      return next;
+    });
+
+    showToast(`포지션이 조기 정리되어 ${returnDp.toLocaleString()} DP가 지갑에 환급되었습니다.`);
+    return { success: true, returnDp };
+  };
+
+  // FreePlay(호텔) 신청 플로우 상태.
+  // 💡 BookingFlowState의 pricePerNightDp / totalDp 필드는 레거시 명칭이며,
+  //    실제로는 "코인" 결제 금액을 담습니다(결제 시 user.walletCoin에서 차감).
   const [booking, setBooking] = useState<BookingFlowState>({
     step: 'detail',
     hotelName: 'Okada Manila (오카다 마닐라)',
@@ -480,8 +652,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   }, [booking.nights, booking.guests, booking.options, booking.pricePerNightDp]);
 
-  const startBooking = (hotel: { name: string; location: string; roomType: string; pricePerNightUsdt?: number; pricePerNightDp?: number; image: string }) => {
-    const unitPrice = hotel.pricePerNightDp || hotel.pricePerNightUsdt || 600;
+  const startBooking = (hotel: { name: string; location: string; roomType: string; pricePerNightDp?: number; image: string }) => {
+    const unitPrice = hotel.pricePerNightDp || 600; // 코인 단가
     setBooking({
       step: 'date',
       hotelName: hotel.name,
@@ -503,12 +675,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentSubScreen('freeroom-booking');
   };
 
-  // Complete Payment: Immediate state updates to Reservations & Coin Wallet (DP)
+  // FreePlay 신청 결제 완료 처리.
+  // 💡 mock 잔액(user.walletCoin)에서 차감하는 시뮬레이션이며 실제 결제 연동이 아닙니다.
   const completePayment = () => {
-    // 1. Deduct DP balance
+    // 1. 코인 잔액 차감 (FreePlay 디포짓/결제는 코인으로만 처리)
     setUser(prev => ({
       ...prev,
-      walletDp: Math.max(0, prev.walletDp - booking.totalDp)
+      walletCoin: Math.max(0, prev.walletCoin - booking.totalDp)
     }));
 
     // 2. Add to Reservations with "확정" status
@@ -529,7 +702,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const tx: WalletTransaction = {
       id: `TX-${Math.floor(1000 + Math.random() * 9000)}`,
       type: '예약 결제',
-      title: `FreeRoom 예약 (${booking.hotelName})`,
+      title: `FreePlay 신청 (${booking.hotelName})`,
       amount: -booking.totalDp,
       date: new Date().toLocaleString('ko-KR', { hour12: false }),
       txHash: `0x${Math.random().toString(16).substring(2, 10)}...f32a`,
@@ -538,9 +711,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setWalletTransactions(prev => [tx, ...prev]);
 
     setBooking(prev => ({ ...prev, step: 'success' }));
-    showToast('예약 및 DP 결제가 완료되었습니다!');
+    showToast('신청 및 코인 결제가 완료되었습니다!');
   };
   
+  // 오늘의 로그인 보너스.
+  // 💡 mock: AppContext 메모리의 walletDp에만 +150 하는 시뮬레이션이며,
+  //    실제 보너스 정산/서버 반영이 아닙니다. 새로고침 시 초기값으로 리셋됩니다.
+  const LOGIN_BONUS_DP = 150;
+  const grantLoginBonus = () => {
+    setUser(prev => ({ ...prev, walletDp: prev.walletDp + LOGIN_BONUS_DP }));
+  };
+
+  // 연속 출석 스트릭.
+  // 💡 mock 상태입니다. attendanceStreak / claimedStreakMilestones 모두 AppContext 메모리에만
+  //    존재하며, 실제 출석 서버 반영이 아니고 새로고침 시 초기값으로 리셋됩니다.
+  const [attendanceStreak, setAttendanceStreak] = useState<number>(7); // 데모 시작값: 7일째 (배포 기준과 동일)
+  const [claimedStreakMilestones, setClaimedStreakMilestones] = useState<number[]>([3]); // 3일 보상은 수령했다고 가정
+
+  // 오늘 출석 체크 → 연속일수 +1 (최대 30일에서 멈춤). mock 편의상 하루 1회 제한은 두지 않음.
+  const checkInStreak = () => {
+    setAttendanceStreak(prev => {
+      if (prev >= STREAK_MAX_DAYS) {
+        showToast('이미 최대 연속 출석일수에 도달했어요');
+        return prev;
+      }
+      const next = prev + 1;
+      showToast(`출석 체크 완료! 연속 ${next}일째`);
+      return next;
+    });
+  };
+
+  // 도달한 마일스톤 보상 수령 → walletDp에 반영(mock), 마일스톤 1회만 수령 가능.
+  const claimStreakReward = (days: number) => {
+    const milestone = STREAK_MILESTONES.find(m => m.days === days);
+    if (!milestone) return;
+    if (attendanceStreak < milestone.days) {
+      showToast(`아직 ${milestone.days}일 연속 출석 전이에요`);
+      return;
+    }
+    if (claimedStreakMilestones.includes(days)) {
+      showToast('이미 수령한 출석 보상이에요');
+      return;
+    }
+    setUser(prev => ({ ...prev, walletDp: prev.walletDp + milestone.reward }));
+    setClaimedStreakMilestones(prev => [...prev, days]);
+    showToast(`${milestone.days}일 연속 출석 보상 ${milestone.reward.toLocaleString()} DP 지급!`);
+  };
+
   const [showWriteModal, setShowWriteModal] = useState<boolean>(false);
 
   return (
@@ -564,12 +781,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toggleBookmarkPost, // 💡 내보내기 추가
         reservations,
         addReservation,
+        tierRecords,
+        addTierRecord,
+        hasActiveTrip,
+        setHasActiveTrip,
         walletTransactions,
         polyVotes,
         polyMarkets,
         selectedMarket,
         setSelectedMarket,
         castPolyVote,
+        earlyExitPolyVote,
         getUserVoteForMarket,
         settings,
         updateSettings,
@@ -585,7 +807,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         showToast,
         myProfile,
         setMyProfile,
-        refreshLogin
+        refreshLogin,
+        grantLoginBonus,
+        attendanceStreak,
+        claimedStreakMilestones,
+        checkInStreak,
+        claimStreakReward
       }}
     >
       {children}

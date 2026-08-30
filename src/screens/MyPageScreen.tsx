@@ -1,6 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { apiCommonClient, ApiError, ResultCode } from '../utils/apiClient';
+import { StreakTracker } from '../components/StreakTracker';
+import { MembershipDashboardScreen } from './MembershipDashboardScreen';
+import { PolyPortfolioHistoryScreen } from './PolyPortfolioHistoryScreen';
+import { CompBenefitSelectionScreen } from './CompBenefitSelectionScreen';
+import { CurrentTripSummaryScreen } from './CurrentTripSummaryScreen';
 
 // 💡 안전한 localStorage JSON 파싱 헬퍼 함수
 const getSafeUserInfo = () => {
@@ -52,6 +57,8 @@ export const MyPageScreen: React.FC = () => {
     polyVotes,
     settings,
     updateSettings,
+    hasActiveTrip,
+    setHasActiveTrip,
     currentSubScreen,
     setCurrentSubScreen,
     setIsLoggedIn,
@@ -133,6 +140,78 @@ export const MyPageScreen: React.FC = () => {
     profileImg = `https://dou-cdn.wildwynn.com/static/upload/member/${profileImg}`;
   }
 
+  // 사용자가 직접 등록한 프로필 사진 (mock — 실제 업로드 API 연동이 아니라 브라우저 로컬 저장).
+  // 새로고침 후에도 유지되며, "기본 이미지로 변경"으로 해제 가능.
+  const [customAvatar, setCustomAvatar] = useState<string>(() => {
+    try {
+      return localStorage.getItem('custom_profile_img') || '';
+    } catch {
+      return '';
+    }
+  });
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+
+  // 최종 표시용 프로필 이미지 (직접 등록 > 서버/기본값)
+  const displayAvatar = customAvatar || profileImg;
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // 같은 파일 재선택 허용
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('이미지 파일만 등록할 수 있습니다.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('5MB 이하 이미지만 등록할 수 있습니다.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result || '');
+      if (!dataUrl) return;
+      setCustomAvatar(dataUrl);
+      try {
+        localStorage.setItem('custom_profile_img', dataUrl);
+      } catch (err) {
+        console.error('프로필 사진 저장 실패:', err);
+      }
+      showToast('프로필 사진이 변경되었습니다.');
+    };
+    reader.onerror = () => showToast('이미지를 읽는 중 오류가 발생했습니다.');
+    reader.readAsDataURL(file);
+  };
+
+  const handleAvatarReset = () => {
+    setCustomAvatar('');
+    try {
+      localStorage.removeItem('custom_profile_img');
+    } catch (err) {
+      console.error('프로필 사진 초기화 실패:', err);
+    }
+    showToast('프로필 사진이 기본 이미지로 변경되었습니다.');
+  };
+
+  // 배포 기준: 멤버십 등급 관리 / 예측 포트폴리오 / Comp 혜택 신청 / 이번 여행 요약은 전용 화면으로 위임
+  if (currentSubScreen === 'my-membership' || currentSubScreen === 'membership-dashboard') {
+    return <MembershipDashboardScreen />;
+  }
+  if (currentSubScreen === 'my-poly-history') {
+    return <PolyPortfolioHistoryScreen />;
+  }
+  if (currentSubScreen === 'comp-benefits') {
+    return <CompBenefitSelectionScreen />;
+  }
+  if (currentSubScreen === 'current-trip-summary') {
+    if (!hasActiveTrip) {
+      setCurrentSubScreen(null);
+      return null;
+    }
+    return <CurrentTripSummaryScreen />;
+  }
+
   // SUB-MENU 1: PROFILE
   if (currentSubScreen === 'my-profile') {
     return (
@@ -147,22 +226,67 @@ export const MyPageScreen: React.FC = () => {
 
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
           <span className="material-symbols-outlined text-[#C5A059]">badge</span>
-          회원 프로필 정보
+          파트너 프로필 정보
         </h2>
 
         <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-5 flex flex-col gap-4 shadow-md">
           <div className="flex items-center gap-4 border-b border-[#1F334D] pb-4">
-            {profileImg ? (
-              <img src={profileImg} alt={userName} className="w-16 h-16 rounded-full object-cover border-2 border-[#C5A059]" />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-[#0D1B2A] border-2 border-[#C5A059] flex items-center justify-center text-[#C5A059]">
-                <span className="material-symbols-outlined text-3xl">person</span>
-              </div>
-            )}
-            <div>
+            {/* 프로필 사진 (클릭 또는 카메라 버튼으로 변경) */}
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                className="block w-16 h-16 rounded-full overflow-hidden border-2 border-[#C5A059] focus:outline-none focus:ring-2 focus:ring-[#E2C28E]"
+                title="프로필 사진 변경"
+              >
+                {displayAvatar ? (
+                  <img src={displayAvatar} alt={userName} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="w-full h-full bg-[#0D1B2A] flex items-center justify-center text-[#C5A059]">
+                    <span className="material-symbols-outlined text-3xl">person</span>
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full gold-button-gradient text-[#0D1B2A] border-2 border-[#162639] flex items-center justify-center shadow hover:brightness-110 active:scale-95 transition"
+                title="프로필 사진 변경"
+              >
+                <span className="material-symbols-outlined text-[14px]">photo_camera</span>
+              </button>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="hidden"
+              />
+            </div>
+
+            <div className="min-w-0">
               <h3 className="text-base font-bold text-white">{userName} 님</h3>
               <p className="text-xs text-[#E2C28E] font-medium">{myProfile?.memberShip.tb_reward || 'SILVER'} VIP Member</p>
               <p className="text-xs text-slate-400">{myProfile?.memberInfo?.company || '-'}</p>
+              <div className="flex items-center gap-2 mt-1.5">
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="text-[11px] font-bold text-[#0D1B2A] gold-button-gradient px-2 py-0.5 rounded hover:brightness-110 active:scale-95 transition flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-[13px]">upload</span>
+                  <span>사진 등록/변경</span>
+                </button>
+                {customAvatar && (
+                  <button
+                    type="button"
+                    onClick={handleAvatarReset}
+                    className="text-[11px] font-bold text-slate-300 bg-[#0D1B2A] border border-[#1F334D] px-2 py-0.5 rounded hover:border-[#C5A059]/50 hover:text-white transition"
+                  >
+                    기본 이미지로 변경
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -185,11 +309,11 @@ export const MyPageScreen: React.FC = () => {
     );
   }
 
-  // SUB-MENU 2: RESERVATION HISTORY
+  // SUB-MENU: RESERVATION HISTORY (FreePlay 스위트 / 게이밍룸 / 다이닝 3종)
   if (currentSubScreen === 'my-reservations') {
     return (
       <div className="flex flex-col gap-4 pb-44 pt-2">
-        <button 
+        <button
           onClick={() => setCurrentSubScreen(null)}
           className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
         >
@@ -197,41 +321,135 @@ export const MyPageScreen: React.FC = () => {
           <span>마이페이지로 돌아가기</span>
         </button>
 
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <span className="material-symbols-outlined text-[#C5A059]">calendar_month</span>
-          FreeRoom 예약 내역 ({reservations?.length || 0}건)
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#C5A059]">calendar_month</span>
+            FreePlay 신청 내역 ({reservations?.length || 0}건)
+          </h2>
+          <button
+            onClick={() => setCurrentSubScreen('comp-benefits')}
+            className="text-[11px] font-bold text-[#E2C28E] hover:underline flex items-center gap-0.5"
+          >
+            <span>+ 추가 혜택 신청</span>
+            <span className="material-symbols-outlined text-xs">arrow_forward</span>
+          </button>
+        </div>
 
         <div className="space-y-3">
-          {(reservations || []).map((res) => (
-            <div key={res.id} className="bg-[#162639] border border-[#C5A059]/40 rounded-2xl p-4 flex flex-col gap-3 shadow-md">
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
-                    상태: {res.status}
-                  </span>
-                  <h3 className="text-sm font-bold text-white mt-1">{res.hotelName}</h3>
-                  <p className="text-xs text-slate-300">{res.roomType}</p>
+          {(reservations || []).map((res) => {
+            const bType = res.benefitType || 'freeplay_suite';
+            return (
+              <div key={res.id} className="bg-[#162639] border border-[#C5A059]/40 rounded-2xl p-4 flex flex-col gap-3 shadow-md">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {bType === 'freeplay_suite' && (
+                        <span className="text-[10px] font-extrabold text-[#0D1B2A] bg-[#C5A059] px-2 py-0.5 rounded flex items-center gap-1 shadow-sm">
+                          <span className="material-symbols-outlined text-xs">king_bed</span>
+                          FreePlay 스위트
+                        </span>
+                      )}
+                      {bType === 'gaming_room' && (
+                        <span className="text-[10px] font-extrabold text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded border border-purple-500/40 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-xs">casino</span>
+                          멤버십 게이밍룸
+                        </span>
+                      )}
+                      {bType === 'dining' && (
+                        <span className="text-[10px] font-extrabold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/40 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-xs">restaurant</span>
+                          멤버십 다이닝
+                        </span>
+                      )}
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                        res.status === '승인완료' || res.status === '확정'
+                          ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
+                          : res.status === '심사중'
+                          ? 'text-amber-400 bg-amber-500/10 border-amber-500/30 animate-pulse'
+                          : 'text-sky-400 bg-sky-500/10 border-sky-500/30'
+                      }`}>
+                        상태: {res.status}
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-bold text-white mt-1.5">{res.hotelName}</h3>
+                    <p className="text-xs text-slate-300">{res.roomType}</p>
+                  </div>
+                  <span className="text-[11px] font-mono text-slate-400">{res.id}</span>
                 </div>
-                <span className="text-xs font-mono text-slate-400">{res.id}</span>
-              </div>
 
-              <div className="bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D] text-xs space-y-1">
-                <div className="flex justify-between text-slate-300">
-                  <span>체크인 - 체크아웃:</span>
-                  <span className="font-mono font-bold text-white">{res.checkIn} ~ {res.checkOut}</span>
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>투숙 정보:</span>
-                  <span>{res.nights}박 / {res.guests}인</span>
-                </div>
-                <div className="flex justify-between text-slate-300 pt-1 border-t border-[#1F334D]">
-                  <span>결제 코인:</span>
-                  <span className="font-mono font-extrabold text-[#E2C28E]">{res.totalDp?.toLocaleString() || 0} DP</span>
+                <div className="bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D] text-xs space-y-1.5">
+                  {bType === 'freeplay_suite' && (
+                    <>
+                      <div className="flex justify-between text-slate-300">
+                        <span>체크인 - 체크아웃:</span>
+                        <span className="font-mono font-bold text-white">{res.checkIn} ~ {res.checkOut}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-300">
+                        <span>투숙 정보:</span>
+                        <span>{res.nights || 2}박 / {res.guests}인</span>
+                      </div>
+                      <div className="flex justify-between text-slate-300 pt-1 border-t border-[#1F334D]">
+                        <span>디포짓 코인:</span>
+                        <span className="font-mono font-extrabold text-[#E2C28E]">
+                          {(res.totalCoins ?? res.totalDp ?? 0).toLocaleString()} 코인
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  {bType === 'gaming_room' && (
+                    <>
+                      <div className="flex justify-between text-slate-300">
+                        <span>이용 일자:</span>
+                        <span className="font-mono font-bold text-white">{res.checkIn}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-300">
+                        <span>이용 인원:</span>
+                        <span>성인 {res.guests}인</span>
+                      </div>
+                      {res.optionsList && res.optionsList.length > 0 && (
+                        <div className="flex justify-between text-slate-300">
+                          <span>선택 옵션:</span>
+                          <span className="text-slate-200 text-right truncate max-w-[200px]">{res.optionsList.join(', ')}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-slate-300 pt-1 border-t border-[#1F334D]">
+                        <span>비용 혜택:</span>
+                        <span className="font-bold text-purple-300">VIP 살롱 전액 무상 의전</span>
+                      </div>
+                    </>
+                  )}
+                  {bType === 'dining' && (
+                    <>
+                      <div className="flex justify-between text-slate-300">
+                        <span>이용 일자:</span>
+                        <span className="font-mono font-bold text-white">{res.checkIn}</span>
+                      </div>
+                      {res.timeSlot && (
+                        <div className="flex justify-between text-slate-300">
+                          <span>이용 시간대:</span>
+                          <span className="font-bold text-[#E2C28E]">{res.timeSlot}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-slate-300">
+                        <span>예약 인원:</span>
+                        <span>성인 {res.guests}인</span>
+                      </div>
+                      {res.optionsList && res.optionsList.length > 0 && (
+                        <div className="flex justify-between text-slate-300">
+                          <span>선택 옵션:</span>
+                          <span className="text-slate-200 text-right truncate max-w-[200px]">{res.optionsList.join(', ')}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-slate-300 pt-1 border-t border-[#1F334D]">
+                        <span>바우처 지원:</span>
+                        <span className="font-bold text-amber-300">VIP 다이닝 바우처 전액 지원</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
@@ -256,8 +474,9 @@ export const MyPageScreen: React.FC = () => {
 
         <div className="bg-gradient-to-br from-[#162639] via-[#1f334d] to-[#0D1B2A] border border-[#C5A059] rounded-2xl p-5 shadow-xl flex flex-col gap-3">
           <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">사용 가능 포인트</span>
+          {/* mock 잔액 (AppContext user.walletDp) — 예측 챌린지 투표 전용, 현금 환전 불가 */}
           <p className="text-2xl font-extrabold text-[#FFF0D0] gold-gradient-text font-mono">
-            {myProfile?.memberInfo?.u_dp?.toLocaleString() ?? '0'} <span className="text-sm text-slate-300">DP</span>
+            {user.walletDp.toLocaleString()} <span className="text-sm text-slate-300">DP</span>
           </p>
 
           <div className="grid grid-cols-2 gap-2 pt-2">
@@ -312,7 +531,7 @@ export const MyPageScreen: React.FC = () => {
 
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
           <span className="material-symbols-outlined text-[#C5A059]">history</span>
-          폴리마켓 투표 참여 내역 ({polyVotes?.length || 0}건)
+          예측 챌린지 참여 내역 ({polyVotes?.length || 0}건)
         </h2>
 
         <div className="space-y-3">
@@ -330,7 +549,7 @@ export const MyPageScreen: React.FC = () => {
                   투표 선택: {v.choice} ({v.currentOdds})
                 </span>
                 <span className="font-mono font-extrabold text-[#E2C28E]">
-                  {v.amountDp} DP
+                  {v.amountDp.toLocaleString()} DP
                 </span>
               </div>
             </div>
@@ -354,7 +573,7 @@ export const MyPageScreen: React.FC = () => {
 
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
           <span className="material-symbols-outlined text-[#C5A059]">workspace_premium</span>
-          멤버십 등급 관리
+          더블링 멤버십 등급 관리
         </h2>
 
         <div className="bg-[#162639] border border-[#C5A059] p-5 rounded-2xl flex flex-col gap-3 shadow-lg">
@@ -426,66 +645,16 @@ export const MyPageScreen: React.FC = () => {
     );
   }
 
-  // SUB-MENU 7: SETTINGS
+  // SUB-MENU: SETTINGS (배포 기준 — 알림/마케팅 토글 + 월간 예약 자기제한 + 데모 상태 초기화)
   if (currentSubScreen === 'my-settings') {
-    const uinfoMy = getSafeUserInfo();
-    const uidx = uinfoMy['uidx'];
-
-    // 💡 1. u_notification (0: 꺼짐, 0 이외: 켜짐)
-    const isNotificationOn = myProfile?.memberInfo?.u_notification !== 0;
-
-    // 💡 2. u_select_1 (0: 꺼짐, 0 이외: 켜짐)
-    const isMarketingOn = myProfile?.memberInfo?.u_select_1 !== 0;
-
-    // 💡 3. 설정 변경 API 호출 함수
-    const handleToggleSetting = async (key: 'u_notification' | 'u_select_1', currentValue: boolean) => {
-      // 변경할 값: 기존이 켜짐(true)이면 0(꺼짐), 꺼짐(false)이면 1(켜짐)
-      const newValue = currentValue ? 0 : 1;
-
-      try {
-        const response = await apiCommonClient.post<UsettingResponse, UsettingParam>(
-          '/members/usetting',
-          { [key]: newValue, uidx: uidx }
-        );
-
-        console.log('/members/usetting 응답:', response);
-
-        if (response && (response.result === ResultCode.SUCCESS || response.result === 0)) {
-          // 백엔드 성공 시 AppContext의 myProfile 데이터 실시간 업데이트
-          const updatedMemberInfo = {
-            ...(myProfile?.memberInfo || {}),
-            [key]: newValue
-          };
-
-          setMyProfile(
-            updatedMemberInfo,
-            myProfile?.memberShip,
-            myProfile?.memberPoly,
-            myProfile?.memberReward
-          );
-
-          showToast('설정이 변경되었습니다.');
-        } else {
-          showToast(response?.message || '설정 변경에 실패했습니다.');
-        }
-      } catch (error) {
-        if (error instanceof ApiError) {
-          console.error(`설정 변경 API 오류 (${error.status}):`, error.message);
-        } else {
-          console.error('설정 변경 처리 중 오류:', error);
-        }
-        showToast('설정 변경 중 오류가 발생했습니다.');
-      }
-    };
-
     return (
       <div className="flex flex-col gap-4 pb-44 pt-2">
-        <button 
+        <button
           onClick={() => setCurrentSubScreen(null)}
           className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
         >
           <span className="material-symbols-outlined text-sm">arrow_back</span>
-          <span>마이페이지로 돌아가지</span>
+          <span>마이페이지로 돌아가기</span>
         </button>
 
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -494,40 +663,99 @@ export const MyPageScreen: React.FC = () => {
         </h2>
 
         <div className="bg-[#162639] border border-[#1F334D] p-4 rounded-2xl flex flex-col gap-4 shadow-md text-xs">
-          {/* Toggle 1: 푸시 알림 수신 (u_notification) */}
+          {/* Toggle 1: Push Notifications */}
           <div className="flex items-center justify-between py-2 border-b border-[#1F334D]">
             <div>
               <p className="font-bold text-white">푸시 알림 수신</p>
-              <p className="text-[10px] text-slate-400">예약 확정 및 폴리마켓 오즈 변동 알림</p>
+              <p className="text-[10px] text-slate-400">예약 확정 및 예측 챌린지 오즈 변동 알림</p>
             </div>
-            <button 
-              onClick={() => handleToggleSetting('u_notification', isNotificationOn)}
+            <button
+              onClick={() => updateSettings({ pushNotifications: !settings.pushNotifications })}
               className={`w-12 h-6 rounded-full p-1 transition-colors ${
-                isNotificationOn ? 'bg-[#C5A059]' : 'bg-[#0D1B2A]'
+                settings.pushNotifications ? 'bg-[#C5A059]' : 'bg-[#0D1B2A]'
               }`}
             >
               <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                isNotificationOn ? 'translate-x-6' : 'translate-x-0'
+                settings.pushNotifications ? 'translate-x-6' : 'translate-x-0'
               }`} />
             </button>
           </div>
 
-          {/* Toggle 2: 마케팅 수신 동의 (u_select_1) */}
+          {/* Toggle 2: Marketing Consent */}
           <div className="flex items-center justify-between py-2 border-b border-[#1F334D]">
             <div>
               <p className="font-bold text-white">마케팅 수신 동의</p>
               <p className="text-[10px] text-slate-400">VIP 전용 리조트 프로모션 수신</p>
             </div>
-            <button 
-              onClick={() => handleToggleSetting('u_select_1', isMarketingOn)}
+            <button
+              onClick={() => updateSettings({ marketingConsent: !settings.marketingConsent })}
               className={`w-12 h-6 rounded-full p-1 transition-colors ${
-                isMarketingOn ? 'bg-[#C5A059]' : 'bg-[#0D1B2A]'
+                settings.marketingConsent ? 'bg-[#C5A059]' : 'bg-[#0D1B2A]'
               }`}
             >
               <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                isMarketingOn ? 'translate-x-6' : 'translate-x-0'
+                settings.marketingConsent ? 'translate-x-6' : 'translate-x-0'
               }`} />
             </button>
+          </div>
+
+          {/* Monthly Booking Self Limit Stepper */}
+          <div className="flex items-center justify-between py-2 border-b border-[#1F334D]">
+            <div>
+              <p className="font-bold text-white">월간 예약 자기 제한 수</p>
+              <p className="text-[10px] text-slate-400">과도한 포인트 소진 방지 보호 설정</p>
+            </div>
+            <div className="flex items-center gap-2 bg-[#0D1B2A] px-2 py-1 rounded-lg border border-[#1F334D]">
+              <button
+                onClick={() => updateSettings({ monthlyBookingLimit: Math.max(1, settings.monthlyBookingLimit - 1) })}
+                className="w-5 h-5 rounded bg-[#162639] text-[#C5A059] font-bold text-xs"
+              >
+                -
+              </button>
+              <span className="font-mono font-bold text-white">{settings.monthlyBookingLimit}회</span>
+              <button
+                onClick={() => updateSettings({ monthlyBookingLimit: settings.monthlyBookingLimit + 1 })}
+                className="w-5 h-5 rounded bg-[#162639] text-[#C5A059] font-bold text-xs"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Demo State Reset: Active Trip / Check-in State */}
+          <div className="pt-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-bold text-white flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[#D4AF37] text-sm">restart_alt</span>
+                  <span>데모 상태 초기화</span>
+                </p>
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  현재 투숙(체크인) 상태를 초기화(미투숙/체크아웃)합니다.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setHasActiveTrip(false);
+                  showToast('투숙 상태가 초기화되었습니다 (체크아웃 상태로 전환)');
+                }}
+                className="px-3 py-1.5 rounded-xl bg-rose-500/20 border border-rose-500/50 text-rose-300 hover:bg-rose-500/30 text-xs font-bold transition flex items-center gap-1 shrink-0 active:scale-95"
+              >
+                <span className="material-symbols-outlined text-xs">refresh</span>
+                <span>데모 상태 초기화</span>
+              </button>
+            </div>
+            <div className="mt-2.5 text-[10px] text-slate-400 bg-[#0D1B2A] p-2.5 rounded-xl border border-[#1F334D] flex items-center justify-between">
+              <span>현재 투숙 상태: <strong className={hasActiveTrip ? 'text-emerald-400 font-mono font-bold' : 'text-slate-400 font-mono font-bold'}>{hasActiveTrip ? '투숙 중 (In-House · 체크인됨)' : '미투숙 (체크인 전)'}</strong></span>
+              {hasActiveTrip ? (
+                <span className="flex items-center gap-1 text-[9px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  LIVE
+                </span>
+              ) : (
+                <span className="text-[9px] text-slate-500">대기</span>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -537,115 +765,259 @@ export const MyPageScreen: React.FC = () => {
   // 메인 마이페이지 화면
   return (
     <div className="flex flex-col gap-4 pb-44 pt-2">
-      {/* User Header Summary Card */}
-      <div className="bg-[#162639] border border-[#C5A059]/40 rounded-2xl p-5 flex items-center justify-between shadow-xl">
-        <div className="flex items-center gap-3">
-          {profileImg ? (
-            <img src={profileImg} alt={userName} className="w-14 h-14 rounded-full object-cover border-2 border-[#C5A059]" />
+      {/* User Header Summary Card — 데모 페르소나(Kevin, 50대 VC 임원) 고정 표시.
+          mock 표시용 값이며 실제 회원 데이터가 아닙니다. */}
+      <div className="bg-[#162639] border border-[#C5A059]/40 rounded-2xl p-5 flex items-center justify-between gap-3 shadow-xl">
+        <div className="flex items-center gap-3 min-w-0">
+          {displayAvatar ? (
+            <img src={displayAvatar} alt="Kevin" className="w-14 h-14 rounded-full object-cover border-2 border-[#C5A059] shrink-0" />
           ) : (
-            <div className="w-14 h-14 rounded-full bg-[#0D1B2A] border-2 border-[#C5A059] flex items-center justify-center text-[#C5A059]">
+            <div className="w-14 h-14 rounded-full bg-[#0D1B2A] border-2 border-[#C5A059] flex items-center justify-center text-[#C5A059] shrink-0">
               <span className="material-symbols-outlined text-2xl">person</span>
             </div>
           )}
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-white">{userName} 님</h2>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-[#C5A059] text-[#0D1B2A] font-extrabold">
-                {myProfile?.memberShip.tb_reward || 'White'}
-              </span>
+              <h2 className="text-lg font-bold text-white">Kevin 님</h2>
+              {/* ETERNITY 등급 뱃지 — 클릭 시 멤버십 등급 관리로 이동 */}
+              <button
+                onClick={() => setCurrentSubScreen('my-membership')}
+                title="더블링 멤버십 등급 관리"
+                className="flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#C5A059]/30 to-[#E2C28E]/20 border border-[#C5A059]/60 text-white font-black hover:brightness-125 transition shadow-sm shrink-0"
+              >
+                <span className="material-symbols-outlined text-xs text-[#E2C28E]">workspace_premium</span>
+                <span>ETERNITY</span>
+              </button>
             </div>
-            <p className="text-xs text-[#E2C28E] font-medium">KOREA</p>
-            <p className="text-[10px] text-slate-400 mt-0.5 font-mono">CODE: {rewardUserCode()}</p>
+            <p className="text-xs text-[#E2C28E] font-medium">DOUBLING VIP</p>
+            <p className="text-[10px] text-slate-400 mt-0.5 font-mono truncate">CODE: KEVIN-VIP-2026</p>
+          </div>
+        </div>
+
+        {/* Tier Score — 우측 정렬, 클릭 시 멤버십 등급 관리로 이동 */}
+        <button
+          onClick={() => setCurrentSubScreen('my-membership')}
+          className="flex flex-col items-end text-right hover:opacity-80 transition shrink-0"
+        >
+          <span className="text-[10px] text-slate-400 font-medium">누적 Tier Score</span>
+          <span className="text-sm font-black text-[#E2C28E] font-mono flex items-center gap-0.5">
+            2,150<span className="text-[10px] text-slate-400">점</span>
+            <span className="material-symbols-outlined text-xs text-slate-400">chevron_right</span>
+          </span>
+        </button>
+      </div>
+
+      {/* Wallet Balance Cards — DP / 코인 분리. 둘 다 AppContext mock 잔액(실결제 미연동). */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* 더블링포인트(DP) 카드 */}
+        <div
+          onClick={() => setCurrentSubScreen('my-wallet')}
+          className="bg-gradient-to-br from-[#162639] to-[#0D1B2A] border border-[#C5A059]/60 hover:border-[#C5A059] p-4 rounded-2xl flex flex-col justify-between gap-3 cursor-pointer transition shadow-lg group"
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-[#C5A059]/20 border border-[#C5A059]/40 flex items-center justify-center text-[#E2C28E] shrink-0">
+                <span className="material-symbols-outlined text-xl">account_balance_wallet</span>
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">더블링포인트 (DP)</span>
+                <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 whitespace-nowrap inline-block mt-0.5">
+                  예측 챌린지 전용 · 무료
+                </span>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-slate-400 group-hover:text-[#E2C28E] transition text-sm shrink-0">open_in_new</span>
+          </div>
+
+          <div>
+            <p className="text-xl font-black text-[#FFF0D0] font-mono leading-none text-right">
+              {user.walletDp.toLocaleString()} <span className="text-xs text-[#E2C28E] font-sans font-bold">DP</span>
+            </p>
+          </div>
+
+          <div className="pt-2 border-t border-[#1F334D] flex items-center justify-between text-[11px] text-[#E2C28E] font-bold">
+            <span>상세 내역 보기</span>
+            <span>→</span>
+          </div>
+        </div>
+
+        {/* 코인 월렛 카드 */}
+        <div
+          onClick={() => showToast('코인 입출금은 다음 업데이트에서 제공됩니다')}
+          className="bg-gradient-to-br from-[#162639] to-[#0D1B2A] border border-[#1F334D] hover:border-[#7FD4B8]/50 p-4 rounded-2xl flex flex-col justify-between gap-3 cursor-pointer transition shadow-md group"
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-[#7FD4B8]/15 border border-[#7FD4B8]/40 flex items-center justify-center text-[#7FD4B8] shrink-0">
+                <span className="material-symbols-outlined text-xl">toll</span>
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">코인 월렛</span>
+                <span className="text-[9px] font-bold text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded border border-sky-500/20 whitespace-nowrap inline-block mt-0.5">
+                  FreePlay 실결제용
+                </span>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-slate-400 group-hover:text-white transition text-sm shrink-0">chevron_right</span>
+          </div>
+
+          <div>
+            <p className="text-xl font-bold text-[#7FD4B8] font-mono leading-none text-right">
+              {user.walletCoin.toLocaleString()} <span className="text-xs text-slate-400 font-sans">코인</span>
+            </p>
+          </div>
+
+          <div className="pt-2 border-t border-[#1F334D] flex items-center justify-between text-[11px] text-slate-300 font-bold group-hover:text-[#7FD4B8]">
+            <span>입출금 및 결제 관리</span>
+            <span>→</span>
           </div>
         </div>
       </div>
 
-      {/* Wallet Balance Display Box */}
-      <div 
-        onClick={() => setCurrentSubScreen('my-wallet')}
-        className="bg-gradient-to-r from-[#162639] to-[#0D1B2A] border border-[#C5A059]/40 p-4 rounded-2xl flex items-center justify-between cursor-pointer hover:border-[#C5A059] transition shadow-md"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#C5A059]/20 border border-[#C5A059]/40 flex items-center justify-center text-[#E2C28E]">
-            <span className="material-symbols-outlined text-xl">account_balance_wallet</span>
-          </div>
-          <div>
-            <span className="text-[10px] text-slate-400 font-bold uppercase">더블링 포인트</span>
-            <p className="text-base font-extrabold text-[#E2C28E] font-mono">
-              {myProfile?.memberInfo?.u_dp?.toLocaleString() ?? '0'} <span className="text-xs text-slate-400">DP</span>
-            </p>
-          </div>
-        </div>
-        <span className="material-symbols-outlined text-slate-400">chevron_right</span>
-      </div>
+      {/* 연속 출석 스트릭 (공용 컴포넌트) */}
+      <StreakTracker />
 
       {/* SUB-MENU LIST */}
       <div className="space-y-2">
-        <h3 className="text-xs font-bold text-[#C5A059] uppercase tracking-wider px-1">마이페이지 메뉴</h3>
+        <h3 className="text-xs font-bold text-[#C5A059] uppercase tracking-wider px-1">마이페이지 메뉴 (7)</h3>
 
-        {/* 1. Profile */}
-        <div 
+        {/* 1. 파트너 프로필 정보 */}
+        <div
           onClick={() => setCurrentSubScreen('my-profile')}
-          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between"
+          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between gap-3"
         >
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-[#C5A059]">badge</span>
-            <span className="text-xs font-bold text-white">1. 회원 프로필 정보</span>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-[#0D1B2A] border border-[#C5A059]/40 flex items-center justify-center text-[#C5A059] shrink-0">
+              <span className="material-symbols-outlined text-lg">badge</span>
+            </div>
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-white block">1. 파트너 프로필 정보</span>
+              <span className="text-[10px] text-slate-400">회원 기본 정보 및 추천인 코드</span>
+            </div>
           </div>
-          <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+          <span className="material-symbols-outlined text-slate-400 text-sm shrink-0">chevron_right</span>
         </div>
 
-        {/* 2. Membership */}
-        <div 
-          onClick={() => setCurrentSubScreen('my-membership')}
-          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between"
+        {/* 2. FreePlay 신청 내역 */}
+        <div
+          onClick={() => setCurrentSubScreen('my-reservations')}
+          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between gap-3"
         >
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-[#C5A059]">workspace_premium</span>
-            <span className="text-xs font-bold text-white">2. 멤버십 등급 관리</span>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-[#0D1B2A] border border-[#C5A059]/40 flex items-center justify-center text-[#C5A059] shrink-0">
+              <span className="material-symbols-outlined text-lg">calendar_month</span>
+            </div>
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-white block">2. FreePlay 신청 내역</span>
+              <span className="text-[10px] text-slate-400">스위트룸 · 게이밍룸 · 다이닝 신청 관리</span>
+            </div>
           </div>
-          <span className="text-xs font-bold text-[#E2C28E]">{myProfile?.memberShip.tb_reward || 'SILVER'}</span>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[11px] font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+              {reservations?.length || 0}건
+            </span>
+            <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+          </div>
         </div>
 
-        {/* 3. Poly Market History */}
-        <div 
+        {/* 3. 코인 월렛 / 입출금 */}
+        <div
+          onClick={() => showToast('코인 입출금은 다음 업데이트에서 제공됩니다')}
+          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#7FD4B8]/50 transition cursor-pointer flex items-center justify-between gap-3"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-[#0D1B2A] border border-[#7FD4B8]/40 flex items-center justify-center text-[#7FD4B8] shrink-0">
+              <span className="material-symbols-outlined text-lg">toll</span>
+            </div>
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-white block">3. 코인 월렛 / 입출금</span>
+              <span className="text-[10px] text-slate-400">잔액: {user.walletCoin.toLocaleString()} 코인</span>
+            </div>
+          </div>
+          <span className="material-symbols-outlined text-slate-400 text-sm shrink-0">chevron_right</span>
+        </div>
+
+        {/* 4. 예측 챌린지 참여 내역 */}
+        <div
           onClick={() => setCurrentSubScreen('my-poly-history')}
-          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between"
+          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between gap-3"
         >
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-[#C5A059]">history</span>
-            <span className="text-xs font-bold text-white">3. 폴리마켓 참여 내역</span>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-[#0D1B2A] border border-[#C5A059]/40 flex items-center justify-center text-[#C5A059] shrink-0">
+              <span className="material-symbols-outlined text-lg">history</span>
+            </div>
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-white block">4. 예측 챌린지 참여 내역</span>
+              <span className="text-[10px] text-[#E2C28E] font-medium">잔액: {user.walletDp.toLocaleString()} DP</span>
+            </div>
           </div>
-          <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[11px] font-mono font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
+              {polyVotes?.length || 0}건
+            </span>
+            <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+          </div>
         </div>
 
-        {/* 4. Referral */}
-        <div 
+        {/* 5. 더블링 멤버십 등급 관리 */}
+        <div
+          onClick={() => setCurrentSubScreen('my-membership')}
+          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between gap-3 group"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-[#0D1B2A] border border-[#C5A059]/40 flex items-center justify-center text-[#C5A059] shrink-0">
+              <span className="material-symbols-outlined text-lg">workspace_premium</span>
+            </div>
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-white block group-hover:text-[#E2C28E] transition">5. 더블링 멤버십 등급 관리</span>
+              <span className="text-[10px] text-slate-400">등급 혜택 및 승급 진행률</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[11px] font-bold text-[#E2C28E] bg-[#C5A059]/15 border border-[#C5A059]/30 px-2 py-0.5 rounded-full">
+              {user.membershipTier}
+            </span>
+            <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+          </div>
+        </div>
+
+        {/* 6. 추천인 리워드 관리 */}
+        <div
           onClick={() => setCurrentSubScreen('my-referral')}
-          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between"
+          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between gap-3"
         >
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-[#C5A059]">group_add</span>
-            <span className="text-xs font-bold text-white">4. 추천인 리워드 관리</span>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-[#0D1B2A] border border-[#C5A059]/40 flex items-center justify-center text-[#C5A059] shrink-0">
+              <span className="material-symbols-outlined text-lg">group_add</span>
+            </div>
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-white block">6. 추천인 리워드 관리</span>
+              <span className="text-[10px] text-slate-400">초대 링크 공유 및 리워드 현황</span>
+            </div>
           </div>
-          <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+          <span className="material-symbols-outlined text-slate-400 text-sm shrink-0">chevron_right</span>
         </div>
 
-        {/* 5. Settings */}
-        <div 
+        {/* 7. 앱 설정 & 제한 */}
+        <div
           onClick={() => setCurrentSubScreen('my-settings')}
-          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between"
+          className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between gap-3"
         >
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-[#C5A059]">settings</span>
-            <span className="text-xs font-bold text-white">5. 앱 설정 & 제한</span>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-[#0D1B2A] border border-[#C5A059]/40 flex items-center justify-center text-[#C5A059] shrink-0">
+              <span className="material-symbols-outlined text-lg">settings</span>
+            </div>
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-white block">7. 앱 설정 & 제한</span>
+              <span className="text-[10px] text-slate-400">알림 · 마케팅 수신 · 월간 예약 제한</span>
+            </div>
           </div>
-          <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+          <span className="material-symbols-outlined text-slate-400 text-sm shrink-0">chevron_right</span>
         </div>
       </div>
 
       {/* Logout button */}
-      <button 
+      <button
         onClick={() => {
           localStorage.setItem('sessionid', '');
           localStorage.setItem('user_info', '');
@@ -654,7 +1026,7 @@ export const MyPageScreen: React.FC = () => {
         }}
         className="w-full py-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 font-bold text-xs hover:bg-rose-500/20 transition mt-2"
       >
-        로그아웃
+        로그아웃 (데모 계정)
       </button>
     </div>
   );

@@ -124,12 +124,23 @@ const mapHotels = (data: JackpotApiResponse): HotelJackpotData[] => {
     });
 };
 
+// 순위·비중에 따라 자동 부여되는 동적 뱃지
+const getDynamicBadges = (rankIndex: number, sharePercent: number): string[] => {
+  const badges: string[] = [];
+  if (rankIndex === 0) badges.push('1위 잭팟');
+  else if (rankIndex <= 2) badges.push('TOP 잭팟');
+  if (sharePercent >= 15) badges.push('글로벌 랜드마크');
+  return badges;
+};
+
 export const JackpotMapScreen: React.FC = () => {
   const { setSelectedHotelId, setCurrentSubScreen } = useApp();
   const [activeCountryIndex, setActiveCountryIndex] = useState<number>(0);
   const [regions, setRegions] = useState<Region[]>([]);
   const [hotels, setHotels] = useState<HotelJackpotData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  // 리스트 뷰 ↔ 트리맵 뷰 전환 (기본: 리스트)
+  const [viewMode, setViewMode] = useState<'list' | 'treemap'>('list');
 
   useEffect(() => {
     let isMounted = true;
@@ -209,18 +220,28 @@ export const JackpotMapScreen: React.FC = () => {
   return (
     <div className="flex flex-col gap-4 pb-44 pt-2">
       {/* Page Title Section */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-[#C5A059]">grid_view</span>
-            Jackpot Zone
+            Jackpot Tree-map
           </h2>
           <p className="text-xs text-slate-400">아시아 주요 호텔 & 리조트 잭팟</p>
         </div>
-        {/*         
-        <span className="text-xs font-mono font-bold text-[#E2C28E] bg-[#162639] px-2.5 py-1 rounded-full border border-[#C5A059]/30">
-          TREEMAP
-        </span> */}
+        {/* 리스트 뷰 ↔ 트리맵 뷰 토글 */}
+        <button
+          onClick={() => setViewMode((v) => (v === 'list' ? 'treemap' : 'list'))}
+          className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-extrabold border transition active:scale-95 ${
+            viewMode === 'treemap'
+              ? 'bg-[#C5A059] text-[#0D1B2A] border-[#C5A059] shadow-sm'
+              : 'bg-[#162639] text-[#E2C28E] border-[#C5A059]/40 hover:border-[#C5A059]'
+          }`}
+        >
+          <span className="material-symbols-outlined text-sm">
+            {viewMode === 'treemap' ? 'view_list' : 'grid_view'}
+          </span>
+          <span>{viewMode === 'treemap' ? 'LIST' : 'TREEMAP'}</span>
+        </button>
       </div>
 
       {/* 1. Region Filter Tabs (ALL / KR / MO / SG / PH / JP) */}
@@ -261,44 +282,44 @@ export const JackpotMapScreen: React.FC = () => {
         </span>
       </div>
 
-      {/* 2. Treemap (Mosaic) Visualization Section */}
-      <div className="flex flex-col gap-2">
-        {/* <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            잭팟 규모 트리맵 (터치 시 상세 잭팟 이동)
-          </span>
-          <span className="text-[10px] text-slate-500">타일 크기: 잭팟 총액 비례</span>
-        </div> */}
+      {/* 2. Treemap View — 타일 크기가 잭팟 총액 비율에 따라 달라지는 모자이크.
+             #1~#3 큰 타일 + 나머지 3x2 작은 타일. row-span 미사용으로 타일 겹침 없음. */}
+      {viewMode === 'treemap' && (
+        <div className="flex flex-col gap-2 w-full bg-[#0D1B2A] p-2.5 rounded-2xl border border-[#1F334D]">
+          <div className="flex items-center justify-between px-0.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">잭팟 규모 트리맵</span>
+            <span className="text-[9px] text-slate-500">타일 크기 = 잭팟 총액 비례 · 터치 시 상세</span>
+          </div>
 
-        {/* Single Region Treemap */}
-        
-          <div className="grid grid-cols-2 gap-2 min-h-56 w-full bg-[#0D1B2A] p-2.5 rounded-2xl border border-[#1F334D]">
-            {/* Region #1 Big Tile */}
+          {/* Top 3 tiles */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* #1 — full width, largest */}
             <button
               onClick={() => handleHotelClick(sortedHotels[0].id)}
-              className={`col-span-2 rounded-xl p-3.5 flex flex-col justify-between text-left relative overflow-hidden border border-[#C5A059]/60 hover:border-[#C5A059] bg-[#1a2839] group transition ${
-                sortedHotels.length === 1 ? 'min-h-44' : 'h-36'
-              }`}
+              className="col-span-2 min-h-[132px] rounded-xl p-3.5 flex flex-col justify-between text-left relative overflow-hidden border border-[#C5A059]/60 hover:border-[#C5A059] bg-[#1a2839] group transition"
             >
               <img
-                src={sortedHotels[0].image }
+                src={sortedHotels[0].image}
                 alt={sortedHotels[0].name}
                 className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-luminosity group-hover:scale-105 transition duration-500"
                 referrerPolicy="no-referrer"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0D1B2A] via-[#0D1B2A]/40 to-transparent"></div>
 
-              <div className="relative z-10 flex items-center justify-between">
-                <span className="text-[10px] font-extrabold text-[#0D1B2A] bg-[#C5A059] px-2 py-0.5 rounded shadow">
-                  {sortedHotels[0].region} 1위
-                </span>
-                <span className="text-xs font-mono font-bold text-[#E2C28E]">
+              <div className="relative z-10 flex items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-1">
+                  {getDynamicBadges(0, (sortedHotels[0].totalJackpotUsd / totalRegionJackpot) * 100).map((b) => (
+                    <span key={b} className="text-[9px] font-extrabold text-[#0D1B2A] bg-[#C5A059] px-1.5 py-0.5 rounded shadow">
+                      {b}
+                    </span>
+                  ))}
+                </div>
+                <span className="text-xs font-mono font-bold text-[#E2C28E] shrink-0">
                   {((sortedHotels[0].totalJackpotUsd / totalRegionJackpot) * 100).toFixed(1)}%
                 </span>
               </div>
               <div className="relative z-10">
-                <h3 className="text-sm font-black text-white">{sortedHotels[0].name}</h3>
-                <p className="text-xs text-slate-300 line-clamp-1">{sortedHotels[0].desc}</p>
+                <h3 className="text-sm font-black text-white truncate">{sortedHotels[0].name}</h3>
                 <p className="text-base font-black text-[#E2C28E] font-mono mt-1">
                   {formatUsd(sortedHotels[0].totalJackpotUsd)}
                 </p>
@@ -308,38 +329,68 @@ export const JackpotMapScreen: React.FC = () => {
               </div>
             </button>
 
-            {/* Other hotels in the region */}
-            {sortedHotels.slice(1, 3).map((h, idx) => (
-              <button
-                key={h.id}
-                onClick={() => handleHotelClick(h.id)}
-                className={`rounded-xl p-3 flex flex-col justify-between text-left relative overflow-hidden border border-[#1F334D] hover:border-[#C5A059]/60 bg-[#162639] group transition ${
-                  sortedHotels.length % 2 === 0 && idx === sortedHotels.length - 2 ? 'col-span-2' : ''
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-bold text-slate-300 bg-[#0D1B2A] px-1.5 py-0.2 rounded">
-                    #{idx + 2} {h.region}
-                  </span>
-                  <span className="text-[9px] text-slate-400 font-mono">
-                    {((h.totalJackpotUsd / totalRegionJackpot) * 100).toFixed(1)}%
-                  </span>
-                </div>
-                <div className="mt-2">
-                  <h4 className="text-xs font-bold text-white truncate">{h.name}</h4>
-                  <p className="text-xs font-bold text-[#E2C28E] font-mono mt-0.5">
-                    {formatUsd(h.totalJackpotUsd)}
-                  </p>
-                  <p className="text-[9px] text-slate-400 font-mono">
-                    {formatKrw(h.totalJackpotUsd)}
-                  </p>
-                </div>
-              </button>
-            ))}
+            {/* #2, #3 — half width each */}
+            {sortedHotels.slice(1, 3).map((h, idx) => {
+              const share = (h.totalJackpotUsd / totalRegionJackpot) * 100;
+              return (
+                <button
+                  key={h.id}
+                  onClick={() => handleHotelClick(h.id)}
+                  className="min-h-[96px] rounded-xl p-2.5 flex flex-col justify-between text-left border border-[#1F334D] hover:border-[#C5A059]/60 bg-[#162639] transition min-w-0"
+                >
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-[9px] font-bold text-slate-300 bg-[#0D1B2A] px-1.5 py-0.5 rounded shrink-0">
+                      #{idx + 2} {h.region}
+                    </span>
+                    <span className="text-[9px] text-slate-400 font-mono shrink-0">{share.toFixed(1)}%</span>
+                  </div>
+                  {getDynamicBadges(idx + 1, share).length > 0 && (
+                    <span className="text-[8px] font-extrabold text-[#0D1B2A] bg-[#C5A059] px-1 py-0.5 rounded w-fit mt-1">
+                      {getDynamicBadges(idx + 1, share)[0]}
+                    </span>
+                  )}
+                  <div className="mt-1 min-w-0">
+                    <h4 className="text-xs font-bold text-white truncate">{h.name}</h4>
+                    <p className="text-xs font-bold text-[#E2C28E] font-mono mt-0.5 truncate">
+                      {formatUsd(h.totalJackpotUsd)}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
-      </div>
+
+          {/* #4 ~ #9 — small tiles, 3x2 grid */}
+          {sortedHotels.length > 3 && (
+            <div className="grid grid-cols-3 gap-1.5">
+              {sortedHotels.slice(3, 9).map((h, idx) => {
+                const share = (h.totalJackpotUsd / totalRegionJackpot) * 100;
+                return (
+                  <button
+                    key={h.id}
+                    onClick={() => handleHotelClick(h.id)}
+                    className="min-h-[64px] rounded-lg p-1.5 flex flex-col justify-between text-left border border-[#1F334D]/70 hover:border-[#C5A059]/50 bg-[#132235] transition min-w-0"
+                    title={`${h.name} · ${formatUsd(h.totalJackpotUsd)}`}
+                  >
+                    <span className="text-[8px] text-slate-400 font-mono">#{idx + 4} · {share.toFixed(1)}%</span>
+                    <h4 className="text-[10px] font-bold text-white truncate leading-tight">{h.name}</h4>
+                    <p className="text-[9px] font-bold text-[#E2C28E] font-mono truncate">{formatUsd(h.totalJackpotUsd)}</p>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {sortedHotels.length > 9 && (
+            <p className="text-[9px] text-slate-500 text-center pt-0.5">
+              나머지 {sortedHotels.length - 9}개 호텔은 리스트 뷰에서 확인
+            </p>
+          )}
+        </div>
+      )}
 
       {/* 3. Major Casinos List Section */}
+      {viewMode === 'list' && (
       <div className="flex flex-col gap-2.5 pt-1">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -372,7 +423,7 @@ export const JackpotMapScreen: React.FC = () => {
                 </div>
 
                 <div className="overflow-hidden">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <h4 className="text-xs font-bold text-white truncate group-hover:text-[#E2C28E] transition">
                       {h.name}
                     </h4>
@@ -381,6 +432,14 @@ export const JackpotMapScreen: React.FC = () => {
                         {h.badge}
                       </span>
                     )}
+                    {getDynamicBadges(idx, (h.totalJackpotUsd / totalRegionJackpot) * 100).map((b) => (
+                      <span
+                        key={b}
+                        className="text-[8px] font-extrabold text-[#E2C28E] bg-[#C5A059]/15 border border-[#C5A059]/40 px-1.5 py-0.2 rounded shrink-0"
+                      >
+                        {b}
+                      </span>
+                    ))}
                   </div>
                   <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">{h.desc}</p>
                   <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
@@ -407,6 +466,7 @@ export const JackpotMapScreen: React.FC = () => {
           ))}
         </div>
       </div>
+      )}
     </div>
   );
 };

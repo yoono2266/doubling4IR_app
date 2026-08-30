@@ -71,7 +71,7 @@ export const BottomNav: React.FC = () => {
         <span className={`material-symbols-outlined text-2xl ${currentTab === 'poly' ? 'fill-1' : ''}`}>
           query_stats
         </span>
-        <span className="text-[11px] mt-0.5 tracking-tight">폴리</span>
+        <span className="text-[11px] mt-0.5 tracking-tight">챌린지</span>
       </button>
 
       {/* 3. Home (Center Highlight) */}

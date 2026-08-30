@@ -42,14 +42,14 @@ export const Header: React.FC = () => {
       {/* Right: Wallet Quick View, Persona Avatar (Rendered only when logged in) */}
       {showHeaderActions && (
         <div className="flex items-center gap-2">
-          {/* Wallet Balance Chip */}
+          {/* Wallet Balance Chip — DP(예측 챌린지) 잔액만 표기. mock 잔액. */}
           {isLoggedIn && (
-            <div 
+            <div
               onClick={() => {
                 setCurrentTab('my');
                 setCurrentSubScreen('my-wallet');
               }}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#162639] border border-[#C5A059]/40 hover:border-[#C5A059] transition cursor-pointer"
+              className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#162639] border border-[#C5A059]/40 hover:border-[#C5A059] transition cursor-pointer"
             >
               <span className="text-xs font-bold text-[#E2C28E] font-mono">
                 {user.walletDp.toLocaleString()} <span className="text-[10px] text-slate-400">DP</span>

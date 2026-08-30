@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { JackpotBanner } from '../components/JackpotBanner';
+import { PolyMarketCarousel } from '../components/PolyMarketCarousel';
+import { displayLikeCount, displayBookmarkCount } from '../data/mockCounts';
 import { VideoPromoCard } from '../components/VideoPromoCard';
 import { apiCommonClient, ApiError, ResultCode, CommonResponse } from '../utils/apiClient';
 
@@ -55,16 +57,23 @@ export const HomeScreen: React.FC = () => {
     setSelectedPost,
     setCurrentTab,
     setCurrentSubScreen,
-    castPolyVote,
     toggleLikePost,
     toggleBookmarkPost, // 💡 추가
     isLoggedIn,
     requireLogin,
+    setSelectedHotelId,
   } = useApp();
 
   const handlePolyCardClick = () => {
     if (!requireLogin()) return;
     setCurrentTab('poly');
+  };
+
+  // "라이브 잭팟" 전체보기 → 잭팟 리스트가 아닌 "솔레어 리조트 앤 카지노" 상세로 직접 이동
+  const handleJackpotMoreClick = () => {
+    if (!requireLogin()) return;
+    setSelectedHotelId('solaire');
+    setCurrentSubScreen('hotel-jackpot-detail');
   };
  const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -251,10 +260,8 @@ useEffect(() => {
             <span className="material-symbols-outlined text-sm">local_fire_department</span>
             라이브 잭팟
           </h3>
-          <button 
-            onClick={() => {
-              if (requireLogin()) setCurrentTab('jackpot');
-            }}
+          <button
+            onClick={handleJackpotMoreClick}
             className="text-[11px] text-slate-400 hover:text-[#C5A059] flex items-center gap-0.5"
           >
             <span>전체보기</span>
@@ -264,67 +271,23 @@ useEffect(() => {
         <JackpotBanner />
       </div>
 
-      {/* 2. Poly Market Teaser Cards (Intact Yes/No Voting intact) */}
+      {/* 2. 실시간 예측 챌린지 캐러셀 배너 */}
       <div>
         <div className="flex items-center justify-between mb-2.5">
           <h3 className="text-xs font-bold text-[#C5A059] uppercase tracking-wider flex items-center gap-1.5">
             <span className="material-symbols-outlined text-sm">query_stats</span>
-            실시간 폴리마켓 예측
+            실시간 예측 챌린지 (100~5,000 DP)
           </h3>
-          <button 
+          <button
             onClick={handlePolyCardClick}
             className="text-[11px] text-slate-400 hover:text-[#C5A059] flex items-center gap-0.5"
           >
-            <span>마켓 더보기</span>
+            <span>마켓 전체보기</span>
             <span className="material-symbols-outlined text-xs">chevron_right</span>
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-3">
-          {/* Poly Market Card 1 */}
-          <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3 shadow-md hover:border-[#C5A059]/40 transition">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <span className="text-[10px] font-semibold text-[#C5A059] bg-[#C5A059]/15 px-2 py-0.5 rounded border border-[#C5A059]/30">
-                  CRYPTO
-                </span>
-                <h4 
-                  onClick={handlePolyCardClick}
-                  className="text-sm font-bold text-white mt-1 hover:text-[#E2C28E] cursor-pointer"
-                >
-                  비트코인(BTC) 2026 Q3 내 $100K 도달 여부
-                </h4>
-              </div>
-              <span className="text-xs font-bold text-emerald-400 font-mono bg-emerald-500/10 px-2 py-1 rounded">
-                68% YES
-              </span>
-            </div>
-
-            {/* Voting Bar */}
-            <div className="w-full bg-[#0D1B2A] h-2 rounded-full overflow-hidden flex">
-              <div className="bg-emerald-500 h-full" style={{ width: '68%' }}></div>
-              <div className="bg-rose-500 h-full" style={{ width: '32%' }}></div>
-            </div>
-
-            {/* Intact Yes / No Voting Buttons */}
-            <div className="grid grid-cols-2 gap-2 mt-1">
-              <button
-                onClick={handlePolyCardClick}
-                className="py-2 px-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-bold text-xs hover:bg-emerald-500/30 transition flex items-center justify-center gap-1"
-              >
-                <span>YES</span>
-                <span className="text-[10px] font-mono text-emerald-400/80">(68%)</span>
-              </button>
-              <button
-                onClick={handlePolyCardClick}
-                className="py-2 px-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 font-bold text-xs hover:bg-rose-500/30 transition flex items-center justify-center gap-1"
-              >
-                <span>NO</span>
-                <span className="text-[10px] font-mono text-rose-400/80">(32%)</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        <PolyMarketCarousel />
       </div>
 
       {/* 4. Community Feed */}
@@ -413,12 +376,12 @@ useEffect(() => {
                       <span className={`material-symbols-outlined text-sm ${post.is_user_liked ? 'fill-1 text-rose-400' : ''}`}>
                         favorite
                       </span>
-                      <span>{post.is_user_liked}</span>
+                      <span>{displayLikeCount(post.tb_index, post.count_like)}</span>
                     </button>
 
                     <div className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">chat_bubble</span>
-                      <span>{post.count_bookmark}</span>
+                      <span className="material-symbols-outlined text-sm">bookmark</span>
+                      <span>{displayBookmarkCount(post.tb_index, post.count_bookmark)}</span>
                     </div>
                   </div>
                 </div>

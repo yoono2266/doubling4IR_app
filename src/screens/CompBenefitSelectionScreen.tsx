@@ -12,7 +12,7 @@ export const CompBenefitSelectionScreen: React.FC = () => {
         name: 'Okada Manila (오카다 마닐라)',
         location: 'New Manila Bay, Philippines',
         roomType: 'Executive Ocean View Suite',
-        pricePerNightCoins: 600,
+        pricePerNightDp: 600,
         image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80'
       });
     } else if (benefit.id === 'gaming_room') {
