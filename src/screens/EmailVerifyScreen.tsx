@@ -72,6 +72,7 @@ export const EmailVerifyScreen: React.FC = () => {
           _platform_gid: socialSignupInfo.platformGid,
           _platform_bid: socialSignupInfo.platformBid,
         },
+        suppressErrorToast: true,
       });
       const sessionId = response.data?.loginfo?.$session || response.sessionid;
 

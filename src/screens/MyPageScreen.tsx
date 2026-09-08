@@ -7,6 +7,15 @@ import { PolyPortfolioHistoryScreen } from './PolyPortfolioHistoryScreen';
 import { CompBenefitSelectionScreen } from './CompBenefitSelectionScreen';
 import { CurrentTripSummaryScreen } from './CurrentTripSummaryScreen';
 
+// Unix timestamp(초) → "yyyy-mm-dd hh:mm:ss" 문자열 변환
+const formatDateTime = (timestamp: any): string => {
+  const ts = Number(timestamp);
+  if (!ts) return '';
+  const d = new Date(ts * 1000);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+};
+
 // 💡 안전한 localStorage JSON 파싱 헬퍼 함수
 const getSafeUserInfo = () => {
   try {
@@ -22,7 +31,7 @@ interface MemberResponse {
   result: ResultCode | number;
   memberInfo?: any;
   memberShip?: any;
-  memberPoly?: any;
+  memPickList?: any;
   memberReward?: any;
   data?: any;
   message?: string;
@@ -53,7 +62,6 @@ export const MyPageScreen: React.FC = () => {
     setMyProfile,
     user,
     reservations,
-    walletTransactions,
     polyVotes,
     settings,
     updateSettings,
@@ -93,13 +101,13 @@ export const MyPageScreen: React.FC = () => {
         
         const memberInfo = resData.memberInfo || resData.uinfo || {};
         const memberShip = resData.memberShip || {};
-        const memberPoly = resData.memberPoly || {};
-        const memberReward = resData.memberReward || {};
+        const memPickList = resData.memPickList || []
+        const memberReward = resData.memberReward || [];
 
         console.log('저장할 memberInfo:', memberInfo);
 
         // 💡 [핵심] AppContext의 setMyProfile로 4개 객체 전달하여 상태 저장
-        setMyProfile(memberInfo, memberShip, memberPoly, memberReward);
+        setMyProfile(memberInfo, memberShip, memPickList, memberReward);
       } else {
         console.warn('회원 정보 조회 실패:', response?.message);
       }
@@ -130,6 +138,9 @@ export const MyPageScreen: React.FC = () => {
 
   console.log('저장한 myProfile?.memberInfo:', myProfile?.memberInfo);
   console.log('저장한 myProfile?.memberShip:', myProfile?.memberShip);
+  console.log('저장한 myProfile?.memPickList:', myProfile?.memPickList);
+  console.log('저장한 myProfile?.memberReward:', myProfile?.memberReward);
+
   // 💡 myProfile에서 실시간으로 저장된 사용자 정보 꺼내기
   const memberInfo = myProfile?.memberInfo || {};
   const userName = memberInfo?.u_name || user?.name || '회원';
@@ -474,9 +485,8 @@ export const MyPageScreen: React.FC = () => {
 
         <div className="bg-gradient-to-br from-[#162639] via-[#1f334d] to-[#0D1B2A] border border-[#C5A059] rounded-2xl p-5 shadow-xl flex flex-col gap-3">
           <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">사용 가능 포인트</span>
-          {/* mock 잔액 (AppContext user.walletDp) — 예측 챌린지 투표 전용, 현금 환전 불가 */}
           <p className="text-2xl font-extrabold text-[#FFF0D0] gold-gradient-text font-mono">
-            {user.walletDp.toLocaleString()} <span className="text-sm text-slate-300">DP</span>
+            {(memberInfo.u_dp || 0).toLocaleString()} <span className="text-sm text-slate-300">DP</span>
           </p>
 
           <div className="grid grid-cols-2 gap-2 pt-2">
@@ -498,19 +508,31 @@ export const MyPageScreen: React.FC = () => {
         <div>
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">포인트 지급 및 차감 내역</h3>
           <div className="space-y-2">
-            {(walletTransactions || []).map((tx) => (
-              <div key={tx.id} className="bg-[#162639] border border-[#1F334D] p-3 rounded-xl flex items-center justify-between text-xs">
-                <div>
-                  <p className="font-bold text-white">{tx.title}</p>
-                  <p className="text-[10px] text-slate-400">{tx.date} • {tx.txHash}</p>
+            {(Array.isArray(myProfile?.memberReward)
+              ? myProfile.memberReward
+              : Object.values(myProfile?.memberReward || {})
+            ).map((reward: any, idx: number) => {
+              const title = reward?.dp_message;
+              const date = formatDateTime(Number(reward?.pm_reg_timestamp) - (60*60*9));
+              const txHash = reward?.txHash ?? reward?.tx_hash ?? reward?.reward_index ?? '';
+              const isPositive = reward?.pm_status === 1;
+              const amount = Math.abs(Number(reward?.dp_amount) || 0);
+              const key = reward?.id ?? reward?.reward_index ?? idx;
+
+              return (
+                <div key={key} className="bg-[#162639] border border-[#1F334D] p-3 rounded-xl flex items-center justify-between text-xs">
+                  <div>
+                    <p className="font-bold text-white">{title}</p>
+                    <p className="text-[10px] text-slate-400">{date}{txHash ? ` • ${txHash}` : ''}</p>
+                  </div>
+                  <span className={`font-mono font-extrabold ${
+                    isPositive ? 'text-emerald-400' : 'text-[#E2C28E]'
+                  }`}>
+                    {isPositive ? '+' : '-'}{amount.toLocaleString()} DT
+                  </span>
                 </div>
-                <span className={`font-mono font-extrabold ${
-                  tx.amount > 0 ? 'text-emerald-400' : 'text-[#E2C28E]'
-                }`}>
-                  {tx.amount > 0 ? `+${tx.amount.toLocaleString()}` : tx.amount?.toLocaleString()} DT
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -647,6 +669,56 @@ export const MyPageScreen: React.FC = () => {
 
   // SUB-MENU: SETTINGS (배포 기준 — 알림/마케팅 토글 + 월간 예약 자기제한 + 데모 상태 초기화)
   if (currentSubScreen === 'my-settings') {
+    const uinfoMy = getSafeUserInfo();
+    const uidx = uinfoMy['uidx'];
+
+    // u_notification (0: 꺼짐, 0 이외: 켜짐)
+    const isNotificationOn = myProfile?.memberInfo?.u_notification !== 0;
+
+    // u_select_1 (0: 꺼짐, 0 이외: 켜짐)
+    const isMarketingOn = myProfile?.memberInfo?.u_select_1 !== 0;
+
+    // 설정 변경 API 호출 함수 (/members/usetting)
+    const handleToggleSetting = async (key: 'u_notification' | 'u_select_1', currentValue: boolean) => {
+      // 변경할 값: 기존이 켜짐(true)이면 0(꺼짐), 꺼짐(false)이면 1(켜짐)
+      const newValue = currentValue ? 0 : 1;
+
+      try {
+        const response = await apiCommonClient.post<UsettingResponse, UsettingParam>(
+          '/members/usetting',
+          { [key]: newValue, uidx }
+        );
+
+        console.log('/members/usetting 응답:', response);
+
+        if (response && (response.result === ResultCode.SUCCESS || response.result === 0)) {
+          // 백엔드 성공 시 AppContext의 myProfile 데이터 실시간 업데이트
+          const updatedMemberInfo = {
+            ...(myProfile?.memberInfo || {}),
+            [key]: newValue
+          };
+
+          setMyProfile(
+            updatedMemberInfo,
+            myProfile?.memberShip,
+            myProfile?.memPickList,
+            myProfile?.memberReward
+          );
+
+          showToast('설정이 변경되었습니다.');
+        } else {
+          showToast(response?.message || '설정 변경에 실패했습니다.');
+        }
+      } catch (error) {
+        if (error instanceof ApiError) {
+          console.error(`설정 변경 API 오류 (${error.status}):`, error.message);
+        } else {
+          console.error('설정 변경 처리 중 오류:', error);
+        }
+        showToast('설정 변경 중 오류가 발생했습니다.');
+      }
+    };
+
     return (
       <div className="flex flex-col gap-4 pb-44 pt-2">
         <button
@@ -663,43 +735,43 @@ export const MyPageScreen: React.FC = () => {
         </h2>
 
         <div className="bg-[#162639] border border-[#1F334D] p-4 rounded-2xl flex flex-col gap-4 shadow-md text-xs">
-          {/* Toggle 1: Push Notifications */}
+          {/* Toggle 1: 푸시 알림 수신 (u_notification) */}
           <div className="flex items-center justify-between py-2 border-b border-[#1F334D]">
             <div>
               <p className="font-bold text-white">푸시 알림 수신</p>
               <p className="text-[10px] text-slate-400">예약 확정 및 예측 챌린지 오즈 변동 알림</p>
             </div>
             <button
-              onClick={() => updateSettings({ pushNotifications: !settings.pushNotifications })}
+              onClick={() => handleToggleSetting('u_notification', isNotificationOn)}
               className={`w-12 h-6 rounded-full p-1 transition-colors ${
-                settings.pushNotifications ? 'bg-[#C5A059]' : 'bg-[#0D1B2A]'
+                isNotificationOn ? 'bg-[#C5A059]' : 'bg-[#0D1B2A]'
               }`}
             >
               <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                settings.pushNotifications ? 'translate-x-6' : 'translate-x-0'
+                isNotificationOn ? 'translate-x-6' : 'translate-x-0'
               }`} />
             </button>
           </div>
 
-          {/* Toggle 2: Marketing Consent */}
+          {/* Toggle 2: 마케팅 수신 동의 (u_select_1) */}
           <div className="flex items-center justify-between py-2 border-b border-[#1F334D]">
             <div>
               <p className="font-bold text-white">마케팅 수신 동의</p>
               <p className="text-[10px] text-slate-400">VIP 전용 리조트 프로모션 수신</p>
             </div>
             <button
-              onClick={() => updateSettings({ marketingConsent: !settings.marketingConsent })}
+              onClick={() => handleToggleSetting('u_select_1', isMarketingOn)}
               className={`w-12 h-6 rounded-full p-1 transition-colors ${
-                settings.marketingConsent ? 'bg-[#C5A059]' : 'bg-[#0D1B2A]'
+                isMarketingOn ? 'bg-[#C5A059]' : 'bg-[#0D1B2A]'
               }`}
             >
               <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                settings.marketingConsent ? 'translate-x-6' : 'translate-x-0'
+                isMarketingOn ? 'translate-x-6' : 'translate-x-0'
               }`} />
             </button>
           </div>
 
-          {/* Monthly Booking Self Limit Stepper */}
+          {/* Monthly Booking Self Limit Stepper 
           <div className="flex items-center justify-between py-2 border-b border-[#1F334D]">
             <div>
               <p className="font-bold text-white">월간 예약 자기 제한 수</p>
@@ -721,8 +793,8 @@ export const MyPageScreen: React.FC = () => {
               </button>
             </div>
           </div>
-
-          {/* Demo State Reset: Active Trip / Check-in State */}
+            */}
+          {/* Demo State Reset: Active Trip / Check-in State 
           <div className="pt-2">
             <div className="flex items-center justify-between">
               <div>
@@ -757,6 +829,7 @@ export const MyPageScreen: React.FC = () => {
               )}
             </div>
           </div>
+            */}
         </div>
       </div>
     );
@@ -808,7 +881,7 @@ export const MyPageScreen: React.FC = () => {
       </div>
 
       {/* Wallet Balance Cards — DP / 코인 분리. 둘 다 AppContext mock 잔액(실결제 미연동). */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3">
         {/* 더블링포인트(DP) 카드 */}
         <div
           onClick={() => setCurrentSubScreen('my-wallet')}
@@ -831,7 +904,7 @@ export const MyPageScreen: React.FC = () => {
 
           <div>
             <p className="text-xl font-black text-[#FFF0D0] font-mono leading-none text-right">
-              {user.walletDp.toLocaleString()} <span className="text-xs text-[#E2C28E] font-sans font-bold">DP</span>
+              {(memberInfo.u_dp || 0).toLocaleString()} <span className="text-xs text-[#E2C28E] font-sans font-bold">DP</span>
             </p>
           </div>
 
@@ -841,7 +914,7 @@ export const MyPageScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* 코인 월렛 카드 */}
+        {/* 코인 월렛 카드 
         <div
           onClick={() => showToast('코인 입출금은 다음 업데이트에서 제공됩니다')}
           className="bg-gradient-to-br from-[#162639] to-[#0D1B2A] border border-[#1F334D] hover:border-[#7FD4B8]/50 p-4 rounded-2xl flex flex-col justify-between gap-3 cursor-pointer transition shadow-md group"
@@ -872,6 +945,7 @@ export const MyPageScreen: React.FC = () => {
             <span>→</span>
           </div>
         </div>
+        */}
       </div>
 
       {/* 연속 출석 스트릭 (공용 컴포넌트) */}
@@ -920,7 +994,7 @@ export const MyPageScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* 3. 코인 월렛 / 입출금 */}
+        {/* 3. 코인 월렛 / 입출금 
         <div
           onClick={() => showToast('코인 입출금은 다음 업데이트에서 제공됩니다')}
           className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#7FD4B8]/50 transition cursor-pointer flex items-center justify-between gap-3"
@@ -936,7 +1010,7 @@ export const MyPageScreen: React.FC = () => {
           </div>
           <span className="material-symbols-outlined text-slate-400 text-sm shrink-0">chevron_right</span>
         </div>
-
+          */}
         {/* 4. 예측 챌린지 참여 내역 */}
         <div
           onClick={() => setCurrentSubScreen('my-poly-history')}
@@ -947,7 +1021,7 @@ export const MyPageScreen: React.FC = () => {
               <span className="material-symbols-outlined text-lg">history</span>
             </div>
             <div className="min-w-0">
-              <span className="text-xs font-bold text-white block">4. 예측 챌린지 참여 내역</span>
+              <span className="text-xs font-bold text-white block">3. 예측 챌린지 참여 내역</span>
               <span className="text-[10px] text-[#E2C28E] font-medium">잔액: {user.walletDp.toLocaleString()} DP</span>
             </div>
           </div>
@@ -969,7 +1043,7 @@ export const MyPageScreen: React.FC = () => {
               <span className="material-symbols-outlined text-lg">workspace_premium</span>
             </div>
             <div className="min-w-0">
-              <span className="text-xs font-bold text-white block group-hover:text-[#E2C28E] transition">5. 더블링 멤버십 등급 관리</span>
+              <span className="text-xs font-bold text-white block group-hover:text-[#E2C28E] transition">4. 더블링 멤버십 등급 관리</span>
               <span className="text-[10px] text-slate-400">등급 혜택 및 승급 진행률</span>
             </div>
           </div>
@@ -991,14 +1065,14 @@ export const MyPageScreen: React.FC = () => {
               <span className="material-symbols-outlined text-lg">group_add</span>
             </div>
             <div className="min-w-0">
-              <span className="text-xs font-bold text-white block">6. 추천인 리워드 관리</span>
+              <span className="text-xs font-bold text-white block">5. 추천인 리워드 관리</span>
               <span className="text-[10px] text-slate-400">초대 링크 공유 및 리워드 현황</span>
             </div>
           </div>
           <span className="material-symbols-outlined text-slate-400 text-sm shrink-0">chevron_right</span>
         </div>
 
-        {/* 7. 앱 설정 & 제한 */}
+        {/* 6. 앱 설정 & 제한 */}
         <div
           onClick={() => setCurrentSubScreen('my-settings')}
           className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between gap-3"
@@ -1008,7 +1082,7 @@ export const MyPageScreen: React.FC = () => {
               <span className="material-symbols-outlined text-lg">settings</span>
             </div>
             <div className="min-w-0">
-              <span className="text-xs font-bold text-white block">7. 앱 설정 & 제한</span>
+              <span className="text-xs font-bold text-white block">6. 앱 설정 & 제한</span>
               <span className="text-[10px] text-slate-400">알림 · 마케팅 수신 · 월간 예약 제한</span>
             </div>
           </div>

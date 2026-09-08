@@ -5,6 +5,7 @@ import { PolyMarketCarousel } from '../components/PolyMarketCarousel';
 import { displayLikeCount, displayBookmarkCount } from '../data/mockCounts';
 import { VideoPromoCard } from '../components/VideoPromoCard';
 import { apiCommonClient, ApiError, ResultCode, CommonResponse } from '../utils/apiClient';
+import { saveMainScrollTop, restoreMainScrollTop } from '../utils/scrollMemory';
 
 // /contents/main-content API 요청/응답 타입
 interface MainContentParam {
@@ -62,6 +63,7 @@ export const HomeScreen: React.FC = () => {
     isLoggedIn,
     requireLogin,
     setSelectedHotelId,
+    refreshPlmContents,
   } = useApp();
 
   const handlePolyCardClick = () => {
@@ -78,6 +80,11 @@ export const HomeScreen: React.FC = () => {
  const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // 게시글 상세에서 목록으로 돌아왔을 때, 상세 진입 전 스크롤 위치를 복원한다.
+  useEffect(() => {
+    restoreMainScrollTop();
+  }, []);
 
   // 💡 비디오 플레이어 모달 상태 관리
   const [videoModal, setVideoModal] = useState<{
@@ -179,6 +186,11 @@ const fetchPosts = useCallback(async (pageNum: number) => {
 useEffect(() => {
   fetchPosts(1);
 }, []);
+
+useEffect(() => {
+  console.log('[HomeScreen] mount -> refreshPlmContents()');
+  refreshPlmContents();
+}, [refreshPlmContents]);
 
 // 무한 스크롤 관찰자 (IntersectionObserver)
 useEffect(() => {
@@ -311,6 +323,7 @@ useEffect(() => {
                 key={post.tb_index}
                 onClick={() => {
                   if (!requireLogin()) return;
+                  saveMainScrollTop();
                   setSelectedPost(post);
                   setCurrentSubScreen('post-detail');
                 }}

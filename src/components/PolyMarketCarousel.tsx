@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { PolyMarketItem } from '../data/polyMarketData';
+import { apiCommonClient, CommonResponse } from '../utils/apiClient';
 
 const DP_PRESETS = [100, 500, 1000, 5000];
 
@@ -73,9 +74,44 @@ export const PolyMarketCarousel: React.FC = () => {
     });
   };
 
-  const handleConfirmVote = () => {
+  // 서버에 픽 결과 기록 (/members/plm-memberpick). 응답 콜백으로 DP/픽 정보를 서버 기준으로
+  // 갱신하는 로직은 추후 반영 예정이며, 지금은 요청이 실패해도 화면이 깨지지 않도록만 처리한다.
+  const submitMemberPick = async (pmIndex: number, userPick: number, userPickValue: number, dpAmount: number) => {
+    try {
+      const response = await apiCommonClient.post<CommonResponse>('/members/plm-memberpick', {
+        pm_index: pmIndex,
+        user_pick: userPick,
+        user_pick_value: userPickValue,
+        dp_amount: dpAmount,
+      });
+      console.log('[plm-memberpick] response:', response);
+      return response;
+    } catch (error) {
+      console.error('[plm-memberpick] 요청 실패:', error);
+      return undefined;
+    }
+  };
+
+  const handleConfirmVote = async () => {
     if (!confirmData) return;
     const { market, choice, odds, prevChoice } = confirmData;
+
+    const pmIndex = Number(market.id.replace(/^plm-/, '')) || 0;
+    const userPickValue = parseFloat(odds.replace(/[^0-9.]/g, '')) || 0;
+    const serverResponse = await submitMemberPick(
+      pmIndex,
+      choice === 'YES' ? 1 : 2,
+      userPickValue,
+      selectedAmount
+    );
+    const serverResult = serverResponse?.result ?? serverResponse?.data?.result ?? -1;
+
+    if (!serverResponse || serverResult !== 0) {
+      console.warn('[plm-memberpick] 참여 실패 또는 서버 응답 오류:', serverResponse);
+      setConfirmData(null);
+      return;
+    }
+
     const res = castPolyVote(
       market.id,
       market.title,

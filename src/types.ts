@@ -1,7 +1,7 @@
 export interface MyProfile {
   memberInfo: any;
   memberShip: any;
-  memberPoly: any;
+  memPickList: any;
   memberReward: any;
 }
 

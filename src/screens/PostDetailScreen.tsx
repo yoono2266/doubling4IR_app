@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 export const PostDetailScreen: React.FC = () => {
@@ -8,6 +8,12 @@ export const PostDetailScreen: React.FC = () => {
     { id: 'c1', author: 'Alexander Kim', text: '스위트룸 버틀러 서비스 정보 유용하네요!', time: '10분 전' },
     { id: 'c2', author: 'David Park', text: '다음달 마닐라 출장 때 꼭 이용해보겠습니다.', time: '5분 전' }
   ]);
+  const mediaAnchorRef = useRef<HTMLDivElement | null>(null);
+
+  // 목록에서 스크롤된 상태로 진입해도 상세 화면은 항상 비디오/썸네일부터 보이도록 앵커 처리
+  useEffect(() => {
+    mediaAnchorRef.current?.scrollIntoView({ block: 'start' });
+  }, [selectedPost?.tb_index]);
 
   if (!selectedPost) return null;
 
@@ -37,15 +43,16 @@ export const PostDetailScreen: React.FC = () => {
       <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-5 flex flex-col gap-4 shadow-xl">
         {/* Author Header */}
         {selectedPost.tb_type === 1 ? (
-          <div className="flex items-center justify-between border-b border-[#1F334D] pb-3">
-            <div>
-              <span className="text-xs text-slate-400 font-mono flex items-center gap-1">
-                <span className="material-symbols-outlined text-[13px] text-slate-500">schedule</span>
-                <span>{selectedPost.tb_reg_datetime || '방금 전'}</span>
+          <div className="border-b border-[#1F334D] pb-3">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-base font-bold text-white">{selectedPost.tb_title}</h2>
+              <span className="text-xs font-bold text-[#0D1B2A] bg-[#C5A059] px-2.5 py-1 rounded-full shadow-sm shrink-0">
+                {selectedPost.cate_name}
               </span>
             </div>
-            <span className="text-xs font-bold text-[#0D1B2A] bg-[#C5A059] px-2.5 py-1 rounded-full shadow-sm">
-              {selectedPost.cate_name}
+            <span className="text-xs text-slate-400 font-mono flex items-center gap-1 mt-0.5">
+              <span className="material-symbols-outlined text-[13px] text-slate-500">schedule</span>
+              <span>{selectedPost.tb_reg_datetime || '방금 전'}</span>
             </span>
           </div>
         ) : (
@@ -75,17 +82,18 @@ export const PostDetailScreen: React.FC = () => {
           </div>
         )}
 
-        {/* Post Title & Body */}
-        <div>
-          <h2 className="text-base font-bold text-white mb-2">{selectedPost.tb_title}</h2>
-          {selectedPost.tb_type !== 1 && (
+        {/* Post Title & Body (tb_type===1은 위 Author Header에서 타이틀을 이미 표시) */}
+        {selectedPost.tb_type !== 1 && (
+          <div>
+            <h2 className="text-base font-bold text-white mb-2">{selectedPost.tb_title}</h2>
             <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-line">{selectedPost.tb_title}</p>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Video / Attached Image */}
+        <div ref={mediaAnchorRef} />
         {selectedPost.tb_type === 1 ? (
-          <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-[#0D1B2A] border border-[#1F334D] my-1">
+          <div className="relative w-full aspect-[9/16] rounded-xl overflow-hidden bg-[#0D1B2A] border border-[#1F334D] my-1">
             <video 
               src={`https://dou-cdn.wildwynn.com/static/upload/contents/${selectedPost.tb_file_url}`} 
               poster={`https://dou-cdn.wildwynn.com/static/upload/contents/thumb/${selectedPost.tb_thumb_url}`}

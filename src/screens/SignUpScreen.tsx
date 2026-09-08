@@ -100,8 +100,9 @@ export const SignUpScreen: React.FC = () => {
                     _platform_gid: socialSignupInfo.platformGid,
                     _platform_bid: socialSignupInfo.platformBid,
                   },
+                  suppressErrorToast: true,
                 }
-              : undefined
+              : { suppressErrorToast: true }
           );
     
           //console.log('/members/ucreate 응답 결과:', response);

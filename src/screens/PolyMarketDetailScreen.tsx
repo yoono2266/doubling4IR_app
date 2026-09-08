@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { MarketComment } from '../data/polyMarketData';
+import { apiCommonClient } from '../utils/apiClient';
 
 const DP_PRESETS = [100, 500, 1000, 5000];
 
@@ -105,8 +106,32 @@ export const PolyMarketDetailScreen: React.FC = () => {
     });
   };
 
-  const handleConfirmVote = () => {
+  const handleConfirmVote = async () => {
     if (!confirmModalData) return;
+
+    let response: any;
+    try {
+      const pmIndex = Number(selectedMarket.id.replace(/^plm-/, '')) || 0;
+      const userPickValue = parseFloat(confirmModalData.odds.replace(/[^0-9.]/g, '')) || 0;
+      response = await apiCommonClient.post('/members/plm-memberpick', {
+        pm_index: pmIndex,
+        user_pick: confirmModalData.choice === 'YES' ? 1 : 2,
+        user_pick_value: userPickValue,
+        dp_amount: selectedAmount,
+      });
+    } catch (error) {
+      console.error('[plm-memberpick] 요청 실패:', error);
+      setConfirmModalData(null);
+      return;
+    }
+
+    const serverResult = response?.result ?? response?.data?.result ?? -1;
+    if (serverResult !== 0) {
+      console.warn('[plm-memberpick] 참여 실패 또는 서버 응답 오류:', response);
+      setConfirmModalData(null);
+      return;
+    }
+
     const res = castPolyVote(
       selectedMarket.id,
       selectedMarket.title,

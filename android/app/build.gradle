@@ -3,12 +3,22 @@ apply plugin: 'com.android.application'
 android {
     namespace "com.spoodds.prod"
     compileSdk rootProject.ext.compileSdkVersion
+
+    signingConfigs {
+        release {
+            storeFile file("doubling-upload-key.jks")
+            storePassword "jBx3JFCME1NZS0uZSikm7D22SZga"
+            keyAlias "doubling-upload-2026"
+            keyPassword "jBx3JFCME1NZS0uZSikm7D22SZga"
+        }
+    }
+
     defaultConfig {
         applicationId "com.spoodds.prod"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 10114
-        versionName "1.1.14"
+        versionCode 10117
+        versionName "1.1.17"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -24,6 +34,7 @@ android {
 
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

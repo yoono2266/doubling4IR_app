@@ -24,7 +24,11 @@ import { EmailVerifyScreen } from './screens/EmailVerifyScreen';
 import { LandingScreen } from './screens/LandingScreen';
 import { PwaInstallBanner } from './components/PwaInstallBanner';
 import { hasStoredSession } from './utils/auth';
+import { getOrCreateGuestId } from './utils/apiClient';
 import { useAppHistory } from './hooks/useAppHistory';
+
+// 앱 최초 로드 시 게스트 식별자(guest_id)가 없으면 생성해 localStorage에 저장한다.
+getOrCreateGuestId();
 
 const AppContent: React.FC = () => {
   const {

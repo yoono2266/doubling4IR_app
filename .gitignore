@@ -6,6 +6,3 @@ node_modules/
 # Android signing keystores â€” never commit private signing keys
 *.jks
 *.keystore
-# È¯°æº¯¼ö
-.env
-.env.*

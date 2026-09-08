@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { apiCommonClient } from '../utils/apiClient'; // 💡 apiCommonClient 임포트 추가
-import { checkLogin } from '../utils/auth';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { apiCommonClient, setErrorToastHandler, setSessionExpiredHandler } from '../utils/apiClient'; // 💡 apiCommonClient 임포트 추가
+import { checkLogin, clearSession } from '../utils/auth';
 import {
   MyProfile,
   UserPersona,
@@ -16,6 +16,55 @@ import {
 import { PolyMarketItem, INITIAL_POLY_MARKETS } from '../data/polyMarketData';
 import { INITIAL_TIER_RECORDS } from '../data/membershipData';
 import { STREAK_MILESTONES, STREAK_MAX_DAYS } from '../data/streakData';
+
+interface PLMContentsResponse {
+  pm_index: number;
+  pm_cate_index: number;
+  pm_cate_name: string;
+  pm_title: string;
+  pm_desc: string;
+  pm_yes: string | number;
+  pm_no: string | number;
+  pm_pick_dp: number;
+  pm_file_url: string;
+  pm_start: string;
+  pm_stop: string;
+  pm_end: string;
+}
+
+const normalizeCategory = (categoryName: string): PolyMarketItem['category'] => {
+  const normalized = (categoryName || '').trim();
+  if (normalized.includes('사회')) return '사회';
+  if (normalized.includes('연예')) return '연예';
+  if (normalized.includes('정치')) return '정치';
+  if (normalized.includes('인물')) return '인물';
+  return normalized || '사회';
+};
+
+const mapPlmContentsToMarket = (item: PLMContentsResponse): PolyMarketItem => {
+  const yesValue = typeof item.pm_yes === 'number'
+    ? item.pm_yes
+    : Number.parseFloat((item.pm_yes || '0').replace(/[^0-9.]/g, '')) || 0;
+  const noValue = typeof item.pm_no === 'number'
+    ? item.pm_no
+    : Number.parseFloat((item.pm_no || '0').replace(/[^0-9.]/g, '')) || 0;
+
+  return {
+    id: `plm-${item.pm_index}`,
+    type: 'general',
+    title: item.pm_title,
+    category: normalizeCategory(item.pm_cate_name),
+    yesOdds: `${yesValue}%`,
+    noOdds: `${noValue}%`,
+    yesValue,
+    noValue,
+    totalVolumeDp: `${(item.pm_pick_dp || 0).toLocaleString()} DP`,
+    description: item.pm_desc,
+    rulesText: '실시간 예측 챌린지 기준에 따라 판정됩니다.',
+    contextNews: item.pm_desc,
+    comments: [],
+  };
+};
 
 interface AppContextType {
   user: UserPersona;
@@ -49,7 +98,10 @@ interface AppContextType {
   setHasActiveTrip: React.Dispatch<React.SetStateAction<boolean>>;
 
   walletTransactions: WalletTransaction[];
-  polyVotes: PolyVote[];polyMarkets: PolyMarketItem[];
+  polyVotes: PolyVote[];
+  polyMarkets: PolyMarketItem[];
+  plmContentsLoading: boolean;
+  refreshPlmContents: () => Promise<void>;
   selectedMarket: PolyMarketItem | null;
   setSelectedMarket: (market: PolyMarketItem | null) => void;
   castPolyVote: (marketId: string, title: string, category: string, choice: string, odds: string, amountDp?: number) => { success: boolean; isRevote: boolean; prevChoice?: string; prevAmount?: number; participationRewardDp?: number; msg?: string };
@@ -75,7 +127,7 @@ interface AppContextType {
 
   // 💡 MyProfile state & updater
   myProfile: MyProfile;
-  setMyProfile: (memberInfo?: any, memberShip?: any, memberPoly?: any, memberReward?: any) => void;
+  setMyProfile: (memberInfo?: any, memberShip?: any, memPickList?: any, memberReward?: any) => void;
 
   // 💡 로그인 세션 확인 및 DP 등 최신 회원 정보 갱신 (/member/uchk)
   refreshLogin: () => Promise<boolean>;
@@ -99,33 +151,68 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [socialSignupInfo, setSocialSignupInfo] = useState<SocialSignupInfo | null>(null);
   const [selectedHotelId, setSelectedHotelId] = useState<string>('okada');
   const [posts, setPosts] = useState<Post[]>([]);
-  const [polyMarkets] = useState<PolyMarketItem[]>(INITIAL_POLY_MARKETS);
+  const [polyMarkets, setPolyMarkets] = useState<PolyMarketItem[]>(INITIAL_POLY_MARKETS);
+  const [plmContentsLoading, setPlmContentsLoading] = useState<boolean>(false);
   const [selectedMarket, setSelectedMarket] = useState<PolyMarketItem | null>(null);
+
+  const refreshPlmContents = useCallback(async (): Promise<void> => {
+    try {
+      setPlmContentsLoading(true);
+      console.log('[PLM] fetch start -> /contents/plm-contents');
+
+      const response = await apiCommonClient.post<any, {}>('/contents/plm-contents', {}, { suppressErrorToast: true });
+      console.log('[PLM] raw response:', response.data.data);
+
+      const payload = Array.isArray(response?.data?.data) ? response.data.data as PLMContentsResponse[] : [];
+      console.log('[PLM] parsed payload:', payload);
+
+      if (payload.length > 0) {
+        const mappedMarkets = payload.map(mapPlmContentsToMarket);
+        console.log('[PLM] mapped markets:', mappedMarkets);
+        setPolyMarkets(mappedMarkets);
+      } else {
+        console.log('[PLM] no payload, fallback to INITIAL_POLY_MARKETS');
+        setPolyMarkets(INITIAL_POLY_MARKETS);
+      }
+    } catch (error) {
+      console.error('[PLM] fetch failed:', error);
+      setPolyMarkets(INITIAL_POLY_MARKETS);
+    } finally {
+      setPlmContentsLoading(false);
+    }
+  }, []);
+
+  // 화면 진입 시점에서 명시적으로 불러오도록 유지한다.
+  // 앱 최초 마운트 시 자동 호출은 제거하여 화면별 로딩 타이밍을 제어한다.
 
   // 💡 MyProfile 초기 상태 설정
   const [myProfile, setMyProfileState] = useState<MyProfile>({
     memberInfo: {},
     memberShip: {},
-    memberPoly: {},
+    memPickList: {},
     memberReward: {}
   });
 
   // 💡 [핵심] setMyProfile 핸들러 구현
   // 💡 setMyProfile 구현 부분 수정
+  // 배열을 { ...arr } 로 복사하면 {0: ..., 1: ...} 형태의 일반 객체가 되어 배열성이 사라지므로,
+  // 원본이 배열인지 여부에 따라 복사 방식을 분기한다.
+  const cloneProfileField = (value: any) => (Array.isArray(value) ? [...value] : { ...value });
+
   const setMyProfile = (
-    memberInfo: any = {}, 
-    memberShip: any = {}, 
-    memberPoly: any = {}, 
+    memberInfo: any = {},
+    memberShip: any = {},
+    memPickList: any = {},
     memberReward: any = {}
   ) => {
     console.log('📌 AppContext setMyProfile 호출됨:', memberInfo);
-    
-    // 💡 불변성(Immutability)을 지키기 위해 새로운 객체 생성하여 state 갱신
+
+    // 💡 불변성(Immutability)을 지키기 위해 새로운 객체/배열 생성하여 state 갱신
     setMyProfileState({
-      memberInfo: { ...memberInfo },
-      memberShip: { ...memberShip },
-      memberPoly: { ...memberPoly },
-      memberReward: { ...memberReward }
+      memberInfo: cloneProfileField(memberInfo),
+      memberShip: cloneProfileField(memberShip),
+      memPickList: cloneProfileField(memPickList),
+      memberReward: cloneProfileField(memberReward)
     });
   };
 
@@ -136,7 +223,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (result) {
       setIsLoggedIn(true);
-      setMyProfile(result.memberInfo, result.memberShip, result.memberPoly, result.memberReward);
+      setMyProfile(result.memberInfo, result.memberShip, result.memPickList, result.memberReward);
       return true;
     }
 
@@ -195,12 +282,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Toast message
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const showToast = (msg: string) => {
+  const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage(null);
     }, 3000);
-  };
+  }, []);
+
+  // apiCommonClient의 result 코드 기반 공통 에러 토스트가 이 화면의 showToast를 사용하도록 등록
+  useEffect(() => {
+    setErrorToastHandler(showToast);
+    return () => setErrorToastHandler(null);
+  }, [showToast]);
+
+  // 서버가 result 2(세션 없음/만료)를 응답하면 자동으로 로그아웃 처리 후 로그인 화면으로 이동한다.
+  // (에러 메시지 토스트는 setErrorToastHandler 쪽에서 이미 띄워주므로 여기서는 상태 정리만 한다.)
+  const handleSessionExpired = useCallback(() => {
+    clearSession();
+    setIsLoggedIn(false);
+    setCurrentSubScreen('login');
+  }, []);
+
+  useEffect(() => {
+    setSessionExpiredHandler(handleSessionExpired);
+    return () => setSessionExpiredHandler(null);
+  }, [handleSessionExpired]);
 
   const requireLogin = () => {
     if (isLoggedIn) return true;
@@ -253,7 +359,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             return p;
           })
         );
-        showToast('좋아요 처리 실패');
       }
     } catch (error) {
       // 에러 발생 시 롤백
@@ -315,7 +420,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             return p;
           })
         );
-        showToast('북마크 처리 실패');
       }
     } catch (error) {
       // 에러 발생 시 롤백
@@ -788,6 +892,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         walletTransactions,
         polyVotes,
         polyMarkets,
+        plmContentsLoading,
+        refreshPlmContents,
         selectedMarket,
         setSelectedMarket,
         castPolyVote,

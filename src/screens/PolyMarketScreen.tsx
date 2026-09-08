@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { PolyMarketItem } from '../data/polyMarketData';
+import { apiCommonClient } from '../utils/apiClient';
 
 const DP_PRESETS = [100, 500, 1000, 5000];
 
@@ -20,7 +21,8 @@ export const PolyMarketScreen: React.FC = () => {
     setCurrentSubScreen,
     user,
     requireLogin,
-    showToast
+    showToast,
+    refreshPlmContents,
   } = useApp();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
@@ -36,6 +38,11 @@ export const PolyMarketScreen: React.FC = () => {
   } | null>(null);
 
   const [selectedAmount, setSelectedAmount] = useState<number>(100);
+
+  React.useEffect(() => {
+    console.log('[PolyMarketScreen] mount -> refreshPlmContents()');
+    refreshPlmContents();
+  }, [refreshPlmContents]);
 
   const [resultModalData, setResultModalData] = useState<{
     marketTitle: string;
@@ -74,9 +81,33 @@ export const PolyMarketScreen: React.FC = () => {
     });
   };
 
-  const handleConfirmVote = () => {
+  const handleConfirmVote = async () => {
     if (!confirmModalData) return;
     const { market, choice, odds, prevChoice } = confirmModalData;
+
+    let serverResponse: any;
+    try {
+      const pmIndex = Number(market.id.replace(/^plm-/, '')) || 0;
+      const userPickValue = parseFloat(odds.replace(/[^0-9.]/g, '')) || 0;
+      serverResponse = await apiCommonClient.post('/members/plm-memberpick', {
+        pm_index: pmIndex,
+        user_pick: choice === 'YES' ? 1 : 2,
+        user_pick_value: userPickValue,
+        dp_amount: selectedAmount,
+      });
+    } catch (error) {
+      console.error('[plm-memberpick] 요청 실패:', error);
+      setConfirmModalData(null);
+      return;
+    }
+
+    const serverResult = serverResponse?.result ?? serverResponse?.data?.result ?? -1;
+    if (serverResult !== 0) {
+      console.warn('[plm-memberpick] 참여 실패 또는 서버 응답 오류:', serverResponse);
+      setConfirmModalData(null);
+      return;
+    }
+
     const res = castPolyVote(market.id, market.title, market.category, choice, odds, selectedAmount);
 
     if (res.success) {

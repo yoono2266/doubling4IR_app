@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useApp } from '../context/AppContext';
+import { getStoredUserInfo } from '../utils/auth';
 
 interface LandingScreenProps {
   onStart: () => void;
@@ -12,6 +14,25 @@ const FEATURES = [
 ];
 
 export const LandingScreen: React.FC<LandingScreenProps> = ({ onStart }) => {
+  // 앱 전역에서 상시 갱신되는 로그인 상태(AppContext의 refreshLogin)를 그대로 활용
+  const { isLoggedIn } = useApp();
+  const [uinfo, setUinfo] = useState<Record<string, any>>(() => getStoredUserInfo());
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // 세션이 없으면 checkLogin이 네트워크 호출 없이 바로 null을 반환하므로 항상 호출해도 안전하다.
+    getStoredUserInfo('server').then((fresh) => {
+      if (!cancelled) setUinfo(fresh);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const displayName = uinfo?.u_name || uinfo?.email;
+
   return (
     <div className="h-full overflow-y-auto no-scrollbar flex flex-col">
       <div className="flex-1 flex flex-col items-center px-6 pt-12 pb-8 text-center">
@@ -19,6 +40,14 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onStart }) => {
           <img src="/icons/icon-512-maskable.png" className='rounded-2xl'/>
         </div>
         <span className="font-black tracking-[0.2em] gold-gradient-text text-lg mb-3">DOUBLING</span>
+
+        {isLoggedIn && (
+          <span className="text-[11px] font-bold text-[#E2C28E] bg-[#C5A059]/10 px-2.5 py-1 rounded-full border border-[#C5A059]/30 mb-3 flex items-center gap-1">
+            <span className="material-symbols-outlined text-xs">how_to_reg</span>
+            {displayName ? `${displayName}님, 로그인 중입니다` : '로그인 중입니다'}
+          </span>
+        )}
+
         <h1 className="text-2xl font-black leading-snug mb-3">
           재미있는 컨텐츠로로 만나는<br />
           <span className="gold-gradient-text">여행 커뮤니티 & 플랫폼</span>

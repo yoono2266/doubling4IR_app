@@ -1,8 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
+import { Capacitor } from '@capacitor/core';
+import { GoogleSignIn } from '@capawesome/capacitor-google-sign-in';
 import { useApp } from '../context/AppContext';
 import { LOGO_BASE64 } from '../assets/logoBase64';
 import { apiCommonClient, ApiError, ResultCode } from '../utils/apiClient';
+import { getStoredUserInfo } from '../utils/auth';
+
+// /members/uAuth API 응답 타입 (소셜 로그인 서버 인증 체크)
+interface UAuthResponse {
+  result: ResultCode;
+  message?: string;
+  sessionid?: string;
+  data?: {
+    loginfo?: { $session?: string };
+    userinfo?: unknown;
+  };
+}
+
+interface GoogleUserInfo {
+  sub: string;
+  email: string;
+  name?: string;
+  picture?: string;
+}
+
+// 웹 환경 Google Identity Services 스크립트는 한 번만 로드
+let googleScriptPromise: Promise<void> | null = null;
+const loadGoogleIdentityScript = (): Promise<void> => {
+  if (window.google?.accounts?.oauth2) return Promise.resolve();
+  if (googleScriptPromise) return googleScriptPromise;
+
+  googleScriptPromise = new Promise((resolve, reject) => {
+    const existingScript = document.querySelector<HTMLScriptElement>('script[data-google-identity]');
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve());
+      existingScript.addEventListener('error', () => reject(new Error('Google 로그인 SDK를 불러오지 못했습니다.')));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.dataset.googleIdentity = 'true';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Google 로그인 SDK를 불러오지 못했습니다.'));
+    document.head.appendChild(script);
+  });
+
+  return googleScriptPromise;
+};
+
+const fetchGoogleUserInfo = async (accessToken: string): Promise<GoogleUserInfo> => {
+  const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) throw new Error('Google 사용자 정보를 확인하지 못했습니다.');
+  return response.json() as Promise<GoogleUserInfo>;
+};
+
+// 오늘의 로그인 보너스 모달 하루 1회(계정별) 노출 여부 판단용
+const getTodayDateKey = (): string => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const getLoginBonusStorageKey = (uid: string): string => `login_bonus_claimed_${uid}`;
+
+// 로그인 응답(userinfo)에서 create_date를 뽑아온다. 응답에 없으면 apiClient가 자동 동기화한
+// localStorage user_info에서라도 확인한다. 값이 없으면 빈 문자열을 반환한다.
+const getCreateDateFromResponse = (data?: { userinfo?: unknown }): string => {
+  const fromResponse = (data?.userinfo as Record<string, any> | undefined)?.create_date;
+  if (typeof fromResponse === 'string' && fromResponse.trim() !== '') return fromResponse;
+
+  const fromStorage = getStoredUserInfo()?.create_date;
+  return typeof fromStorage === 'string' ? fromStorage : '';
+};
 
 // /members/ulogin API 요청/응답 타입
 interface LoginParam {
@@ -71,6 +148,7 @@ export const LoginScreen: React.FC = () => {
     setIsLoggedIn,
     setCurrentTab,
     setCurrentSubScreen,
+    setSocialSignupInfo,
     showToast,
     grantLoginBonus,
   } = useApp();
@@ -79,18 +157,71 @@ export const LoginScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGoogleNativeReady, setIsGoogleNativeReady] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   // 로그인 성공 후 보너스 모달 노출 여부 (홈 이동은 모달 확인 시점에)
   const [bonusVisible, setBonusVisible] = useState(false);
+  // 모달 확인 시 "수령 완료"로 기록할 create_date 값
+  const [pendingBonusDate, setPendingBonusDate] = useState('');
 
-  // 로그인 성공 공통 처리: 화면 전환은 미루고 보너스 모달부터 띄운다.
-  const openLoginBonus = () => {
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      showToast('Google Client ID가 설정되지 않았습니다.');
+      return;
+    }
+
+    let cancelled = false;
+
+    GoogleSignIn.initialize({
+      clientId,
+      scopes: ['openid', 'email', 'profile'],
+    })
+      .then(() => {
+        if (!cancelled) setIsGoogleNativeReady(true);
+      })
+      .catch((error) => {
+        console.error('GoogleSignIn initialize failed:', error);
+        if (!cancelled) {
+          showToast('앱에서 Google 로그인을 초기화하지 못했습니다. Google OAuth 설정을 확인해 주세요.');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [showToast]);
+
+  // 로그인 성공 공통 처리: create_date(계정별 출석 기준일)가 없으면 모달 없이 바로 홈으로 이동하고,
+  // 이미 해당 create_date로 보너스를 받았으면 역시 모달 없이 홈으로 이동한다.
+  // 그 외에는 보너스 모달을 띄운다 (화면 전환은 모달 확인 시점으로 미룸).
+  const openLoginBonus = (createDate: string) => {
     setErrorMsg(null);
+
+    const uid = getStoredUserInfo()?.u_id || 'guest';
+    const alreadyClaimed = !!createDate && localStorage.getItem(getLoginBonusStorageKey(uid)) === createDate;
+
+    if (!createDate || alreadyClaimed) {
+      setIsLoggedIn(true);
+      setCurrentTab('home');
+      setCurrentSubScreen(null);
+      return;
+    }
+
+    setPendingBonusDate(createDate);
     setBonusVisible(true);
   };
 
-  // 보너스 확인 → DP 지급(mock) → 홈 이동 → 토스트
+  // 보너스 확인 → DP 지급(mock) → 홈 이동 → 토스트 (create_date + u_id로 수령 기록)
   const confirmBonusAndGoHome = () => {
+    const uid = getStoredUserInfo()?.u_id || 'guest';
+    if (pendingBonusDate) {
+      localStorage.setItem(getLoginBonusStorageKey(uid), pendingBonusDate);
+    }
+
     grantLoginBonus();
     setBonusVisible(false);
     setIsLoggedIn(true);
@@ -115,16 +246,18 @@ export const LoginScreen: React.FC = () => {
     try {
       const response = await apiCommonClient.post<LoginResponse, LoginParam>(
         '/members/ulogin',
-        { userid: email.trim(), upass: password }
+        { userid: email.trim(), upass: password },
+        { suppressErrorToast: true }
       );
 
       switch (response.result) {
         case ResultCode.SUCCESS: {
           const session = response.data?.loginfo?.['$session'];
           if (session) {
+            console.log('[ulogin] userinfo:', response.data?.userinfo);
             localStorage.setItem('sessionid', session);
             localStorage.setItem('user_info', JSON.stringify(response.data?.userinfo ?? {}));
-            openLoginBonus();
+            openLoginBonus(getCreateDateFromResponse(response.data));
           } else {
             setErrorMsg('로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.');
           }
@@ -157,15 +290,129 @@ export const LoginScreen: React.FC = () => {
   };
 
   // 소셜 로그인 — 실제 OAuth 연동 없음. 데모(체험) 모드 mock 로그인.
+  // 실제 서버 create_date가 없는 mock 흐름이므로 오늘 날짜로 대체한다.
   const handleMockSocial = (provider: string) => {
     showToast(`(데모) ${provider} 계정으로 체험 로그인합니다`);
-    openLoginBonus();
+    openLoginBonus(getTodayDateKey());
+  };
+
+  // Google 로그인 — 네이티브(Capacitor)/웹 OAuth 후 /members/uAuth로 서버 계정 존재 여부 확인.
+  // 서버에 이미 가입된 계정이면 로그인 처리, 없으면 구글 정보를 들고 회원가입 화면으로 이동.
+  const handleGoogleLogin = async () => {
+    // Google Sign-In 플러그인 초기화에는 Web Client ID만 사용합니다.
+    // Android OAuth client(package + SHA-1)는 Google Cloud Console / google-services.json에서 별도로 관리합니다.
+    const webClientId = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!webClientId) {
+      showToast('Google Web Client ID가 설정되지 않았습니다.');
+      return;
+    }
+
+    setIsGoogleLoading(true);
+
+    let platformUid = '';
+    let platformGid = '';
+    let profileImage: string | undefined;
+    let googleProfile: Record<string, unknown> = {};
+    let googleAuthenticated = false;
+
+    try {
+      if (Capacitor.isNativePlatform()) {
+        if (!isGoogleNativeReady) {
+          await GoogleSignIn.initialize({
+            clientId: webClientId,
+            scopes: ['openid', 'email', 'profile'],
+          });
+          setIsGoogleNativeReady(true);
+        }
+
+        const nativeUser = await GoogleSignIn.signIn();
+        if (!nativeUser.email) throw new Error('Google 계정 이메일을 확인하지 못했습니다.');
+
+        platformUid = nativeUser.email;
+        platformGid = nativeUser.userId ?? nativeUser.email;
+        profileImage = nativeUser.imageUrl ?? undefined;
+        googleProfile = { ...nativeUser };
+      } else {
+        await loadGoogleIdentityScript();
+        const oauth2 = window.google?.accounts?.oauth2;
+        if (!oauth2) throw new Error('Google 로그인 기능을 사용할 수 없습니다.');
+
+        const userInfo = await new Promise<GoogleUserInfo>((resolve, reject) => {
+          const tokenClient = oauth2.initTokenClient({
+            client_id: webClientId,
+            scope: 'openid email profile',
+            callback: async (tokenResponse) => {
+              if (tokenResponse.error || !tokenResponse.access_token) {
+                reject(new Error('Google 로그인이 취소되었거나 실패했습니다.'));
+                return;
+              }
+              try {
+                resolve(await fetchGoogleUserInfo(tokenResponse.access_token));
+              } catch (err) {
+                reject(err);
+              }
+            },
+          });
+          tokenClient.requestAccessToken();
+        });
+
+        platformUid = userInfo.email;
+        platformGid = userInfo.sub;
+        profileImage = userInfo.picture;
+        googleProfile = { ...userInfo };
+      }
+
+      googleAuthenticated = true;
+
+      // 구글 인증 성공 → 서버에 이미 가입된 계정인지 /members/uAuth로 확인
+      const response = await apiCommonClient.post<UAuthResponse, {}>(
+        '/members/uAuth',
+        { userid: platformUid, upass: '123456' },
+        {
+          platform: {
+            _platform_uid: platformUid,
+            _platform_gid: platformGid,
+            _platform_bid: 'google',
+          },
+          // 미가입 사용자 확인용 호출이라 result!=0(미존재)이 정상 흐름이므로 에러 토스트를 띄우지 않는다.
+          suppressErrorToast: true,
+        }
+      );
+
+      const sessionId = response.data?.loginfo?.['$session'] || response.sessionid;
+
+      if (response.result === ResultCode.SUCCESS && sessionId) {
+        localStorage.setItem('sessionid', sessionId);
+        localStorage.setItem(
+          'user_info',
+          JSON.stringify(response.data?.userinfo ?? { email: platformUid, sub: platformGid })
+        );
+        openLoginBonus(getCreateDateFromResponse(response.data));
+      } else {
+        // 서버에 매칭되는 계정이 없음 → 구글 정보를 들고 회원가입 화면으로 이동
+        setSocialSignupInfo({ platformUid, platformGid, platformBid: 'google', profileImage, googleProfile });
+        setCurrentSubScreen('signup');
+      }
+    } catch (error) {
+      if (googleAuthenticated) {
+        // 구글 인증은 됐지만 서버 확인(/members/uAuth) 실패 → 회원가입으로 유도
+        setSocialSignupInfo({ platformUid, platformGid, platformBid: 'google', profileImage, googleProfile });
+        setCurrentSubScreen('signup');
+        showToast('Google 인증은 완료되었습니다. 회원가입을 진행해 주세요.');
+      } else {
+        console.error('Google 로그인 오류:', error);
+        showToast(error instanceof Error ? error.message : 'Google 로그인에 실패했습니다.');
+      }
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   // 데모 계정 체험 — 실제 가입/인증 없이 앱을 둘러보기 위한 mock 진입.
+  // 실제 서버 create_date가 없는 mock 흐름이므로 오늘 날짜로 대체한다.
   const handleDemoLogin = () => {
     showToast('데모 계정으로 체험을 시작합니다 (mock)');
-    openLoginBonus();
+    openLoginBonus(getTodayDateKey());
   };
 
   return (
@@ -280,21 +527,22 @@ export const LoginScreen: React.FC = () => {
           </span>
         </div>
 
-        {/* Social buttons (mock — no real OAuth) */}
+        {/* Social buttons — Google은 실제 OAuth 연동, 나머지는 데모(mock) */}
         <div className="flex flex-col gap-2">
           {SOCIAL_PROVIDERS.map((p) => (
             <button
               key={p.key}
               type="button"
-              onClick={() => handleMockSocial(p.key)}
-              className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2.5 shadow transition ${p.className}`}
+              disabled={p.key === 'Google' && isGoogleLoading}
+              onClick={() => (p.key === 'Google' ? handleGoogleLogin() : handleMockSocial(p.key))}
+              className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2.5 shadow transition disabled:opacity-50 disabled:cursor-not-allowed ${p.className}`}
             >
               {p.icon}
-              <span>{p.label}</span>
+              <span>{p.key === 'Google' && isGoogleLoading ? '로그인 중...' : p.label}</span>
             </button>
           ))}
           <p className="text-[10px] text-slate-500 text-center mt-1">
-            소셜 로그인은 현재 데모(체험) 모드입니다 · 실제 계정 연동 없음
+            Google 로그인만 실제 계정 연동이며, 그 외 소셜 로그인은 데모(체험) 모드입니다
           </p>
         </div>
 
@@ -329,7 +577,6 @@ export const LoginScreen: React.FC = () => {
               <p className="text-[11px] text-slate-400 mt-1">
                 예측 챌린지 투표에 사용할 수 있는 DP가 지급됩니다.
               </p>
-              <p className="text-[10px] text-slate-500 mt-1">* 데모 지급(mock)이며 현금 환전은 불가합니다.</p>
             </div>
 
             <button

@@ -52,7 +52,7 @@ export const Header: React.FC = () => {
               className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#162639] border border-[#C5A059]/40 hover:border-[#C5A059] transition cursor-pointer"
             >
               <span className="text-xs font-bold text-[#E2C28E] font-mono">
-                {user.walletDp.toLocaleString()} <span className="text-[10px] text-slate-400">DP</span>
+                {uinfo.u_dp} <span className="text-[10px] text-slate-400">DP</span>
               </span>
             </div>
           )}

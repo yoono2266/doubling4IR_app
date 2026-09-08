@@ -7,26 +7,18 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:8775686699:android:4b2233d1e7e0835dd8e86e",
+        "mobilesdk_app_id": "1:8775686699:android:3d4391635dc1c497d8e86e",
         "android_client_info": {
           "package_name": "com.spoodds.prod"
         }
       },
       "oauth_client": [
         {
-          "client_id": "8775686699-ghdurrfd6kgrjine1l4d041i2jil1koc.apps.googleusercontent.com",
+          "client_id": "8775686699-193tk1u90dfeihps7gep55b5g0jt7e40.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.spoodds.prod",
-            "certificate_hash": "9b912ea13cdbdb707f0f32ce7ab67ada90ef23e9"
-          }
-        },
-        {
-          "client_id": "8775686699-n2krelniguqjv9bhrvdounipf1kjf90u.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.spoodds.prod",
-            "certificate_hash": "6511f38ace75466e8cb404045a9530e106cac478"
+            "certificate_hash": "8144d8837ec08c847d6896de088be6c7c0451910"
           }
         },
         {
@@ -36,7 +28,7 @@
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAC4srLFWa1IaDPaYnlPDA3DwlDuc26IWw"
+          "current_key": "AIzaSyCLF3GtTZkp1B4Ex7FllKqVL1bpUJE1OmQ"
         }
       ],
       "services": {

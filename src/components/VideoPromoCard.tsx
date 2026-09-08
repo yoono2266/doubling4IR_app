@@ -1,6 +1,7 @@
 import React from 'react';
 import { Post, useApp } from '../context/AppContext';
 import { displayLikeCount, displayBookmarkCount } from '../data/mockCounts';
+import { saveMainScrollTop } from '../utils/scrollMemory';
 
 interface VideoPromoCardProps {
   post: Post;
@@ -11,6 +12,7 @@ export const VideoPromoCard: React.FC<VideoPromoCardProps> = ({ post }) => {
 
   const handleCardClick = () => {
     if (!requireLogin()) return;
+    saveMainScrollTop();
     setSelectedPost(post);
     setCurrentSubScreen('post-detail');
   };
