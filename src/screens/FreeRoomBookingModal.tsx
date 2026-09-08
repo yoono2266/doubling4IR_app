@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import confetti from 'canvas-confetti';
+import { MonthCalendar, RangeValue, startOfDay, fromKey, diffDays } from '../components/MonthCalendar';
+
+const MAX_NIGHTS = 14; // 최대 숙박일수
 
 export const FreeRoomBookingModal: React.FC = () => {
   const {
@@ -9,6 +12,7 @@ export const FreeRoomBookingModal: React.FC = () => {
     completePayment,
     setCurrentSubScreen,
     setCurrentTab,
+    showToast,
     user
   } = useApp();
 
@@ -49,11 +53,33 @@ export const FreeRoomBookingModal: React.FC = () => {
     }, 2500);
   };
 
-  const availableDates = [
-    { start: '2026-08-15', end: '2026-08-17', nights: 2, label: '8월 15일(토) - 8월 17일(월) [추천]' },
-    { start: '2026-08-22', end: '2026-08-24', nights: 2, label: '8월 22일(토) - 8월 24일(월)' },
-    { start: '2026-09-05', end: '2026-09-08', nights: 3, label: '9월 05일(토) - 9월 08일(화)' }
-  ];
+  // 2026-09-09 자유 기간 달력 방식으로 대체 (삭제하지 않고 주석 보존).
+  // 기존: 미리 정의된 3개 일정 프리셋 중 라디오 선택. 되살릴 경우 아래 STEP 1 JSX도 함께 원복할 것.
+  // const availableDates = [
+  //   { start: '2026-08-15', end: '2026-08-17', nights: 2, label: '8월 15일(토) - 8월 17일(월) [추천]' },
+  //   { start: '2026-08-22', end: '2026-08-24', nights: 2, label: '8월 22일(토) - 8월 24일(월)' },
+  //   { start: '2026-09-05', end: '2026-09-08', nights: 3, label: '9월 05일(토) - 9월 08일(화)' }
+  // ];
+
+  // ── STEP 1 자유 기간 달력 상태 ──
+  const today = startOfDay(new Date());
+  const checkIn = booking.startDate ? fromKey(booking.startDate) : null;
+  const checkOut = booking.endDate ? fromKey(booking.endDate) : null;
+
+  // startBooking()이 넣어둔 프리셋 날짜가 과거면 초기화 → 사용자가 달력에서 새로 고르게 한다.
+  useEffect(() => {
+    if (booking.startDate && fromKey(booking.startDate) < today) {
+      setBooking(prev => ({ ...prev, startDate: '', endDate: '', nights: 0 }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 공용 MonthCalendar(range 모드) → booking state 반영. nights는 여기서 계산.
+  const handleRangeChange = (next: string | RangeValue) => {
+    const r = next as RangeValue;
+    const nights = r.start && r.end ? diffDays(fromKey(r.start), fromKey(r.end)) : 0;
+    setBooking(prev => ({ ...prev, startDate: r.start, endDate: r.end, nights }));
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-[#070e17]/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
@@ -64,7 +90,7 @@ export const FreeRoomBookingModal: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-[#C5A059]">calendar_today</span>
             <div>
-              <h3 className="text-sm font-bold text-white">FreePlay 신청 시스템</h3>
+              <h3 className="text-sm font-bold text-white">오퍼 신청 시스템</h3>
               <p className="text-[10px] text-slate-400">{booking.hotelName}</p>
             </div>
           </div>
@@ -89,56 +115,55 @@ export const FreeRoomBookingModal: React.FC = () => {
 
         {/* Modal Body Content */}
         <div className="p-5 flex-1 overflow-y-auto space-y-4">
-          {/* STEP 1: DATE SELECTION */}
+          {/* STEP 1: DATE SELECTION — 자유 기간 달력 (체크인 → 체크아웃) */}
           {booking.step === 'date' && (
             <div className="space-y-4">
               <div>
-                <h4 className="text-sm font-bold text-white mb-1">투숙 희망 일정을 선택하세요</h4>
-                <p className="text-xs text-slate-300">FreePlay 멤버십 자격으로 100% 코인 디포짓 신청이 진행됩니다.</p>
+                <h4 className="text-sm font-bold text-white mb-1">투숙 희망 기간을 선택하세요</h4>
+                <p className="text-xs text-slate-300">
+                  체크인 → 체크아웃 순으로 날짜를 선택하세요. 오퍼 멤버십 자격으로 100% 코인 디포짓 신청이 진행됩니다.
+                </p>
               </div>
 
-              <div className="space-y-2">
-                {availableDates.map((d, idx) => {
-                  const isSelected = booking.startDate === d.start;
-                  return (
-                    <div
-                      key={idx}
-                      onClick={() => {
-                        setBooking(prev => ({
-                          ...prev,
-                          startDate: d.start,
-                          endDate: d.end,
-                          nights: d.nights
-                        }));
-                      }}
-                      className={`p-3.5 rounded-2xl border transition cursor-pointer flex items-center justify-between ${
-                        isSelected 
-                          ? 'bg-[#162639] border-[#C5A059] shadow-md ring-1 ring-[#C5A059]' 
-                          : 'bg-[#162639]/50 border-[#1F334D] hover:border-[#C5A059]/40'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                          isSelected ? 'border-[#C5A059] bg-[#C5A059]' : 'border-slate-500'
-                        }`}>
-                          {isSelected && <span className="text-[#0D1B2A] font-bold text-xs">✓</span>}
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-white">{d.label}</p>
-                          <p className="text-[10px] text-slate-400">{d.nights}박 {d.nights + 1}일 일정</p>
-                        </div>
-                      </div>
-                      <span className="text-xs font-extrabold text-[#E2C28E] font-mono">
-                        {(booking.pricePerNightDp * d.nights).toLocaleString()} 코인
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+              {/* Month Calendar (공용 컴포넌트, 체크인~체크아웃 range 모드) */}
+              <MonthCalendar
+                mode="range"
+                value={{ start: booking.startDate, end: booking.endDate }}
+                onChange={handleRangeChange}
+                maxNights={MAX_NIGHTS}
+                onMaxNightsExceeded={() => showToast(`최대 ${MAX_NIGHTS}박까지 선택할 수 있어요`)}
+              />
+
+              {/* Selection hint / summary */}
+              {!checkIn || !checkOut ? (
+                <p className="text-[11px] text-slate-400 text-center">
+                  {checkIn
+                    ? '체크아웃 날짜를 선택하세요 (최소 1박, 최대 14박)'
+                    : '체크인 날짜를 선택하세요'}
+                </p>
+              ) : (
+                <div className="bg-[#0D1B2A] p-3.5 rounded-2xl border border-[#C5A059]/40 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-bold block">선택한 일정</span>
+                    <span className="text-xs text-slate-300">{booking.startDate} → {booking.endDate}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-bold text-white block">
+                      {booking.nights}박 {booking.nights + 1}일
+                    </span>
+                    <span className="text-sm font-extrabold text-[#E2C28E] font-mono">
+                      총 {(booking.pricePerNightDp * booking.nights).toLocaleString()} 코인
+                    </span>
+                  </div>
+                </div>
+              )}
 
               <button
                 onClick={() => setBooking(prev => ({ ...prev, step: 'options' }))}
-                className="w-full py-3.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow-md hover:brightness-110 transition flex items-center justify-center gap-1.5 mt-4"
+                disabled={!checkIn || !checkOut}
+                className={`w-full py-3.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow-md hover:brightness-110 transition flex items-center justify-center gap-1.5 mt-2 ${
+                  !checkIn || !checkOut ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
                 <span>다음: 옵션 및 인원 선택</span>
                 <span className="material-symbols-outlined text-sm">arrow_forward</span>
@@ -335,7 +360,7 @@ export const FreeRoomBookingModal: React.FC = () => {
               </div>
 
               <div>
-                <h4 className="text-lg font-bold text-white">FreePlay 신청 및 결제 완료!</h4>
+                <h4 className="text-lg font-bold text-white">오퍼 신청 및 결제 완료!</h4>
                 <p className="text-xs text-slate-300 mt-1">
                   신청 내역이 즉시 확정되었으며 코인 월렛 차감이 완료되었습니다.
                 </p>
