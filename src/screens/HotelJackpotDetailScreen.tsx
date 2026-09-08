@@ -404,22 +404,28 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
         </div>
       </div>
 
-      {/* FreePlay Booking CTA Button */}
-      <button
-        onClick={() => {
-          startBooking({
-            name: hotel.name,
-            location: hotel.regionLabel,
-            roomType: 'VIP Executive Suite',
-            pricePerNightDp: 600,
-            image: hotel.image
-          });
-        }}
-        className="w-full py-3.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow-lg hover:brightness-110 active:scale-[0.98] transition flex items-center justify-center gap-2 mt-2"
-      >
-        <span className="material-symbols-outlined text-base">hotel</span>
-        <span>{hotel.name} FreePlay 바우처로 VIP 신청하기</span>
-      </button>
+      {/*
+        2026-09-08 제거 요청으로 비활성화 (삭제하지 않고 주석 보존).
+        사유: 잭팟 상세 화면 게임 목록 하단의 "FreePlay 바우처로 VIP 신청하기" CTA를 노출하지 않기로 함.
+              이 버튼은 공용 컴포넌트가 아니라 이 화면에만 있는 인라인 코드다.
+              되살릴 경우 useApp()에서 startBooking 구독도 그대로 사용하면 된다(현재는 이 버튼이 유일 호출부).
+        [원본 JSX]
+        <button
+          onClick={() => {
+            startBooking({
+              name: hotel.name,
+              location: hotel.regionLabel,
+              roomType: 'VIP Executive Suite',
+              pricePerNightDp: 600,
+              image: hotel.image
+            });
+          }}
+          className="w-full py-3.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow-lg hover:brightness-110 active:scale-[0.98] transition flex items-center justify-center gap-2 mt-2"
+        >
+          <span className="material-symbols-outlined text-base">hotel</span>
+          <span>{hotel.name} FreePlay 바우처로 VIP 신청하기</span>
+        </button>
+      */}
     </div>
   );
 };
