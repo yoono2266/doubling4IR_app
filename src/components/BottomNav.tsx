@@ -2,8 +2,14 @@ import React, { useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 
 export const BottomNav: React.FC = () => {
-  const { currentTab, setCurrentTab, setCurrentSubScreen, requireLogin } = useApp();
+  const { currentTab, currentSubScreen, setCurrentTab, setCurrentSubScreen, setSelectedHotelId, requireLogin } = useApp();
   const navRef = useRef<HTMLElement>(null);
+
+  // 잭팟 관련 화면(상세 'hotel-jackpot-detail' / 히스토리 'jackpot-history')에서는
+  // 목록 탭이 아니어도 '잭팟'을 항상 활성 상태로 표시한다.
+  const isJackpotSubScreen =
+    currentSubScreen === 'hotel-jackpot-detail' || currentSubScreen === 'jackpot-history';
+  const isJackpotActive = currentTab === 'jackpot' || isJackpotSubScreen;
 
   useEffect(() => {
     const updateNavHeight = () => {
@@ -35,6 +41,16 @@ export const BottomNav: React.FC = () => {
 
   const handleTabClick = (tab: 'jackpot' | 'poly' | 'home' | 'freeroom' | 'my') => {
     if (tab === 'my' && !requireLogin()) return;
+
+    // '잭팟' 탭은 잭팟 목록(JackpotMapScreen)이 아니라
+    // "솔레어 리조트 앤 카지노" 상세 화면(HotelJackpotDetailScreen)으로 바로 진입한다.
+    if (tab === 'jackpot') {
+      setCurrentTab('jackpot');
+      setSelectedHotelId('solaire');
+      setCurrentSubScreen('hotel-jackpot-detail');
+      return;
+    }
+
     setCurrentTab(tab);
     setCurrentSubScreen(null);
   };
@@ -48,12 +64,12 @@ export const BottomNav: React.FC = () => {
       <button
         onClick={() => handleTabClick('jackpot')}
         className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
-          currentTab === 'jackpot'
+          isJackpotActive
             ? 'text-[#C5A059] font-bold scale-105'
             : 'text-slate-400 hover:text-slate-200'
         }`}
       >
-        <span className={`material-symbols-outlined text-2xl ${currentTab === 'jackpot' ? 'fill-1' : ''}`}>
+        <span className={`material-symbols-outlined text-2xl ${isJackpotActive ? 'fill-1' : ''}`}>
           casino
         </span>
         <span className="text-[11px] mt-0.5 tracking-tight">잭팟</span>
@@ -63,12 +79,12 @@ export const BottomNav: React.FC = () => {
       <button
         onClick={() => handleTabClick('poly')}
         className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
-          currentTab === 'poly'
+          !isJackpotSubScreen && currentTab === 'poly'
             ? 'text-[#C5A059] font-bold scale-105'
             : 'text-slate-400 hover:text-slate-200'
         }`}
       >
-        <span className={`material-symbols-outlined text-2xl ${currentTab === 'poly' ? 'fill-1' : ''}`}>
+        <span className={`material-symbols-outlined text-2xl ${!isJackpotSubScreen && currentTab === 'poly' ? 'fill-1' : ''}`}>
           query_stats
         </span>
         <span className="text-[11px] mt-0.5 tracking-tight">챌린지</span>
@@ -78,17 +94,17 @@ export const BottomNav: React.FC = () => {
       <button
         onClick={() => handleTabClick('home')}
         className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
-          currentTab === 'home'
+          !isJackpotSubScreen && currentTab === 'home'
             ? 'text-[#C5A059] font-bold scale-105'
             : 'text-slate-400 hover:text-slate-200'
         }`}
       >
         <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-          currentTab === 'home'
+          !isJackpotSubScreen && currentTab === 'home'
             ? 'bg-gradient-to-tr from-[#C5A059] to-[#E2C28E] text-[#0D1B2A] shadow-lg shadow-[#C5A059]/30 -mt-4 border-2 border-[#0D1B2A]'
             : 'bg-[#162639] border border-[#1F334D]'
         }`}>
-          <span className={`material-symbols-outlined text-2xl ${currentTab === 'home' ? 'fill-1' : ''}`}>
+          <span className={`material-symbols-outlined text-2xl ${!isJackpotSubScreen && currentTab === 'home' ? 'fill-1' : ''}`}>
             home
           </span>
         </div>
@@ -99,27 +115,27 @@ export const BottomNav: React.FC = () => {
       <button
         onClick={() => handleTabClick('freeroom')}
         className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
-          currentTab === 'freeroom'
+          !isJackpotSubScreen && currentTab === 'freeroom'
             ? 'text-[#C5A059] font-bold scale-105'
             : 'text-slate-400 hover:text-slate-200'
         }`}
       >
-        <span className={`material-symbols-outlined text-2xl ${currentTab === 'freeroom' ? 'fill-1' : ''}`}>
+        <span className={`material-symbols-outlined text-2xl ${!isJackpotSubScreen && currentTab === 'freeroom' ? 'fill-1' : ''}`}>
           workspace_premium
         </span>
-        <span className="text-[11px] mt-0.5 tracking-tight">Free</span>
+        <span className="text-[11px] mt-0.5 tracking-tight">오퍼</span>
       </button>
 
       {/* 5. My */}
       <button
         onClick={() => handleTabClick('my')}
         className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
-          currentTab === 'my'
+          !isJackpotSubScreen && currentTab === 'my'
             ? 'text-[#C5A059] font-bold scale-105'
             : 'text-slate-400 hover:text-slate-200'
         }`}
       >
-        <span className={`material-symbols-outlined text-2xl ${currentTab === 'my' ? 'fill-1' : ''}`}>
+        <span className={`material-symbols-outlined text-2xl ${!isJackpotSubScreen && currentTab === 'my' ? 'fill-1' : ''}`}>
           person
         </span>
         <span className="text-[11px] mt-0.5 tracking-tight">마이</span>
