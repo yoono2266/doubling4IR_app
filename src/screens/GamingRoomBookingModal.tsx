@@ -1,6 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import confetti from 'canvas-confetti';
+import { MonthCalendar } from '../components/MonthCalendar';
+
+// 2026-09-09 자유 날짜 달력 + 세션 선택 방식으로 대체 (삭제하지 않고 주석 보존).
+// 기존: 날짜+시간이 라벨에 합쳐진 프리셋 3개 라디오 선택. 되살릴 경우 아래 STEP 1 JSX도 함께 원복할 것.
+// const availableDates = [
+//   { value: '2026-09-05', label: '9월 05일(토) 19:00', badge: '주말 프라임' },
+//   { value: '2026-09-12', label: '9월 12일(토) 19:00', badge: '추천 배정' },
+//   { value: '2026-09-19', label: '9월 19일(토) 20:00', badge: '레이트 세션' }
+// ];
+
+// 위 프리셋에 있던 시간대(19:00 x2, 20:00 x1)·라벨을 세션 목록으로 분리한다.
+// (기존 데이터에 날짜별 세션 구조가 없어 임의 확장하지 않음: 3개 그대로 유지 / 모든 날짜 공통.
+//  19:00 세션이 두 개인 것도 원본 데이터 그대로.)
+const GAMING_SESSIONS = [
+  { value: '19:00 · 주말 프라임', time: '19:00', label: '주말 프라임' },
+  { value: '19:00 · 추천 배정', time: '19:00', label: '추천 배정' },
+  { value: '20:00 · 레이트 세션', time: '20:00', label: '레이트 세션' }
+];
 
 export const GamingRoomBookingModal: React.FC = () => {
   const {
@@ -12,19 +30,14 @@ export const GamingRoomBookingModal: React.FC = () => {
   } = useApp();
 
   const [step, setStep] = useState<'date' | 'options' | 'processing' | 'success'>('date');
-  const [selectedDate, setSelectedDate] = useState<string>('2026-09-12');
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedSession, setSelectedSession] = useState<string>('');
   const [guests, setGuests] = useState<number>(2);
   const [options, setOptions] = useState({
     highLimitTable: true,
     vipCatering: true,
     conciergeHost: true,
   });
-
-  const availableDates = [
-    { value: '2026-09-05', label: '9월 05일(토) 19:00', badge: '주말 프라임' },
-    { value: '2026-09-12', label: '9월 12일(토) 19:00', badge: '추천 배정' },
-    { value: '2026-09-19', label: '9월 19일(토) 20:00', badge: '레이트 세션' }
-  ];
 
   // When step transitions to processing, simulate 2.5s review -> approve
   useEffect(() => {
@@ -45,6 +58,7 @@ export const GamingRoomBookingModal: React.FC = () => {
           hotelLocation: 'New Manila Bay, Philippines',
           roomType: '프라이빗 VIP 살롱',
           checkIn: selectedDate,
+          timeSlot: selectedSession,
           guests: guests,
           optionsList: optList,
           totalCoins: 0,
@@ -61,7 +75,7 @@ export const GamingRoomBookingModal: React.FC = () => {
       }, 2500);
     }
     return () => clearTimeout(timer);
-  }, [step, selectedDate, guests, options, addReservation]);
+  }, [step, selectedDate, selectedSession, guests, options, addReservation]);
 
   const handleClose = () => {
     setCurrentSubScreen(null);
@@ -123,35 +137,54 @@ export const GamingRoomBookingModal: React.FC = () => {
                 </p>
               </div>
 
+              {/* 1) 날짜 선택 — 공용 달력(단일 날짜). 게이밍룸은 1회성 이용이라 체크인/체크아웃 없음. */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-300 block">이용 희망 일자 (프리셋)</label>
-                {availableDates.map((d) => (
-                  <div
-                    key={d.value}
-                    onClick={() => setSelectedDate(d.value)}
-                    className={`p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer transition ${
-                      selectedDate === d.value
-                        ? 'bg-[#1E2E44] border-[#C5A059] shadow-md'
-                        : 'bg-[#162639] border-[#1F334D] hover:border-[#C5A059]/40'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className={`material-symbols-outlined text-lg ${selectedDate === d.value ? 'text-[#C5A059]' : 'text-slate-500'}`}>
-                        {selectedDate === d.value ? 'radio_button_checked' : 'radio_button_unchecked'}
-                      </span>
-                      <span className="text-xs font-bold text-white font-mono">{d.label}</span>
-                    </div>
-                    <span className="text-[10px] font-bold text-[#E2C28E] bg-[#0D1B2A] px-2 py-0.5 rounded border border-[#C5A059]/30">
-                      {d.badge}
-                    </span>
-                  </div>
-                ))}
+                <label className="text-xs font-bold text-slate-300 block">이용 희망 날짜</label>
+                <MonthCalendar
+                  mode="single"
+                  value={selectedDate}
+                  onChange={(v) => {
+                    setSelectedDate(v as string);
+                    setSelectedSession(''); // 날짜 바꾸면 세션 선택 초기화
+                  }}
+                />
               </div>
+
+              {/* 2) 세션(시간대) 선택 — 날짜를 고른 뒤 노출. 모든 날짜 동일 목록. */}
+              {selectedDate && (
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-300 block">이용 세션 선택</label>
+                  {GAMING_SESSIONS.map((s) => (
+                    <div
+                      key={s.value}
+                      onClick={() => setSelectedSession(s.value)}
+                      className={`p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer transition ${
+                        selectedSession === s.value
+                          ? 'bg-[#1E2E44] border-[#C5A059] shadow-md'
+                          : 'bg-[#162639] border-[#1F334D] hover:border-[#C5A059]/40'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={`material-symbols-outlined text-lg ${selectedSession === s.value ? 'text-[#C5A059]' : 'text-slate-500'}`}>
+                          {selectedSession === s.value ? 'radio_button_checked' : 'radio_button_unchecked'}
+                        </span>
+                        <span className="text-xs font-bold text-white font-mono">{s.time}</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-[#E2C28E] bg-[#0D1B2A] px-2 py-0.5 rounded border border-[#C5A059]/30">
+                        {s.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="pt-2">
                 <button
                   onClick={() => setStep('options')}
-                  className="w-full py-3.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow-xl hover:brightness-110 active:scale-[0.98] transition flex items-center justify-center gap-2"
+                  disabled={!selectedDate || !selectedSession}
+                  className={`w-full py-3.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow-xl hover:brightness-110 active:scale-[0.98] transition flex items-center justify-center gap-2 ${
+                    !selectedDate || !selectedSession ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
                   <span>다음: 인원 및 옵션 확인</span>
                   <span className="material-symbols-outlined text-sm">arrow_forward</span>
@@ -340,6 +373,10 @@ export const GamingRoomBookingModal: React.FC = () => {
                 <div className="flex justify-between">
                   <span className="text-slate-400">이용 일자:</span>
                   <span className="font-bold text-white font-mono">{selectedDate}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">이용 세션:</span>
+                  <span className="font-bold text-[#E2C28E]">{selectedSession}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">이용 인원:</span>
