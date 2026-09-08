@@ -1,6 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import confetti from 'canvas-confetti';
+import { MonthCalendar } from '../components/MonthCalendar';
+
+// 2026-09-09 "이용 희망 일자"를 자유 날짜 달력으로 대체 (삭제하지 않고 주석 보존).
+// "이용 예정 시간대"(런치/디너1부/디너2부)는 기존 그대로 유지.
+// const availableDates = [
+//   { value: '2026-09-05', label: '9월 05일(토)', badge: '주말 예약' },
+//   { value: '2026-09-12', label: '9월 12일(토)', badge: '추천 일정' },
+//   { value: '2026-09-19', label: '9월 19일(토)', badge: '여유 좌석' }
+// ];
+
+// 위 프리셋 3개에만 있던 좌석 상황 라벨. 날짜별 구조가 아니므로 임의 확장하지 않고,
+// 이 3개 날짜를 정확히 골랐을 때만 참고 표시한다. 그 외 날짜는 아무 라벨도 표시 안 함.
+const DATE_SEAT_NOTES: Record<string, string> = {
+  '2026-09-05': '주말 예약',
+  '2026-09-12': '추천 일정',
+  '2026-09-19': '여유 좌석'
+};
 
 export const DiningBookingModal: React.FC = () => {
   const {
@@ -12,7 +29,7 @@ export const DiningBookingModal: React.FC = () => {
   } = useApp();
 
   const [step, setStep] = useState<'datetime' | 'options' | 'processing' | 'success'>('datetime');
-  const [selectedDate, setSelectedDate] = useState<string>('2026-09-12');
+  const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>('디너 1부 (18:00-20:00)');
   const [guests, setGuests] = useState<number>(2);
   const [options, setOptions] = useState({
@@ -20,12 +37,6 @@ export const DiningBookingModal: React.FC = () => {
     tastingCourse: true,
     welcomeChampagne: true,
   });
-
-  const availableDates = [
-    { value: '2026-09-05', label: '9월 05일(토)', badge: '주말 예약' },
-    { value: '2026-09-12', label: '9월 12일(토)', badge: '추천 일정' },
-    { value: '2026-09-19', label: '9월 19일(토)', badge: '여유 좌석' }
-  ];
 
   const timeSlots = [
     { value: '런치 (12:00-14:00)', label: '런치 (12:00 - 14:00)', desc: '비즈니스 & 브런치' },
@@ -131,25 +142,20 @@ export const DiningBookingModal: React.FC = () => {
                 </p>
               </div>
 
-              {/* Date Selection */}
+              {/* Date Selection — 공용 달력(단일 날짜). 다이닝은 1회성 예약이라 체크인/체크아웃 없음. */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-300 block">이용 희망 일자</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {availableDates.map((d) => (
-                    <button
-                      key={d.value}
-                      onClick={() => setSelectedDate(d.value)}
-                      className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center ${
-                        selectedDate === d.value
-                          ? 'bg-[#1E2E44] border-[#C5A059] shadow-md'
-                          : 'bg-[#162639] border-[#1F334D] hover:border-[#C5A059]/40'
-                      }`}
-                    >
-                      <span className="text-[11px] font-bold text-white font-mono">{d.label}</span>
-                      <span className="text-[9px] text-[#E2C28E] font-medium mt-0.5">{d.badge}</span>
-                    </button>
-                  ))}
-                </div>
+                <MonthCalendar
+                  mode="single"
+                  value={selectedDate}
+                  onChange={(v) => setSelectedDate(v as string)}
+                />
+                {selectedDate && DATE_SEAT_NOTES[selectedDate] && (
+                  <p className="text-[11px] text-[#E2C28E] font-medium flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs">event_seat</span>
+                    {DATE_SEAT_NOTES[selectedDate]}
+                  </p>
+                )}
               </div>
 
               {/* Timeslot Selection */}
@@ -183,7 +189,10 @@ export const DiningBookingModal: React.FC = () => {
               <div className="pt-2">
                 <button
                   onClick={() => setStep('options')}
-                  className="w-full py-3.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow-xl hover:brightness-110 active:scale-[0.98] transition flex items-center justify-center gap-2"
+                  disabled={!selectedDate}
+                  className={`w-full py-3.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow-xl hover:brightness-110 active:scale-[0.98] transition flex items-center justify-center gap-2 ${
+                    !selectedDate ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
                   <span>다음: 인원 및 옵션 확인</span>
                   <span className="material-symbols-outlined text-sm">arrow_forward</span>
