@@ -70,7 +70,7 @@ export const PwaInstallBanner: React.FC = () => {
             <span className="text-[9px] bg-[#C5A059] text-[#0D1B2A] font-black px-1.5 py-0.2 rounded uppercase">PWA</span>
           </p>
           <p className="text-[10px] text-slate-300">
-            {isIos ? '사파리 공유 버튼 → "홈 화면에 추가"' : '홈 화면에 앱을 추가하여 이용해보세요'}
+            {isIos ? '사파리 공유 버튼 → "홈 화면에 추가"' : '홈 화면에 추가하고 더 빠르게 만나보세요'}
           </p>
         </div>
       </div>
