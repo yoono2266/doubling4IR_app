@@ -12,7 +12,7 @@ export const MEMBERSHIP_TIERS: MembershipTierInfo[] = [
     jewelryConcept: '클래식 밴드 링 (기본 웰컴)',
     benefits: [
       '더블링 파트너스 기본 가입 혜택',
-      'FreePlay 호텔 시즌별 우선 예약 권한',
+      '오퍼 호텔 시즌별 우선 예약 권한',
       '아시아 제휴 IR 웰컴 음료 서비스'
     ]
   },
@@ -42,7 +42,7 @@ export const MEMBERSHIP_TIERS: MembershipTierInfo[] = [
     jewelryConcept: '풀 파베 다이아몬드 이터니티 링 (플래티넘)',
     benefits: [
       '마카오·필리핀·싱가포르 복합리조트 VIP 등급 상호 동등 인정 (Cross-IR)',
-      'FreePlay 스위트 분기별 바우처 지급',
+      '오퍼 스위트 분기별 바우처 지급',
       'VIP 클럽 라운지 올액세스 (동반 1인 무료)',
       '리조트 내 전용 발렛파킹 및 컨시어지 직통 서비스'
     ]
