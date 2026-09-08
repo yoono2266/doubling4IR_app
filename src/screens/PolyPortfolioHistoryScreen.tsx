@@ -44,9 +44,14 @@ export const PolyPortfolioHistoryScreen: React.FC = () => {
         <div>
           <h2 className="text-base font-bold text-white flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[#C5A059] text-xl">account_balance_wallet</span>
-            <span>예측 포트폴리오 참여 내역</span>
+            <span>예측 챌린지 참여 내역</span>
           </h2>
-          <p className="text-[11px] text-slate-400">오즈 기반 실시간 포지션 관리 및 조기 정리</p>
+          {/*
+            2026-09-09 제거 요청으로 비활성화 (삭제하지 않고 주석 보존).
+            사유: 제목 아래 부제 문구를 노출하지 않기로 함.
+            [원본 JSX]
+            <p className="text-[11px] text-slate-400">오즈 기반 실시간 포지션 관리 및 조기 정리</p>
+          */}
         </div>
         <button
           onClick={() => {
@@ -55,7 +60,7 @@ export const PolyPortfolioHistoryScreen: React.FC = () => {
           }}
           className="px-3 py-1.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-black text-xs shadow hover:brightness-110 active:scale-95 transition"
         >
-          새 마켓 참여 →
+          챌린지 참여 →
         </button>
       </div>
 
