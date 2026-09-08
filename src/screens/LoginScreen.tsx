@@ -289,12 +289,15 @@ export const LoginScreen: React.FC = () => {
     }
   };
 
+  // 2026-09-08 비활성화 (삭제하지 않고 주석 보존).
+  // 사유: X/Facebook/Apple 소셜 버튼을 "Coming Soon" 안내(showToast)로 대체 → 이 mock 핸들러의
+  //       호출부가 사라짐. 실제 소셜 OAuth 연동 시 이 로직을 참고하거나 복구할 것.
   // 소셜 로그인 — 실제 OAuth 연동 없음. 데모(체험) 모드 mock 로그인.
   // 실제 서버 create_date가 없는 mock 흐름이므로 오늘 날짜로 대체한다.
-  const handleMockSocial = (provider: string) => {
-    showToast(`(데모) ${provider} 계정으로 체험 로그인합니다`);
-    openLoginBonus(getTodayDateKey());
-  };
+  // const handleMockSocial = (provider: string) => {
+  //   showToast(`(데모) ${provider} 계정으로 체험 로그인합니다`);
+  //   openLoginBonus(getTodayDateKey());
+  // };
 
   // Google 로그인 — 네이티브(Capacitor)/웹 OAuth 후 /members/uAuth로 서버 계정 존재 여부 확인.
   // 서버에 이미 가입된 계정이면 로그인 처리, 없으면 구글 정보를 들고 회원가입 화면으로 이동.
@@ -408,12 +411,15 @@ export const LoginScreen: React.FC = () => {
     }
   };
 
+  // 2026-09-08 비활성화 (삭제하지 않고 주석 보존).
+  // 사유: 로그인 화면에서 "데모 계정으로 체험하기" 버튼을 숨김 → 유일한 호출부가 사라져 미사용.
+  //       데모/mock 진입 경로를 되살릴 때 아래 JSX(데모 계정 버튼)와 함께 주석 해제할 것.
   // 데모 계정 체험 — 실제 가입/인증 없이 앱을 둘러보기 위한 mock 진입.
   // 실제 서버 create_date가 없는 mock 흐름이므로 오늘 날짜로 대체한다.
-  const handleDemoLogin = () => {
-    showToast('데모 계정으로 체험을 시작합니다 (mock)');
-    openLoginBonus(getTodayDateKey());
-  };
+  // const handleDemoLogin = () => {
+  //   showToast('데모 계정으로 체험을 시작합니다 (mock)');
+  //   openLoginBonus(getTodayDateKey());
+  // };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 py-6">
@@ -426,7 +432,7 @@ export const LoginScreen: React.FC = () => {
           </div>
           <h1 className="text-2xl font-black text-white tracking-widest font-mono">DOUBLING</h1>
           <p className="text-[11px] text-[#C5A059] font-medium tracking-wide">
-            VIP CASINO &amp; HOTEL FREEROOM PLATFORM
+            ASIA&apos;S LARGEST INTEGRATED RESORT TRAVEL PLATFORM
           </p>
         </div>
 
@@ -506,18 +512,23 @@ export const LoginScreen: React.FC = () => {
           </button>
         </form>
 
-        {/* Demo Account (mock) */}
-        <button
-          type="button"
-          onClick={handleDemoLogin}
-          className="w-full py-2.5 rounded-xl bg-[#0D1B2A] border border-dashed border-[#C5A059]/60 text-[#E2C28E] font-bold text-xs hover:border-[#C5A059] hover:bg-[#0D1B2A]/70 active:scale-[0.98] transition flex flex-col items-center gap-0.5"
-        >
-          <span className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-sm">rocket_launch</span>
-            데모 계정으로 체험하기
-          </span>
-          <span className="text-[10px] font-medium text-slate-400">실제 가입·인증 없이 둘러보기 (mock)</span>
-        </button>
+        {/*
+          2026-09-08 비활성화 (삭제하지 않고 주석 보존).
+          사유: 로그인 화면에서 "데모 계정으로 체험하기" 버튼 + 하위 설명("실제 가입·인증 없이
+                둘러보기 (mock)")을 노출하지 않기로 함. 되살릴 경우 위 handleDemoLogin 함수도 함께 해제.
+          [원본 JSX]
+          <button
+            type="button"
+            onClick={handleDemoLogin}
+            className="w-full py-2.5 rounded-xl bg-[#0D1B2A] border border-dashed border-[#C5A059]/60 text-[#E2C28E] font-bold text-xs hover:border-[#C5A059] hover:bg-[#0D1B2A]/70 active:scale-[0.98] transition flex flex-col items-center gap-0.5"
+          >
+            <span className="flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-sm">rocket_launch</span>
+              데모 계정으로 체험하기
+            </span>
+            <span className="text-[10px] font-medium text-slate-400">실제 가입·인증 없이 둘러보기 (mock)</span>
+          </button>
+        */}
 
         {/* Divider */}
         <div className="relative flex items-center justify-center my-1">
@@ -527,23 +538,29 @@ export const LoginScreen: React.FC = () => {
           </span>
         </div>
 
-        {/* Social buttons — Google은 실제 OAuth 연동, 나머지는 데모(mock) */}
+        {/* Social buttons — Google만 실제 OAuth 연동. X/Facebook/Apple은 연동 전까지 "Coming Soon" 안내. */}
         <div className="flex flex-col gap-2">
           {SOCIAL_PROVIDERS.map((p) => (
             <button
               key={p.key}
               type="button"
               disabled={p.key === 'Google' && isGoogleLoading}
-              onClick={() => (p.key === 'Google' ? handleGoogleLogin() : handleMockSocial(p.key))}
+              onClick={() => {
+                if (p.key === 'Google') {
+                  handleGoogleLogin();
+                  return;
+                }
+                // 2026-09-08: X/Facebook/Apple은 실제 연동 전까지 "Coming Soon" 안내만 노출.
+                // 실제 연동 시 아래 원래 동작으로 되돌릴 것: handleMockSocial(p.key)
+                //   (또는 provider별 실제 OAuth 핸들러 연결)
+                showToast(`${p.key} 로그인은 준비 중입니다 (Coming Soon)`);
+              }}
               className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2.5 shadow transition disabled:opacity-50 disabled:cursor-not-allowed ${p.className}`}
             >
               {p.icon}
               <span>{p.key === 'Google' && isGoogleLoading ? '로그인 중...' : p.label}</span>
             </button>
           ))}
-          <p className="text-[10px] text-slate-500 text-center mt-1">
-            Google 로그인만 실제 계정 연동이며, 그 외 소셜 로그인은 데모(체험) 모드입니다
-          </p>
         </div>
 
         {/* Sign Up */}
