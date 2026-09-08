@@ -285,7 +285,7 @@ export const CurrentTripSummaryScreen: React.FC = () => {
         </div>
 
         <p className="text-xs text-slate-300 leading-relaxed bg-[#0D1B2A]/80 p-3 rounded-xl border border-[#1F334D]">
-          투숙 기간 동안 FreePlay 스위트 룸, VIP 살롱 게이밍룸, 미쉐린 파인다이닝 등 <strong className="text-white">{user.membershipTier}</strong> 등급 전용 Comp 특전을 바로 신청하고 이용하실 수 있습니다.
+          투숙 기간 동안 오퍼 스위트 룸, VIP 살롱 게이밍룸, 미쉐린 파인다이닝 등 <strong className="text-white">{user.membershipTier}</strong> 등급 전용 Comp 특전을 바로 신청하고 이용하실 수 있습니다.
         </p>
 
         <button
