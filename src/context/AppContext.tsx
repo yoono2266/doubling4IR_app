@@ -806,7 +806,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const tx: WalletTransaction = {
       id: `TX-${Math.floor(1000 + Math.random() * 9000)}`,
       type: '예약 결제',
-      title: `FreePlay 신청 (${booking.hotelName})`,
+      title: `오퍼 신청 (${booking.hotelName})`,
       amount: -booking.totalDp,
       date: new Date().toLocaleString('ko-KR', { hour12: false }),
       txHash: `0x${Math.random().toString(16).substring(2, 10)}...f32a`,
