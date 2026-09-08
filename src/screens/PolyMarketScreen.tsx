@@ -140,7 +140,12 @@ export const PolyMarketScreen: React.FC = () => {
             <span className="material-symbols-outlined text-[#C5A059]">query_stats</span>
             예측 챌린지
           </h2>
-          <p className="text-xs text-slate-400">웹3 기반 사회·연예·정치·인물 실시간 오즈 &amp; 100~5,000 DP 투표</p>
+          {/*
+            2026-09-08 제거 요청으로 비활성화 (삭제하지 않고 주석 보존).
+            사유: 예측 챌린지 화면 제목 아래 부제 문구를 노출하지 않기로 함.
+            [원본 JSX]
+            <p className="text-xs text-slate-400">웹3 기반 사회·연예·정치·인물 실시간 오즈 &amp; 100~5,000 DP 투표</p>
+          */}
         </div>
         <div className="flex items-center gap-2">
           {/* Leaderboard Button */}
