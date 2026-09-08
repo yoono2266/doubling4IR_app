@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Video, Newspaper, Vote, Award } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getStoredUserInfo } from '../utils/auth';
 
@@ -7,10 +8,10 @@ interface LandingScreenProps {
 }
 
 const FEATURES = [
-  { icon: 'casino', title: '실시간 호텔 영상 컨텐츠', desc: '실시간 호텔 정보를 영상으로 확인' },
-  { icon: 'query_stats', title: '예측 커뮤니티', desc: '여행 트렌드 예측에 참여하고 결과 확인' },
-  { icon: 'workspace_premium', title: '프리룸', desc: '호텔 무료 객실 응모 및 당첨 확인' },
-  { icon: 'movie', title: '커뮤니티', desc: '실시간 호텔 영상을 즐기고 공유 및 스크랩' },
+  { Icon: Video, title: '실시간 콘텐츠', desc: '지금 이 순간을 놓치지 않고 바로 확인' },
+  { Icon: Newspaper, title: '다양한 콘텐츠와 뉴스', desc: '취향 따라 골라보는 다채로운 이야기' },
+  { Icon: Vote, title: '예측 챌린지', desc: '사회·연예·정치 이슈, 오늘의 촉을 시험해보세요' },
+  { Icon: Award, title: '혜택형 여행', desc: '다닐수록 커지는 특별한 대우' },
 ];
 
 export const LandingScreen: React.FC<LandingScreenProps> = ({ onStart }) => {
@@ -49,39 +50,54 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onStart }) => {
         )}
 
         <h1 className="text-2xl font-black leading-snug mb-3">
-          재미있는 컨텐츠로로 만나는<br />
-          <span className="gold-gradient-text">여행 커뮤니티 & 플랫폼</span>
+          하나의 멤버십으로 연결되는,<br />
+          <span className="gold-gradient-text">아시아 5성 복합리조트 여행</span>
         </h1>
         <p className="text-slate-400 text-xs leading-relaxed mb-8 max-w-[280px]">
-          여행 트렌드 및 호텔의 실시간 정보 및 숏폼 영상 커뮤니티, 박터지는 yes/no 대화로 또 다른 놀꺼리를 하나의 앱에서 경험하세요.
+          다양하고 재미있는 정보를 실시간으로 한눈에, 복합리조트 혜택까지 챙기는 가성비 끝판왕 여행
         </p>
 
-        <div className="w-full flex flex-col gap-2.5 mb-8">
-          {FEATURES.map((f) => (
+        <div className="w-full flex flex-col gap-2.5 mb-6">
+          {FEATURES.map(({ Icon, title, desc }) => (
             <div
-              key={f.title}
+              key={title}
               className="w-full flex items-center gap-3 bg-[#122030] gold-card-border rounded-xl px-4 py-3 text-left"
             >
               <div className="w-9 h-9 rounded-lg bg-[#C5A059]/15 flex items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-[#E2C28E] text-lg">{f.icon}</span>
+                <Icon className="w-[18px] h-[18px] text-[#E2C28E]" strokeWidth={2} />
               </div>
               <div>
-                <p className="text-sm font-bold text-[#F8F9FA]">{f.title}</p>
-                <p className="text-[11px] text-slate-400 leading-tight">{f.desc}</p>
+                <p className="text-sm font-bold text-[#F8F9FA]">{title}</p>
+                <p className="text-[11px] text-slate-400 leading-tight">{desc}</p>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="w-full bg-[#122030] gold-card-border rounded-xl px-4 py-4 text-left mb-2">
-          <p className="text-[11px] font-bold text-[#E2C28E] mb-1.5 flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-sm">lock</span>
-            안전한 구글 계정 연동
+        {/* 하단 고지 문구 (다른 안내 문구와 톤 통일: 작은 회색 텍스트) */}
+        <div className="w-full text-left space-y-1">
+          <p className="text-[11px] text-slate-500 leading-relaxed">
+            ※ 예측 챌린지는 만 19세 이상 이용 가능합니다.
           </p>
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            Google 로그인은 간편 로그인과 좋아요·북마크 동기화 목적으로만 사용되며, 로그인 없이도 앱을 둘러볼 수 있습니다.
+          <p className="text-[11px] text-slate-500 leading-relaxed">
+            ※ 포인트(DP)는 현금으로 구매·환전할 수 없습니다.
           </p>
         </div>
+
+        {/*
+          2026-09-08 시안 교체로 비활성화 (삭제하지 않고 주석 보존).
+          사유: 새 랜딩 시안에 "안전한 구글 계정 연동" 안내 박스가 없음.
+          [원본 JSX]
+          <div className="w-full bg-[#122030] gold-card-border rounded-xl px-4 py-4 text-left mb-2">
+            <p className="text-[11px] font-bold text-[#E2C28E] mb-1.5 flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-sm">lock</span>
+              안전한 구글 계정 연동
+            </p>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Google 로그인은 간편 로그인과 좋아요·북마크 동기화 목적으로만 사용되며, 로그인 없이도 앱을 둘러볼 수 있습니다.
+            </p>
+          </div>
+        */}
       </div>
 
       <div className="px-6 pb-8 pt-2">
