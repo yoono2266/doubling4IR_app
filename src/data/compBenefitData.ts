@@ -16,16 +16,16 @@ export interface CompBenefitItem {
 export const COMP_BENEFITS: CompBenefitItem[] = [
   {
     id: 'freeplay_suite',
-    title: 'FreePlay 스위트',
+    title: '오퍼 스위트',
     subtitle: '럭셔리 스위트룸 무상/우대 이용',
-    tagline: '마카오·마닐라·싱가포르 최고급 복합리조트 스위트',
-    description: 'ETERNITY 등급 회원에게 주어지는 분기별 무상 바우처로 아시아 최고급 복합리조트의 이그제큐티브 스위트룸을 우선 배정받으세요.',
+    tagline: '마닐라 엔터테인먼트 시티 · 솔레어 리조트 앤 카지노 스위트',
+    description: 'ETERNITY 등급 회원에게 주어지는 분기별 무상 바우처로 솔레어 리조트 앤 카지노(마닐라 엔터테인먼트 시티)의 이그제큐티브 스위트룸을 우선 배정받으세요.',
     icon: 'king_bed',
     badge: 'ETERNITY 등급 즉시 이용 가능',
     tierRequirement: 'BAND 이상 (ETERNITY 분기 바우처 적용)',
     isAvailable: true,
     actionType: 'suite_booking',
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=800&auto=format&fit=crop&q=80',
     highlights: [
       '24시간 전담 VIP 버틀러 서비스',
       '이그제큐티브 라운지 올액세스 (동반 1인)',
