@@ -335,7 +335,7 @@ export const MyPageScreen: React.FC = () => {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-[#C5A059]">calendar_month</span>
-            FreePlay 신청 내역 ({reservations?.length || 0}건)
+            오퍼 신청 내역 ({reservations?.length || 0}건)
           </h2>
           <button
             onClick={() => setCurrentSubScreen('comp-benefits')}
@@ -357,7 +357,7 @@ export const MyPageScreen: React.FC = () => {
                       {bType === 'freeplay_suite' && (
                         <span className="text-[10px] font-extrabold text-[#0D1B2A] bg-[#C5A059] px-2 py-0.5 rounded flex items-center gap-1 shadow-sm">
                           <span className="material-symbols-outlined text-xs">king_bed</span>
-                          FreePlay 스위트
+                          오퍼 스위트
                         </span>
                       )}
                       {bType === 'gaming_room' && (
@@ -927,7 +927,7 @@ export const MyPageScreen: React.FC = () => {
               <div className="min-w-0">
                 <span className="text-[10px] font-bold text-slate-400 uppercase block">코인 월렛</span>
                 <span className="text-[9px] font-bold text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded border border-sky-500/20 whitespace-nowrap inline-block mt-0.5">
-                  FreePlay 실결제용
+                  오퍼 실결제용
                 </span>
               </div>
             </div>
@@ -982,7 +982,7 @@ export const MyPageScreen: React.FC = () => {
               <span className="material-symbols-outlined text-lg">calendar_month</span>
             </div>
             <div className="min-w-0">
-              <span className="text-xs font-bold text-white block">2. FreePlay 신청 내역</span>
+              <span className="text-xs font-bold text-white block">2. 오퍼 신청 내역</span>
               <span className="text-[10px] text-slate-400">스위트룸 · 게이밍룸 · 다이닝 신청 관리</span>
             </div>
           </div>
@@ -1100,7 +1100,7 @@ export const MyPageScreen: React.FC = () => {
         }}
         className="w-full py-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 font-bold text-xs hover:bg-rose-500/20 transition mt-2"
       >
-        로그아웃 (데모 계정)
+        로그아웃
       </button>
     </div>
   );
