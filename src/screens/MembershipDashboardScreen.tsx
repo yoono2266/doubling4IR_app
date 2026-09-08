@@ -22,10 +22,10 @@ export const MembershipDashboardScreen: React.FC = () => {
 
   const getBenefitCompTag = (benefit: string) => {
     const b = benefit.toLowerCase();
-    if (b.includes('freeplay') || b.includes('스위트') || b.includes('룸 업그레이드') || b.includes('체크아웃') || b.includes('호텔')) {
+    if (b.includes('freeplay') || b.includes('오퍼') || b.includes('스위트') || b.includes('룸 업그레이드') || b.includes('체크아웃') || b.includes('호텔')) {
       return {
         type: 'freeplay_suite',
-        label: 'FreePlay 스위트',
+        label: '오퍼 스위트',
         icon: 'hotel',
         bg: 'bg-blue-500/15',
         text: 'text-blue-300',
