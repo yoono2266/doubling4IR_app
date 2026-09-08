@@ -191,7 +191,18 @@ const AppContent: React.FC = () => {
 
             <>
               {/* <FreeRoomStickyBanner /> */}
-              <BottomNav />
+              {/* 2026-09-08: 인증 화면(로그인 'login' / 회원가입 'signup')에서는 하단 네비를 숨긴다.
+                  (이전 git restore로 이 분기가 사라졌던 것을 다시 추가) */}
+              {currentSubScreen !== 'login' && currentSubScreen !== 'signup' && <BottomNav />}
+
+              {/* 로그인 화면 한정: 하단 네비가 있던 자리에 회사 정보 푸터 표시 */}
+              {currentSubScreen === 'login' && (
+                <footer className="fixed bottom-0 left-0 right-0 z-40 max-w-[430px] mx-auto bg-[#0D1B2A]/95 backdrop-blur-xl border-t border-[#1F334D] px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] text-center">
+                  <p className="text-[11px] text-slate-500">
+                    &copy; 2026 WILDWYNN Corp. All rights reserved.
+                  </p>
+                </footer>
+              )}
             </>
           </>
         )}
