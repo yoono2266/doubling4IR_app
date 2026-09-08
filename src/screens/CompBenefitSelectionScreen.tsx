@@ -9,11 +9,11 @@ export const CompBenefitSelectionScreen: React.FC = () => {
   const handleBenefitClick = (benefit: CompBenefitItem) => {
     if (benefit.id === 'freeplay_suite') {
       startBooking({
-        name: 'Okada Manila (오카다 마닐라)',
-        location: 'New Manila Bay, Philippines',
+        name: '솔레어 리조트 앤 카지노 (Solaire Resort & Casino)',
+        location: '필리핀 마닐라 · 엔터테인먼트 시티',
         roomType: 'Executive Ocean View Suite',
         pricePerNightDp: 600,
-        image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80'
+        image: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=800&auto=format&fit=crop&q=80'
       });
     } else if (benefit.id === 'gaming_room') {
       setCurrentSubScreen('gaming-room-booking');
