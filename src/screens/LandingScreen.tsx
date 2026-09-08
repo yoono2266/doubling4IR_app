@@ -107,14 +107,22 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onStart }) => {
         >
           지금 시작하기
         </button>
-        <a
-          href="/landing.html#privacy"
-          target="_blank"
-          rel="noreferrer"
-          className="block text-center text-[11px] text-slate-500 hover:text-slate-300 mt-4"
-        >
-          이용약관 및 개인정보처리방침 보기
-        </a>
+        {/*
+          2026-09-08 교체 요청으로 비활성화 (삭제하지 않고 주석 보존).
+          사유: 랜딩 하단 "이용약관 및 개인정보처리방침 보기" 링크를 회사 정보 푸터로 대체.
+          [원본 JSX]
+          <a
+            href="/landing.html#privacy"
+            target="_blank"
+            rel="noreferrer"
+            className="block text-center text-[11px] text-slate-500 hover:text-slate-300 mt-4"
+          >
+            이용약관 및 개인정보처리방침 보기
+          </a>
+        */}
+        <p className="block text-center text-[11px] text-slate-500 mt-4">
+          &copy; 2026 WILDWYNN Corp. All rights reserved.
+        </p>
       </div>
     </div>
   );
