@@ -270,7 +270,7 @@ useEffect(() => {
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-bold text-[#C5A059] uppercase tracking-wider flex items-center gap-1.5">
             <span className="material-symbols-outlined text-sm">local_fire_department</span>
-            라이브 잭팟
+            라이브 프로그래시브
           </h3>
           <button
             onClick={handleJackpotMoreClick}
@@ -294,7 +294,7 @@ useEffect(() => {
             onClick={handlePolyCardClick}
             className="text-[11px] text-slate-400 hover:text-[#C5A059] flex items-center gap-0.5"
           >
-            <span>마켓 전체보기</span>
+            <span>전체보기</span>
             <span className="material-symbols-outlined text-xs">chevron_right</span>
           </button>
         </div>
@@ -307,7 +307,7 @@ useEffect(() => {
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-bold text-[#C5A059] uppercase tracking-wider flex items-center gap-1.5">
             <span className="material-symbols-outlined text-sm">forum</span>
-            더블링 파트너스 커뮤니티
+            파트너스 커뮤니티
           </h3>
         </div>
 

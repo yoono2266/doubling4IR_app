@@ -166,9 +166,13 @@ export const PolyMarketCarousel: React.FC = () => {
               </span>
             )}
           </div>
+          {/* 2026-09-15 비활성화 (삭제하지 않고 주석 보존).
+              사유: 홈 화면 예측 챌린지 박스 우측 상단의 거래량/투표 규모(N,NNN DP) 표시를
+              숨기기로 함. 되살릴 경우 아래 span을 주석 해제할 것.
           <span className="text-[10px] text-slate-400 font-mono bg-[#0D1B2A] px-2 py-1 rounded border border-[#1F334D]">
             {currentMarket.totalVolumeDp}
           </span>
+          */}
         </div>
 
         {/* Title & Description */}
