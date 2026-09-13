@@ -25,6 +25,42 @@ export interface HotelJackpotData {
   slots?: number;
 }
 
+// 2026-09-15: 아래 이미지들은 전부 Unsplash License(무료 상업적 이용 가능) 스톡 사진입니다.
+// 해당 카지노/리조트의 실제 브랜드 사진이 아니며, 목록/상세 화면에서 카드 이미지가 전부
+// 동일해 보이는 문제를 완화하기 위한 대체 이미지입니다 (실제 브랜드 사진 확보 전 임시 조치).
+//
+// A) jackpotData.ts 내 HOTELS_JACKPOT_DATA 중 우연히 동일 사진을 공유하던 5개 그룹을
+//    구분하기 위한 대체 이미지 (HotelJackpotDetailScreen.tsx에서 사용).
+const IMG_GROUP_CASINO_CARDS = 'https://images.unsplash.com/photo-1606167668584-78701c57f13d?w=800&auto=format&fit=crop&q=80';
+const IMG_GROUP_RESORT_POOL = 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&auto=format&fit=crop&q=80';
+const IMG_GROUP_SKYLINE_NIGHT = 'https://images.unsplash.com/photo-1535827841776-24afc1e255ac?w=800&auto=format&fit=crop&q=80';
+const IMG_GROUP_HOTEL_LOBBY = 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800&auto=format&fit=crop&q=80';
+const IMG_GROUP_OUTDOOR_NIGHT = 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&auto=format&fit=crop&q=80';
+
+// B) JackpotMapScreen.tsx(잭팟 목록, 실서버 API 연동 화면)에서 API가 내려주는
+//    jp_thumb_url이 비어 있을 때 쓰는 지역별 대체 이미지. 국가 코드(MO/PH/SG)당 2종을
+//    번갈아 배정해 "전부 동일 사진" 문제를 완화한다. (A)의 이미지 일부를 재사용한다.
+const IMG_FALLBACK_RESORT_EXTERIOR = 'https://images.unsplash.com/photo-1519449556851-5720b33024e7?w=800&auto=format&fit=crop&q=80';
+const IMG_FALLBACK_SLOT_MACHINE = 'https://images.unsplash.com/photo-1518895312237-a9e23508077d?w=800&auto=format&fit=crop&q=80';
+
+export const REGION_FALLBACK_IMAGES: Record<'MO' | 'PH' | 'SG', [string, string]> = {
+  MO: [IMG_GROUP_CASINO_CARDS, IMG_GROUP_SKYLINE_NIGHT],
+  PH: [IMG_GROUP_RESORT_POOL, IMG_GROUP_HOTEL_LOBBY],
+  SG: [IMG_GROUP_OUTDOOR_NIGHT, IMG_FALLBACK_RESORT_EXTERIOR],
+};
+
+// 위 3개 국가(MO/PH/SG) 외 지역(API에 KR/JP 등이 추가될 경우) 또는 국가 코드를 알 수 없을 때의
+// 최종 대체 이미지.
+export const DEFAULT_FALLBACK_IMAGE = IMG_FALLBACK_SLOT_MACHINE;
+
+// regionCode(국가 코드)와 목록 내 순번(index)을 받아 대체 이미지를 반환한다.
+// JackpotMapScreen.tsx의 mapHotels()에서 jp_thumb_url이 비어 있을 때 호출한다.
+export const getHotelFallbackImage = (regionCode: string, index: number): string => {
+  const pair = REGION_FALLBACK_IMAGES[regionCode as 'MO' | 'PH' | 'SG'];
+  if (!pair) return DEFAULT_FALLBACK_IMAGE;
+  return pair[index % 2];
+};
+
 const KRW_RATE = 1350;
 
 export const formatUsd = (val: number): string => {
@@ -52,7 +88,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
     region: 'KR',
     regionLabel: '대한민국 인천',
     desc: '동북아 최초의 아트테인먼트 복합 리조트, 외국인 전용',
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
+    image: IMG_GROUP_CASINO_CARDS,
     badge: 'HOT 잭팟',
     rating: 4.8,
     vipTables: 40,
@@ -72,7 +108,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
     region: 'KR',
     regionLabel: '대한민국 영종도',
     desc: '15,000석 규모 아레나와 대형 디지털 거리를 갖춘 초대형 엔터테인먼트 리조트',
-    image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop&q=80',
+    image: IMG_GROUP_RESORT_POOL,
     badge: 'NEW 리조트',
     rating: 4.9,
     vipTables: 50,
@@ -92,7 +128,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
     region: 'KR',
     regionLabel: '대한민국 강원도',
     desc: '국내 유일 내국인 출입 허용 사계절 산악형 리조트',
-    image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&auto=format&fit=crop&q=80',
+    image: IMG_GROUP_OUTDOOR_NIGHT,
     badge: '국내유일',
     rating: 4.7,
     vipTables: 60,
@@ -176,7 +212,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
     region: 'PH',
     regionLabel: '필리핀 마닐라',
     desc: '럭셔리 호텔 브랜드(하얏트,누와,노부)가 결합된 글로벌 복합 리조트',
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
+    image: IMG_GROUP_CASINO_CARDS,
     badge: 'HOT 잭팟',
     rating: 4.8,
     vipTables: 40,
@@ -207,7 +243,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
     region: 'PH',
     regionLabel: '필리핀 파사이',
     desc: '마닐라 공항 터미널 3과 직결된 필리핀 최초의 복합 카지노 단지',
-    image: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&auto=format&fit=crop&q=80',
+    image: IMG_GROUP_SKYLINE_NIGHT,
     badge: '공항직결',
     rating: 4.7,
     vipTables: 38,
@@ -227,7 +263,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
     region: 'PH',
     regionLabel: '필리핀 클락',
     desc: '필리핀 클락 경제특구 내 최초의 5성급 럭셔리 카지노 리조트',
-    image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&auto=format&fit=crop&q=80',
+    image: IMG_GROUP_HOTEL_LOBBY,
     badge: '클락1위',
     rating: 4.7,
     vipTables: 35,
@@ -290,7 +326,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
     region: 'MO',
     regionLabel: '마카오 코타이',
     desc: '화려한 생화 장식과 스카이캡(케이블카)이 특징인 극강의 하이엔드 리조트',
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
+    image: IMG_GROUP_CASINO_CARDS,
     badge: '초호화 VIP',
     rating: 4.9,
     vipTables: 65,
@@ -310,7 +346,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
     region: 'MO',
     regionLabel: '마카오 코타이',
     desc: '금빛 외관과 대형 인공 워터파크를 갖춘 코타이 최대 규모 리조트 단지',
-    image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop&q=80',
+    image: IMG_GROUP_RESORT_POOL,
     badge: '코타이최대',
     rating: 4.9,
     vipTables: 80,
@@ -331,7 +367,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
     region: 'MO',
     regionLabel: '마카오 코타이',
     desc: '자하 하디드가 설계한 모피어스 호텔 등 미래지향적 건축미의 리조트',
-    image: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&auto=format&fit=crop&q=80',
+    image: IMG_GROUP_SKYLINE_NIGHT,
     badge: '미래지향',
     rating: 4.9,
     vipTables: 60,
@@ -351,7 +387,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
     region: 'MO',
     regionLabel: '마카오 코타이',
     desc: '보석함을 쌓아 올린 외관과 디지털 아트 광장을 갖춘 예술 리조트',
-    image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&auto=format&fit=crop&q=80',
+    image: IMG_GROUP_HOTEL_LOBBY,
     badge: '아트IR',
     rating: 4.8,
     vipTables: 55,
@@ -371,7 +407,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
     region: 'MO',
     regionLabel: '마카오 코타이',
     desc: 'SJM 그룹의 코타이 플래그십 리조트로 유럽 궁전과 중국 전통의 조화',
-    image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&auto=format&fit=crop&q=80',
+    image: IMG_GROUP_OUTDOOR_NIGHT,
     badge: '궁전스타일',
     rating: 4.8,
     vipTables: 55,
@@ -424,7 +460,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
     region: 'SG',
     regionLabel: '싱가포르 센토사',
     desc: '유니버설 스튜디오와 대형 아쿠아리움이 결합된 가족형 복합 리조트',
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
+    image: IMG_GROUP_CASINO_CARDS,
     badge: '센토사 랜드마크',
     rating: 4.8,
     vipTables: 45,

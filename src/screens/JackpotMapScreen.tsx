@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { RegionCode, formatUsd, formatKrw } from '../data/jackpotData';
+import { RegionCode, formatUsd, formatKrw, getHotelFallbackImage } from '../data/jackpotData';
 import { apiCommonClient, CommonResponse, ResultCode } from '../utils/apiClient';
 
 // /contents/main-content API 요청/응답 타입
@@ -100,18 +100,25 @@ const mapHotels = (data: JackpotApiResponse): HotelJackpotData[] => {
   return [...data.hotels]
     .sort((a, b) => a.jp_sort - b.jp_sort)
     .filter(hotel => hotel.jp_view !== 0)
-    .map(hotel => {
+    .map((hotel, index) => {
       const country = countryByIndex.get(hotel.country_index);
       const jackpots = jackpotsByHotel.get(hotel.jp_index) ?? [];
+      const regionCode = mapRegionCode(country?.country_code ?? '');
 
       return {
         id: hotel.hotel_code || String(hotel.jp_index),
         name: hotel.hotel_name_ko,
         nameEn: hotel.hotel_name_en,
-        region: mapRegionCode(country?.country_code ?? ''),
+        region: regionCode,
         regionLabel: country?.country_name_ko ?? '',
         desc: '',
-        image: hotel.jp_thumb_url ? `https://dou-cdn.wildwynn.com/static/upload/hotels/${hotel.jp_thumb_url}`: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop&q=80',
+        // 2026-09-15: API가 내려주는 jp_thumb_url이 비어 있으면(현재 전부 비어 있음),
+        // 예전엔 모든 호텔에 동일한 하드코딩 이미지 1개를 썼음(카드가 전부 똑같아 보이는 원인).
+        // 국가 코드(MO/PH/SG)별로 2종씩 번갈아 배정하는 jackpotData.ts의
+        // getHotelFallbackImage()로 대체 — 실제 브랜드 사진이 아닌 임시 대체 이미지임.
+        image: hotel.jp_thumb_url
+          ? `https://dou-cdn.wildwynn.com/static/upload/hotels/${hotel.jp_thumb_url}`
+          : getHotelFallbackImage(regionCode, index),
         rating: 0,
         jackpots: jackpots.map(jackpot => ({
           id: String(jackpot.jp_index),
@@ -127,8 +134,8 @@ const mapHotels = (data: JackpotApiResponse): HotelJackpotData[] => {
 // 순위·비중에 따라 자동 부여되는 동적 뱃지
 const getDynamicBadges = (rankIndex: number, sharePercent: number): string[] => {
   const badges: string[] = [];
-  if (rankIndex === 0) badges.push('1위 잭팟');
-  else if (rankIndex <= 2) badges.push('TOP 잭팟');
+  if (rankIndex === 0) badges.push('1위');
+  else if (rankIndex <= 2) badges.push('TOP');
   if (sharePercent >= 15) badges.push('글로벌 랜드마크');
   return badges;
 };
@@ -224,11 +231,14 @@ export const JackpotMapScreen: React.FC = () => {
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-[#C5A059]">grid_view</span>
-            Jackpot Tree-map
+            프로그래시브 트리 맵 리스트
           </h2>
-          <p className="text-xs text-slate-400">아시아 주요 호텔 & 리조트 잭팟</p>
+          <p className="text-xs text-slate-400">아시아 주요 호텔 & 리조트 프로그래시브</p>
         </div>
-        {/* 리스트 뷰 ↔ 트리맵 뷰 토글 */}
+        {/* 2026-09-15 비활성화 (삭제하지 않고 주석 보존).
+            사유: 리스트 뷰 ↔ 트리맵 뷰 토글 버튼을 화면에서 제거하기로 함. viewMode는 항상
+            초기값 'list'로 고정되며, 아래 트리맵 렌더링 블록은 이 토글이 없으면 도달 불가능한
+            상태로 남음(제거 요청 범위 밖이라 코드는 보존).
         <button
           onClick={() => setViewMode((v) => (v === 'list' ? 'treemap' : 'list'))}
           className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-extrabold border transition active:scale-95 ${
@@ -242,6 +252,7 @@ export const JackpotMapScreen: React.FC = () => {
           </span>
           <span>{viewMode === 'treemap' ? 'LIST' : 'TREEMAP'}</span>
         </button>
+        */}
       </div>
 
       {/* 1. Region Filter Tabs (ALL / KR / MO / SG / PH / JP) */}
