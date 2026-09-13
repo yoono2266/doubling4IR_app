@@ -97,6 +97,16 @@ export interface Reservation {
   qrCode?: string;
 }
 
+export interface PointRedemption {
+  id: string;
+  productId: string;
+  productName: string;
+  categoryId: string;
+  dpCost: number;
+  voucherCode: string;
+  redeemedAt: string;
+}
+
 export interface WalletTransaction {
   id: string;
   type: '충전' | '예약 결제' | '배팅' | '배당금';

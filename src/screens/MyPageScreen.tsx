@@ -6,6 +6,7 @@ import { MembershipDashboardScreen } from './MembershipDashboardScreen';
 import { PolyPortfolioHistoryScreen } from './PolyPortfolioHistoryScreen';
 import { CompBenefitSelectionScreen } from './CompBenefitSelectionScreen';
 import { CurrentTripSummaryScreen } from './CurrentTripSummaryScreen';
+import { PointRedemptionScreen } from './PointRedemptionScreen';
 import { MEMBERSHIP_TIERS } from '../data/membershipData';
 
 // Unix timestamp(초) → "yyyy-mm-dd hh:mm:ss" 문자열 변환
@@ -64,6 +65,7 @@ export const MyPageScreen: React.FC = () => {
     user,
     reservations,
     polyVotes,
+    pointRedemptions,
     settings,
     updateSettings,
     hasActiveTrip,
@@ -490,22 +492,18 @@ export const MyPageScreen: React.FC = () => {
           더블링 포인트 (Doubling Point)
         </h2>
 
+        {/* 💡 포인트 사용처 mock 교환분(pointRedemptions)만큼 표시값에서 차감한다.
+            서버 실제 값인 memberInfo.u_dp 자체는 건드리지 않는다. */}
         <div className="bg-gradient-to-br from-[#162639] via-[#1f334d] to-[#0D1B2A] border border-[#C5A059] rounded-2xl p-5 shadow-xl flex flex-col gap-3">
           <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">사용 가능 포인트</span>
           <p className="text-2xl font-extrabold text-[#FFF0D0] gold-gradient-text font-mono">
-            {(memberInfo.u_dp || 0).toLocaleString()} <span className="text-sm text-slate-300">DP</span>
+            {Math.max(0, (memberInfo.u_dp || 0) - pointRedemptions.reduce((sum, r) => sum + r.dpCost, 0)).toLocaleString()} <span className="text-sm text-slate-300">DP</span>
           </p>
 
-          <div className="grid grid-cols-2 gap-2 pt-2">
-            <button 
-              onClick={() => showToast('현재 포인트를 사용할 수 없습니다.')}
-              className="py-2.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow"
-            >
-              포인트 사용
-            </button>
-            <button 
-              onClick={() => showToast('현재 포인트를 사용할 수 없습니다.')}
-              className="py-2.5 rounded-xl bg-[#0D1B2A] border border-[#C5A059]/40 text-[#E2C28E] font-bold text-xs hover:border-[#C5A059]"
+          <div className="pt-2">
+            <button
+              onClick={() => setCurrentSubScreen('my-wallet-usage')}
+              className="w-full py-2.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow"
             >
               포인트 사용처
             </button>
@@ -515,6 +513,20 @@ export const MyPageScreen: React.FC = () => {
         <div>
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">포인트 지급 및 차감 내역</h3>
           <div className="space-y-2">
+            {/* 💡 로컬 mock 교환 내역(pointRedemptions)을 최신순으로 먼저 보여주고,
+                그 뒤에 실제 서버 내역(memberReward)을 이어붙인다. */}
+            {pointRedemptions.map((redemption) => (
+              <div key={redemption.id} className="bg-[#162639] border border-[#1F334D] p-3 rounded-xl flex items-center justify-between text-xs">
+                <div>
+                  <p className="font-bold text-white">포인트 사용처 교환 ({redemption.productName})</p>
+                  <p className="text-[10px] text-slate-400">{redemption.redeemedAt} • {redemption.voucherCode}</p>
+                </div>
+                <span className="font-mono font-extrabold text-[#E2C28E]">
+                  -{redemption.dpCost.toLocaleString()} DT
+                </span>
+              </div>
+            ))}
+
             {(Array.isArray(myProfile?.memberReward)
               ? myProfile.memberReward
               : Object.values(myProfile?.memberReward || {})
@@ -544,6 +556,11 @@ export const MyPageScreen: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  // SUB-MENU 3-1: 포인트 사용처 (카테고리 → 목록 → 상세 → 확인 → 완료)
+  if (currentSubScreen === 'my-wallet-usage') {
+    return <PointRedemptionScreen />;
   }
 
   // SUB-MENU 4: POLY MARKET HISTORY

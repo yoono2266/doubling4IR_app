@@ -7,6 +7,7 @@ import {
   Post,
   Reservation,
   WalletTransaction,
+  PointRedemption,
   PolyVote,
   SettingsState,
   BookingFlowState,
@@ -98,6 +99,12 @@ interface AppContextType {
   setHasActiveTrip: React.Dispatch<React.SetStateAction<boolean>>;
 
   walletTransactions: WalletTransaction[];
+
+  // 포인트 사용처 상품 교환 내역 (mock). 실제 u_dp/memberReward(서버)는 건드리지 않고,
+  // 화면 표시용으로만 이 내역을 합산해 잔액을 계산하고 내역 리스트에 얹는다.
+  pointRedemptions: PointRedemption[];
+  redeemPointProduct: (product: { id: string; name: string; categoryId: string; dpCost: number }) => { success: boolean; voucherCode?: string };
+
   polyVotes: PolyVote[];
   polyMarkets: PolyMarketItem[];
   plmContentsLoading: boolean;
@@ -508,6 +515,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   ]);
 
+  // 포인트 사용처 상품 교환 내역 (mock).
+  // 💡 실제 서버 잔액(myProfile.memberInfo.u_dp)이나 서버 내역(memberReward)은 절대 직접
+  //    변형하지 않는다 — 대신 이 배열을 화면 표시 시점에 u_dp에서 차감·내역에 병합해서 보여준다
+  //    (MyPageScreen의 '더블링 포인트' 화면 참고). 새로고침 시 초기화되는 세션 한정 mock 상태.
+  const [pointRedemptions, setPointRedemptions] = useState<PointRedemption[]>([]);
+
+  const redeemPointProduct = (
+    product: { id: string; name: string; categoryId: string; dpCost: number }
+  ): { success: boolean; voucherCode?: string } => {
+    const totalRedeemedDp = pointRedemptions.reduce((sum, r) => sum + r.dpCost, 0);
+    const availableDp = Math.max(0, (myProfile?.memberInfo?.u_dp || 0) - totalRedeemedDp);
+
+    if (availableDp < product.dpCost) {
+      showToast(`포인트가 부족합니다. (부족: ${(product.dpCost - availableDp).toLocaleString()} DP)`);
+      return { success: false };
+    }
+
+    const voucherCode = `DBL-${product.categoryId.slice(0, 2).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+
+    const record: PointRedemption = {
+      id: `PR-${Date.now()}`,
+      productId: product.id,
+      productName: product.name,
+      categoryId: product.categoryId,
+      dpCost: product.dpCost,
+      voucherCode,
+      redeemedAt: new Date().toLocaleString('ko-KR', { hour12: false })
+    };
+
+    setPointRedemptions(prev => [record, ...prev]);
+    showToast(`${product.name} 교환 완료! 바우처 코드가 발급되었습니다.`);
+    return { success: true, voucherCode };
+  };
+
   // Poly Market Votes — 배포 기준: 100/500/1,000/5,000 DP 프리셋 중 선택하여 매수
   const [polyVotes, setPolyVotes] = useState<PolyVote[]>([
     {
@@ -912,6 +953,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         hasActiveTrip,
         setHasActiveTrip,
         walletTransactions,
+        pointRedemptions,
+        redeemPointProduct,
         polyVotes,
         polyMarkets,
         plmContentsLoading,
