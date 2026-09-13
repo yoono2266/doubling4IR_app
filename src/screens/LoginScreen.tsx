@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MessageCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
@@ -176,34 +177,53 @@ const SOCIAL_PROVIDERS = [
       </svg>
     ),
   },
+  // 2026-09-15 비활성화 (삭제하지 않고 주석 보존).
+  // 사유: 추후 실제 연동 개발 완료되는 순서대로 하나씩 재활성화 예정.
+  // {
+  //   key: 'X',
+  //   label: 'Continue with X',
+  //   className: 'bg-black hover:bg-slate-900 border border-slate-700 text-white',
+  //   icon: (
+  //     <svg className="w-4 h-4 shrink-0 fill-current text-white" viewBox="0 0 24 24" aria-hidden="true">
+  //       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  //     </svg>
+  //   ),
+  // },
+  // {
+  //   key: 'Facebook',
+  //   label: 'Continue with Facebook',
+  //   className: 'bg-[#1877F2] hover:bg-[#166fe5] text-white',
+  //   icon: (
+  //     <svg className="w-4 h-4 shrink-0 fill-current text-white" viewBox="0 0 24 24" aria-hidden="true">
+  //       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+  //     </svg>
+  //   ),
+  // },
+  // {
+  //   key: 'Apple',
+  //   label: 'Continue with Apple',
+  //   className: 'bg-[#0D1B2A] border border-[#1F334D] hover:bg-[#162639] text-white',
+  //   icon: (
+  //     <svg className="w-4 h-4 shrink-0 fill-current text-white" viewBox="0 0 24 24" aria-hidden="true">
+  //       <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.32c.62-.76 1.05-1.82.93-2.88-.91.04-2.03.61-2.68 1.37-.58.67-1.09 1.76-.95 2.8.1.01 2.08-.53 2.7-1.29z" />
+  //     </svg>
+  //   ),
+  // },
   {
-    key: 'X',
-    label: 'Continue with X',
-    className: 'bg-black hover:bg-slate-900 border border-slate-700 text-white',
+    // 카카오 로그인 공식 디자인 가이드 기준
+    // (https://developers.kakao.com/docs/ko/kakaologin/design-guide):
+    // 배경 #FEE500 고정(타사 버튼을 상대적으로 강조하지 않도록 반드시 이 색을 지정할 것 — 임의 변경 금지),
+    // 심볼 #000000(불투명), 레이블 #000000 85% 불투명도, 컨테이너 radius 12px(기존 rounded-xl과 일치).
+    // 레이블 문구는 가이드가 허용하는 완성형 "카카오 로그인"/"Login with Kakao" 또는
+    // 축약형 "로그인"/"Login" 중에서만 선택 가능 — "카카오로 시작하기"는 가이드에 없는 문구라 사용하지 않음.
+    // 카카오 SDK 연동 전이라 클릭 시 다른 미연동 버튼과 동일하게 Coming Soon 토스트만 노출.
+    key: 'Kakao',
+    label: '카카오 로그인',
+    className: 'bg-[#FEE500] hover:brightness-95 text-black/85',
     icon: (
-      <svg className="w-4 h-4 shrink-0 fill-current text-white" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-      </svg>
-    ),
-  },
-  {
-    key: 'Facebook',
-    label: 'Continue with Facebook',
-    className: 'bg-[#1877F2] hover:bg-[#166fe5] text-white',
-    icon: (
-      <svg className="w-4 h-4 shrink-0 fill-current text-white" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-      </svg>
-    ),
-  },
-  {
-    key: 'Apple',
-    label: 'Continue with Apple',
-    className: 'bg-[#0D1B2A] border border-[#1F334D] hover:bg-[#162639] text-white',
-    icon: (
-      <svg className="w-4 h-4 shrink-0 fill-current text-white" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.32c.62-.76 1.05-1.82.93-2.88-.91.04-2.03.61-2.68 1.37-.58.67-1.09 1.76-.95 2.8.1.01 2.08-.53 2.7-1.29z" />
-      </svg>
+      // 실제 카카오 공식 심볼(말풍선) 에셋으로 교체 필요 — 가이드상 심볼 형태·비율·색상 임의 변형 금지,
+      // 현재는 lucide-react MessageCircle로 임시 대체(색상만 가이드 기준 #000000 고정 적용).
+      <MessageCircle className="w-4 h-4 shrink-0" fill="#000000" stroke="#000000" />
     ),
   },
 ];
@@ -564,7 +584,8 @@ export const LoginScreen: React.FC = () => {
           </span>
         </div>
 
-        {/* Social buttons — Google만 실제 OAuth 연동. X/Facebook/Apple은 연동 전까지 "Coming Soon" 안내. */}
+        {/* Social buttons — Google만 실제 OAuth 연동. Kakao는 연동 전까지 "Coming Soon" 안내
+            (X/Facebook/Apple은 2026-09-15부로 주석 처리, SOCIAL_PROVIDERS 정의부 참고). */}
         <div className="flex flex-col gap-2">
           {SOCIAL_PROVIDERS.map((p) => (
             <button
@@ -576,7 +597,7 @@ export const LoginScreen: React.FC = () => {
                   handleGoogleLogin();
                   return;
                 }
-                // 2026-09-08: X/Facebook/Apple은 실제 연동 전까지 "Coming Soon" 안내만 노출.
+                // Google 외 provider(현재 Kakao)는 실제 연동 전까지 "Coming Soon" 안내만 노출.
                 // 실제 연동 시 아래 원래 동작으로 되돌릴 것: handleMockSocial(p.key)
                 //   (또는 provider별 실제 OAuth 핸들러 연결)
                 showToast(`${p.key} 로그인은 준비 중입니다 (Coming Soon)`);
