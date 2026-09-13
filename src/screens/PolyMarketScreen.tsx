@@ -187,22 +187,17 @@ export const PolyMarketScreen: React.FC = () => {
               className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3 shadow-md hover:border-[#C5A059]/50 transition cursor-pointer"
               onClick={() => handleNavigateDetail(m)}
             >
-              {/* Category & Total Volume */}
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-[#C5A059] bg-[#C5A059]/15 px-2.5 py-0.5 rounded border border-[#C5A059]/30">
-                    {m.category}
-                  </span>
-                  {userVote && (
-                    <span className="text-[10px] font-extrabold text-[#E2C28E] bg-[#C5A059]/10 px-2 py-0.5 rounded border border-[#C5A059]/30 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-xs">how_to_vote</span>
-                      내 투표: {userVote.choice} ({userVote.amountDp.toLocaleString()} DP)
-                    </span>
-                  )}
-                </div>
-                <span className="text-[10px] text-slate-400 font-mono bg-[#0D1B2A] px-2 py-1 rounded border border-[#1F334D] whitespace-nowrap">
-                  볼륨: {m.totalVolumeDp}
+              {/* Category */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-[#C5A059] bg-[#C5A059]/15 px-2.5 py-0.5 rounded border border-[#C5A059]/30">
+                  {m.category}
                 </span>
+                {userVote && (
+                  <span className="text-[10px] font-extrabold text-[#E2C28E] bg-[#C5A059]/10 px-2 py-0.5 rounded border border-[#C5A059]/30 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs">how_to_vote</span>
+                    내 투표: {userVote.choice} ({userVote.amountDp.toLocaleString()} DP)
+                  </span>
+                )}
               </div>
 
               {/* Title & Description */}

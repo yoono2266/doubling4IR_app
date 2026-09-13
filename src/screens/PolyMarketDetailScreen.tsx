@@ -177,12 +177,9 @@ export const PolyMarketDetailScreen: React.FC = () => {
 
       {/* Market Header Summary Box */}
       <div className="bg-[#162639] border border-[#C5A059]/50 rounded-2xl p-5 shadow-xl flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start gap-2">
           <span className="text-[10px] font-bold text-[#C5A059] bg-[#C5A059]/15 px-2.5 py-0.5 rounded border border-[#C5A059]/30">
             {selectedMarket.category}
-          </span>
-          <span className="text-[10px] text-slate-400 font-mono bg-[#0D1B2A] px-2 py-1 rounded border border-[#1F334D] whitespace-nowrap">
-            볼륨: {selectedMarket.totalVolumeDp}
           </span>
         </div>
 
