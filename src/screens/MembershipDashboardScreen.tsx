@@ -4,9 +4,12 @@ import { MEMBERSHIP_TIERS, getTierInfo, getNextTier } from '../data/membershipDa
 import { MembershipTierId } from '../types';
 
 export const MembershipDashboardScreen: React.FC = () => {
-  const { user, tierRecords, setCurrentSubScreen, setHasActiveTrip, myProfile } = useApp();
-  const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
-  const [showCheckInModal, setShowCheckInModal] = useState<boolean>(false);
+  const { user, tierRecords, setCurrentSubScreen, myProfile } = useApp();
+  // 2026-09-14 비활성화 (삭제하지 않고 주석 보존). 사유: "IR 시연용 실시간 알림
+  // 시뮬레이션" 박스(데모 트리거 버튼) 완전 삭제 요청에 따라 이 박스를 여는 트리거가
+  // 사라지면서 아래 두 미리보기 모달(6, 7번 섹션)이 도달 불가능해져 함께 비활성화함.
+  // const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
+  // const [showCheckInModal, setShowCheckInModal] = useState<boolean>(false);
 
   // 서버 memberShip(회원 1인의 현재 등급 1건)의 tb_index를 로컬 membershipData의 id와 매칭해
   // 주얼리 컨셉/아이콘/혜택 목록 등 API에 없는 보완 정보를 채우고, 표시값은 API를 우선한다.
@@ -291,64 +294,6 @@ export const MembershipDashboardScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. DEMO TRIGGER BUTTONS: "체크인 알림 미리보기" & "승급 알림 미리보기" */}
-      <div className="bg-gradient-to-r from-[#162639] via-[#1E2E44] to-[#162639] border border-[#D4AF37]/60 rounded-2xl p-4 shadow-md flex flex-col gap-3">
-        <div className="flex items-center justify-between border-b border-[#1F334D] pb-2">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#D4AF37] text-lg">smart_toy</span>
-            <h4 className="text-xs font-bold text-white break-keep">IR 시연용 실시간 알림 시뮬레이션</h4>
-          </div>
-          <span className="text-[10px] text-[#E2C28E] font-bold bg-[#0D1B2A] px-2 py-0.5 rounded border border-[#C5A059]/30 shrink-0">
-            데모 트리거
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {/* Card 1: Check-in Notification */}
-          <div className="bg-[#0D1B2A] border border-[#1F334D] p-3.5 rounded-xl flex flex-col justify-between gap-3">
-            <div className="flex items-start gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
-                <span className="material-symbols-outlined text-base">key</span>
-              </div>
-              <div className="min-w-0 flex-1">
-                <span className="text-xs font-bold text-white block break-keep">호텔 체크인 확인</span>
-                <span className="text-[10px] text-slate-400 block break-keep mt-0.5">Okada Manila 체크인 웹훅</span>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                setHasActiveTrip(true);
-                setShowCheckInModal(true);
-              }}
-              className="w-full py-2.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-black text-xs shadow-md hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-1.5"
-            >
-              <span className="material-symbols-outlined text-sm">visibility</span>
-              <span className="break-keep">체크인 알림 미리보기</span>
-            </button>
-          </div>
-
-          {/* Card 2: Tier Upgrade Notification */}
-          <div className="bg-[#0D1B2A] border border-[#1F334D] p-3.5 rounded-xl flex flex-col justify-between gap-3">
-            <div className="flex items-start gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#D4AF37]/20 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] shrink-0 mt-0.5">
-                <span className="material-symbols-outlined text-base">celebration</span>
-              </div>
-              <div className="min-w-0 flex-1">
-                <span className="text-xs font-bold text-white block break-keep">SOLITAIRE 승급</span>
-                <span className="text-[10px] text-slate-400 block break-keep mt-0.5">등급 상향 달성 축하</span>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowUpgradeModal(true)}
-              className="w-full py-2.5 rounded-xl bg-[#1E2E44] border border-[#D4AF37]/60 text-[#D4AF37] font-black text-xs hover:bg-[#253952] active:scale-95 transition flex items-center justify-center gap-1.5"
-            >
-              <span className="material-symbols-outlined text-sm">visibility</span>
-              <span className="break-keep">승급 알림 미리보기</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* 4. BOTTOM: RECENT ACCRUAL HISTORY (5 Records) */}
       <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 shadow-md flex flex-col gap-3">
         <div className="flex items-center justify-between border-b border-[#1F334D] pb-2.5">
@@ -533,8 +478,11 @@ export const MembershipDashboardScreen: React.FC = () => {
         })()}
       </div>
 
-      {/* 6. POPUP MODAL: "승급 알림 미리보기" */}
-      {showUpgradeModal && (
+      {/* 6. POPUP MODAL: "승급 알림 미리보기"
+          2026-09-14 비활성화 (삭제하지 않고 주석 보존). 사유: 이 모달을 열던 트리거 버튼이
+          속한 "IR 시연용 실시간 알림 시뮬레이션" 박스가 삭제되면서 도달 불가능해짐.
+          showUpgradeModal state 자체도 위에서 비활성화되어 있어 `false &&`로 대체함. */}
+      {false && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-gradient-to-b from-[#1E2E44] via-[#162639] to-[#0D1B2A] border-2 border-[#D4AF37] rounded-3xl p-6 w-full max-w-sm flex flex-col items-center gap-4 text-center shadow-[0_0_40px_rgba(212,175,55,0.4)] animate-in zoom-in-95">
             {/* Celebration Icon Header */}
@@ -589,8 +537,10 @@ export const MembershipDashboardScreen: React.FC = () => {
         </div>
       )}
 
-      {/* 7. POPUP MODAL: "체크인 알림 미리보기" */}
-      {showCheckInModal && (
+      {/* 7. POPUP MODAL: "체크인 알림 미리보기"
+          2026-09-14 비활성화 (삭제하지 않고 주석 보존). 사유: 위 6번 모달과 동일 —
+          트리거 버튼이 속한 데모 박스 삭제로 도달 불가능해짐. */}
+      {false && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-gradient-to-b from-[#1E2E44] via-[#162639] to-[#0D1B2A] border-2 border-[#C5A059] rounded-3xl p-6 w-full max-w-sm flex flex-col items-center gap-4 text-center shadow-[0_0_40px_rgba(197,160,89,0.4)] animate-in zoom-in-95 relative">
             {/* Top Close (X) Button */}
