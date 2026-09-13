@@ -881,7 +881,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     setUser(prev => ({ ...prev, walletDp: prev.walletDp + milestone.reward }));
     setClaimedStreakMilestones(prev => [...prev, days]);
-    showToast(`${milestone.days}일 연속 출석 보상 ${milestone.reward.toLocaleString()} DP 지급!`);
+    showToast(`${milestone.message} +${milestone.reward.toLocaleString()} DP 지급!`);
   };
 
   const [showWriteModal, setShowWriteModal] = useState<boolean>(false);
