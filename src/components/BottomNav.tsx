@@ -72,7 +72,7 @@ export const BottomNav: React.FC = () => {
         <span className={`material-symbols-outlined text-2xl ${isJackpotActive ? 'fill-1' : ''}`}>
           casino
         </span>
-        <span className="text-[11px] mt-0.5 tracking-tight">잭팟</span>
+        <span className="text-[11px] mt-0.5 tracking-tight">프로그래시브</span>
       </button>
 
       {/* 2. Poly Market */}
