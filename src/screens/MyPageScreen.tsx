@@ -918,7 +918,7 @@ export const MyPageScreen: React.FC = () => {
 
       {/* SUB-MENU LIST */}
       <div className="space-y-2">
-        <h3 className="text-xs font-bold text-[#C5A059] uppercase tracking-wider px-1">마이페이지 메뉴 (7)</h3>
+        <h3 className="text-xs font-bold text-[#C5A059] uppercase tracking-wider px-1">마이페이지 메뉴 (5)</h3>
 
         {/* 1. 파트너 프로필 정보 */}
         <div
@@ -976,7 +976,7 @@ export const MyPageScreen: React.FC = () => {
           <span className="material-symbols-outlined text-slate-400 text-sm shrink-0">chevron_right</span>
         </div>
           */}
-        {/* 4. 예측 챌린지 참여 내역 */}
+        {/* 3. 예측 챌린지 참여 내역 */}
         <div
           onClick={() => setCurrentSubScreen('my-poly-history')}
           className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between gap-3"
@@ -998,7 +998,7 @@ export const MyPageScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* 5. 더블링 멤버십 등급 관리 */}
+        {/* 4. 더블링 멤버십 등급 관리 */}
         <div
           onClick={() => setCurrentSubScreen('my-membership')}
           className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between gap-3 group"
@@ -1020,7 +1020,7 @@ export const MyPageScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* 6. 추천인 리워드 관리 */}
+        {/* 2026-09-15 비활성화 (삭제하지 않고 주석 보존). 사유: [사유는 미상 — 필요시 나중에 채울 것]
         <div
           onClick={() => setCurrentSubScreen('my-referral')}
           className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between gap-3"
@@ -1036,8 +1036,9 @@ export const MyPageScreen: React.FC = () => {
           </div>
           <span className="material-symbols-outlined text-slate-400 text-sm shrink-0">chevron_right</span>
         </div>
+          */}
 
-        {/* 6. 앱 설정 & 제한 */}
+        {/* 5. 앱 설정 & 제한 */}
         <div
           onClick={() => setCurrentSubScreen('my-settings')}
           className="p-3.5 rounded-2xl bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 transition cursor-pointer flex items-center justify-between gap-3"
@@ -1047,7 +1048,7 @@ export const MyPageScreen: React.FC = () => {
               <span className="material-symbols-outlined text-lg">settings</span>
             </div>
             <div className="min-w-0">
-              <span className="text-xs font-bold text-white block">6. 앱 설정 & 제한</span>
+              <span className="text-xs font-bold text-white block">5. 앱 설정 & 제한</span>
               <span className="text-[10px] text-slate-400">알림 · 마케팅 수신 · 월간 예약 제한</span>
             </div>
           </div>
