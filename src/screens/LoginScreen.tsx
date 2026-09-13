@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
 import { Capacitor } from '@capacitor/core';
-import { GoogleSignIn } from '@capawesome/capacitor-google-sign-in';
+import { Browser } from '@capacitor/browser';
+import { App as CapacitorApp } from '@capacitor/app';
 import { useApp } from '../context/AppContext';
 import { LOGO_BASE64 } from '../assets/logoBase64';
 import { apiCommonClient, ApiError, ResultCode } from '../utils/apiClient';
@@ -58,6 +59,70 @@ const fetchGoogleUserInfo = async (accessToken: string): Promise<GoogleUserInfo>
   });
   if (!response.ok) throw new Error('Google 사용자 정보를 확인하지 못했습니다.');
   return response.json() as Promise<GoogleUserInfo>;
+};
+
+// 네이티브 앱에서도 Android/iOS 전용 OAuth 클라이언트 없이 "웹 애플리케이션" 타입 Client ID만으로
+// 로그인할 수 있도록, 시스템 브라우저(Custom Tabs)를 띄워 OAuth 2.0 구현 흐름(implicit flow)을 직접 수행한다.
+// 리다이렉트는 HTTPS App Link(https://doubling.wildwynn.com/oauth2redirect)로 받아 앱으로 되돌아온다.
+// (Google은 "웹 애플리케이션" 클라이언트의 리다이렉트 URI로 커스텀 스킴을 허용하지 않고 HTTPS만 허용한다.)
+const GOOGLE_OAUTH_REDIRECT_URI = 'https://doubling.wildwynn.com/oauth2redirect';
+const GOOGLE_OAUTH_STATE_KEY = 'google_oauth_state';
+
+const startNativeGoogleOAuth = (webClientId: string): Promise<{ accessToken: string }> => {
+  return new Promise((resolve, reject) => {
+    const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem(GOOGLE_OAUTH_STATE_KEY, state);
+
+    const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    authUrl.searchParams.set('client_id', webClientId);
+    authUrl.searchParams.set('redirect_uri', GOOGLE_OAUTH_REDIRECT_URI);
+    authUrl.searchParams.set('response_type', 'token');
+    authUrl.searchParams.set('scope', 'openid email profile');
+    authUrl.searchParams.set('state', state);
+    authUrl.searchParams.set('prompt', 'select_account');
+
+    let settled = false;
+    let listenerHandle: { remove: () => void } | null = null;
+
+    const finish = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      Browser.close().catch(() => {});
+      listenerHandle?.remove();
+      fn();
+    };
+
+    CapacitorApp.addListener('appUrlOpen', ({ url }) => {
+      if (!url.startsWith(GOOGLE_OAUTH_REDIRECT_URI)) return;
+
+      const fragment = url.split('#')[1] || '';
+      const params = new URLSearchParams(fragment);
+      const returnedState = params.get('state');
+      const accessToken = params.get('access_token');
+      const error = params.get('error');
+
+      if (error) {
+        finish(() => reject(new Error(`Google 인증이 취소되었거나 실패했습니다. (${error})`)));
+        return;
+      }
+      if (returnedState !== localStorage.getItem(GOOGLE_OAUTH_STATE_KEY)) {
+        finish(() => reject(new Error('인증 상태 값이 일치하지 않습니다. 다시 시도해 주세요.')));
+        return;
+      }
+      if (!accessToken) {
+        finish(() => reject(new Error('Google access token을 받지 못했습니다.')));
+        return;
+      }
+
+      finish(() => resolve({ accessToken }));
+    }).then((handle) => {
+      listenerHandle = handle;
+    });
+
+    Browser.open({ url: authUrl.toString() }).catch((err) => {
+      finish(() => reject(err));
+    });
+  });
 };
 
 // 오늘의 로그인 보너스 모달 하루 1회(계정별) 노출 여부 판단용
@@ -158,42 +223,11 @@ export const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [isGoogleNativeReady, setIsGoogleNativeReady] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   // 로그인 성공 후 보너스 모달 노출 여부 (홈 이동은 모달 확인 시점에)
   const [bonusVisible, setBonusVisible] = useState(false);
   // 모달 확인 시 "수령 완료"로 기록할 create_date 값
   const [pendingBonusDate, setPendingBonusDate] = useState('');
-
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (!clientId) {
-      showToast('Google Client ID가 설정되지 않았습니다.');
-      return;
-    }
-
-    let cancelled = false;
-
-    GoogleSignIn.initialize({
-      clientId,
-      scopes: ['openid', 'email', 'profile'],
-    })
-      .then(() => {
-        if (!cancelled) setIsGoogleNativeReady(true);
-      })
-      .catch((error) => {
-        console.error('GoogleSignIn initialize failed:', error);
-        if (!cancelled) {
-          showToast('앱에서 Google 로그인을 초기화하지 못했습니다. Google OAuth 설정을 확인해 주세요.');
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [showToast]);
 
   // 로그인 성공 공통 처리: create_date(계정별 출석 기준일)가 없으면 모달 없이 바로 홈으로 이동하고,
   // 이미 해당 create_date로 보너스를 받았으면 역시 모달 없이 홈으로 이동한다.
@@ -302,8 +336,8 @@ export const LoginScreen: React.FC = () => {
   // Google 로그인 — 네이티브(Capacitor)/웹 OAuth 후 /members/uAuth로 서버 계정 존재 여부 확인.
   // 서버에 이미 가입된 계정이면 로그인 처리, 없으면 구글 정보를 들고 회원가입 화면으로 이동.
   const handleGoogleLogin = async () => {
-    // Google Sign-In 플러그인 초기화에는 Web Client ID만 사용합니다.
-    // Android OAuth client(package + SHA-1)는 Google Cloud Console / google-services.json에서 별도로 관리합니다.
+    // 네이티브/웹 모두 "웹 애플리케이션" 타입 Client ID 하나만 사용합니다.
+    // 네이티브는 Android 전용 OAuth client(package + SHA-1) 없이 시스템 브라우저 OAuth로 처리합니다.
     const webClientId = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || import.meta.env.VITE_GOOGLE_CLIENT_ID;
     if (!webClientId) {
       showToast('Google Web Client ID가 설정되지 않았습니다.');
@@ -320,20 +354,12 @@ export const LoginScreen: React.FC = () => {
 
     try {
       if (Capacitor.isNativePlatform()) {
-        if (!isGoogleNativeReady) {
-          await GoogleSignIn.initialize({
-            clientId: webClientId,
-            scopes: ['openid', 'email', 'profile'],
-          });
-          setIsGoogleNativeReady(true);
-        }
-
-        const nativeUser = await GoogleSignIn.signIn();
-        if (!nativeUser.email) throw new Error('Google 계정 이메일을 확인하지 못했습니다.');
+        const { accessToken } = await startNativeGoogleOAuth(webClientId);
+        const nativeUser = await fetchGoogleUserInfo(accessToken);
 
         platformUid = nativeUser.email;
-        platformGid = nativeUser.userId ?? nativeUser.email;
-        profileImage = nativeUser.imageUrl ?? undefined;
+        platformGid = nativeUser.sub;
+        profileImage = nativeUser.picture;
         googleProfile = { ...nativeUser };
       } else {
         await loadGoogleIdentityScript();

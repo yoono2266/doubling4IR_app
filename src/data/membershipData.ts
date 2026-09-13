@@ -2,7 +2,7 @@ import { MembershipTierId, MembershipTierInfo, TierAccrualRecord } from '../type
 
 export const MEMBERSHIP_TIERS: MembershipTierInfo[] = [
   {
-    id: 'BAND',
+    id: '1',
     name: 'BAND (밴드)',
     englishName: 'BAND',
     koreanName: '밴드',
@@ -17,7 +17,7 @@ export const MEMBERSHIP_TIERS: MembershipTierInfo[] = [
     ]
   },
   {
-    id: 'HALO',
+    id: '2',
     name: 'HALO (헤일로)',
     englishName: 'HALO',
     koreanName: '헤일로',
@@ -32,7 +32,7 @@ export const MEMBERSHIP_TIERS: MembershipTierInfo[] = [
     ]
   },
   {
-    id: 'ETERNITY',
+    id: '3',
     name: 'ETERNITY (이터니티)',
     englishName: 'ETERNITY',
     koreanName: '이터니티',
@@ -48,7 +48,7 @@ export const MEMBERSHIP_TIERS: MembershipTierInfo[] = [
     ]
   },
   {
-    id: 'SOLITAIRE',
+    id: '4',
     name: 'SOLITAIRE (솔리테어)',
     englishName: 'SOLITAIRE',
     koreanName: '솔리테어',
@@ -64,7 +64,7 @@ export const MEMBERSHIP_TIERS: MembershipTierInfo[] = [
     ]
   },
   {
-    id: 'CROWN',
+    id: '5',
     name: 'CROWN (크라운)',
     englishName: 'CROWN',
     koreanName: '크라운',

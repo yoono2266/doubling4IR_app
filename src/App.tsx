@@ -52,6 +52,7 @@ const AppContent: React.FC = () => {
 
   const handleLandingStart = () => {
     setShowLanding(false);
+    setCurrentSubScreen('login');
   };
 
   // 브라우저/기기 뒤로가기를 앱 내부 이동으로 처리 (라우터가 없어 직접 관리)

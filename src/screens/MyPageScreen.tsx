@@ -6,6 +6,7 @@ import { MembershipDashboardScreen } from './MembershipDashboardScreen';
 import { PolyPortfolioHistoryScreen } from './PolyPortfolioHistoryScreen';
 import { CompBenefitSelectionScreen } from './CompBenefitSelectionScreen';
 import { CurrentTripSummaryScreen } from './CurrentTripSummaryScreen';
+import { MEMBERSHIP_TIERS } from '../data/membershipData';
 
 // Unix timestamp(초) → "yyyy-mm-dd hh:mm:ss" 문자열 변환
 const formatDateTime = (timestamp: any): string => {
@@ -144,6 +145,12 @@ export const MyPageScreen: React.FC = () => {
   // 💡 myProfile에서 실시간으로 저장된 사용자 정보 꺼내기
   const memberInfo = myProfile?.memberInfo || {};
   const userName = memberInfo?.u_name || user?.name || '회원';
+
+  // 서버 memberShip(현재 등급)의 tb_index를 로컬 membershipData의 id와 매칭해 보완 정보(주얼리 컨셉 등)를 찾고,
+  // 표시값은 기본적으로 API(memberShip) 데이터를 우선 사용한다.
+  const apiTier = myProfile?.memberShip && typeof myProfile.memberShip === 'object' ? myProfile.memberShip : null;
+  const localTier = apiTier ? MEMBERSHIP_TIERS.find((t) => t.id === String(apiTier.tb_index)) || null : null;
+  const tierDisplayName = apiTier?.tb_title_ko || localTier?.koreanName || apiTier?.tb_title_en || localTier?.englishName || 'White';
   
   // 프로필 이미지 주소 판별 (상대경로 대응)
   let profileImg = memberInfo?.u_profile || user?.avatar || '';
@@ -277,7 +284,7 @@ export const MyPageScreen: React.FC = () => {
 
             <div className="min-w-0">
               <h3 className="text-base font-bold text-white">{userName} 님</h3>
-              <p className="text-xs text-[#E2C28E] font-medium">{myProfile?.memberShip.tb_reward || 'SILVER'} VIP Member</p>
+              <p className="text-xs text-[#E2C28E] font-medium">{tierDisplayName} VIP Member</p>
               <p className="text-xs text-slate-400">{myProfile?.memberInfo?.company || '-'}</p>
               <div className="flex items-center gap-2 mt-1.5">
                 <button
@@ -308,7 +315,7 @@ export const MyPageScreen: React.FC = () => {
             </div>
             <div className="flex justify-between py-1 border-b border-[#1F334D]/60">
               <span className="text-slate-400">멤버십 등급</span>
-              <span className="font-bold text-[#E2C28E]">{myProfile?.memberShip.tb_reward || 'White'} VIP</span>
+              <span className="font-bold text-[#E2C28E]">{tierDisplayName} VIP</span>
             </div>
             <div className="flex justify-between py-1 border-b border-[#1F334D]/60">
               <span className="text-slate-400">추천인 코드</span>
@@ -581,48 +588,6 @@ export const MyPageScreen: React.FC = () => {
     );
   }
 
-  // SUB-MENU 5: MEMBERSHIP
-  if (currentSubScreen === 'my-membership') {
-    return (
-      <div className="flex flex-col gap-4 pb-44 pt-2">
-        <button 
-          onClick={() => setCurrentSubScreen(null)}
-          className="text-xs text-slate-400 hover:text-white flex items-center gap-1"
-        >
-          <span className="material-symbols-outlined text-sm">arrow_back</span>
-          <span>마이페이지로 돌아가기</span>
-        </button>
-
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <span className="material-symbols-outlined text-[#C5A059]">workspace_premium</span>
-          더블링 멤버십 등급 관리
-        </h2>
-
-        <div className="bg-[#162639] border border-[#C5A059] p-5 rounded-2xl flex flex-col gap-3 shadow-lg">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-[#E2C28E] font-bold uppercase tracking-wider">현재 멤버십 등급</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#C5A059] text-[#0D1B2A] font-extrabold">
-              {myProfile?.memberShip.tb_reward || 'White'}
-            </span>
-          </div>
-
-          <h3 className="text-lg font-extrabold text-white">{myProfile?.memberShip.tb_reward || 'White'} VIP Member</h3>
-          <p className="text-xs text-slate-300">{myProfile?.memberShip.tb_reward_value1}</p>
-          
-          <div className="space-y-1 pt-2">
-            <div className="flex justify-between text-xs text-slate-400">
-              <span>{myProfile?.memberShip.next_membership.tb_reward || '가족'} 승급까지 잔여 포인트</span>
-              <span className="font-mono text-[#E2C28E] font-bold">{myProfile?.memberInfo.u_exp?.toLocaleString() || 0} / {myProfile?.memberShip.next_membership.tb_max_exp?.toLocaleString() || 0} EXP</span>
-            </div>
-            <div className="w-full bg-[#0D1B2A] h-2.5 rounded-full overflow-hidden border border-[#1F334D]">
-              <div className="bg-gradient-to-r from-[#C5A059] to-[#E2C28E] h-full" style={{ width: `${(myProfile?.memberInfo.u_exp / myProfile?.memberShip.next_membership.tb_max_exp) * 100}%` }}></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // SUB-MENU 6: REFERRAL
   if (currentSubScreen === 'my-referral') {
     return (
@@ -859,7 +824,7 @@ export const MyPageScreen: React.FC = () => {
                 className="flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#C5A059]/30 to-[#E2C28E]/20 border border-[#C5A059]/60 text-white font-black hover:brightness-125 transition shadow-sm shrink-0"
               >
                 <span className="material-symbols-outlined text-xs text-[#E2C28E]">workspace_premium</span>
-                <span>ETERNITY</span>
+                <span>{tierDisplayName}</span>
               </button>
             </div>
             <p className="text-xs text-[#E2C28E] font-medium">DOUBLING VIP</p>
@@ -874,7 +839,7 @@ export const MyPageScreen: React.FC = () => {
         >
           <span className="text-[10px] text-slate-400 font-medium">누적 Tier Score</span>
           <span className="text-sm font-black text-[#E2C28E] font-mono flex items-center gap-0.5">
-            2,150<span className="text-[10px] text-slate-400">점</span>
+            {(memberInfo?.u_exp || 0).toLocaleString()}<span className="text-[10px] text-slate-400">점</span>
             <span className="material-symbols-outlined text-xs text-slate-400">chevron_right</span>
           </span>
         </button>

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { apiCommonClient, setErrorToastHandler, setSessionExpiredHandler } from '../utils/apiClient'; // 💡 apiCommonClient 임포트 추가
 import { checkLogin, clearSession } from '../utils/auth';
 import {
@@ -135,10 +135,9 @@ interface AppContextType {
   // 오늘의 로그인 보너스 지급 (mock: walletDp에 +150, 실제 정산 연동 아님)
   grantLoginBonus: () => void;
 
-  // 연속 출석 스트릭 (mock 상태, 새로고침 시 초기값으로 리셋)
+  // 연속 출석 스트릭 (myProfile.memberReward의 dp_index===1 출석 보너스 기록으로부터 계산)
   attendanceStreak: number;
   claimedStreakMilestones: number[];
-  checkInStreak: () => void;
   claimStreakReward: (days: number) => void;
 }
 
@@ -827,23 +826,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // 연속 출석 스트릭.
-  // 💡 mock 상태입니다. attendanceStreak / claimedStreakMilestones 모두 AppContext 메모리에만
-  //    존재하며, 실제 출석 서버 반영이 아니고 새로고침 시 초기값으로 리셋됩니다.
-  const [attendanceStreak, setAttendanceStreak] = useState<number>(7); // 데모 시작값: 7일째 (배포 기준과 동일)
-  const [claimedStreakMilestones, setClaimedStreakMilestones] = useState<number[]>([3]); // 3일 보상은 수령했다고 가정
+  // myProfile.memberReward 중 dp_index === 1(출석 보너스) 기록의 날짜들로부터 실제 연속 출석일수를 계산한다.
+  // 오늘 출석 기록이 아직 없어도 어제까지 이어져 있으면 스트릭이 끊기지 않은 것으로 간주한다.
+  // pm_reg_timestamp는 이미 한국 시간(KST) 기준으로 내려오는 값이라 추가 타임존 보정 없이 그대로 day 번호로 환산한다.
+  // 반면 Date.now()는 진짜 UTC 기준이므로, 서버 값과 같은 기준(KST)으로 맞추기 위해 "오늘" 계산에만 +9시간을 보정한다.
+  const attendanceStreak = useMemo(() => {
+    const rewards: any[] = Array.isArray(myProfile?.memberReward)
+      ? myProfile.memberReward
+      : Object.values(myProfile?.memberReward || {});
 
-  // 오늘 출석 체크 → 연속일수 +1 (최대 30일에서 멈춤). mock 편의상 하루 1회 제한은 두지 않음.
-  const checkInStreak = () => {
-    setAttendanceStreak(prev => {
-      if (prev >= STREAK_MAX_DAYS) {
-        showToast('이미 최대 연속 출석일수에 도달했어요');
-        return prev;
-      }
-      const next = prev + 1;
-      showToast(`출석 체크 완료! 연속 ${next}일째`);
-      return next;
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+    const toDayNumber = (encodedSeconds: number) => Math.floor((encodedSeconds * 1000) / DAY_MS);
+
+    const attendanceDays = new Set<number>();
+    rewards.forEach((r) => {
+      if (r?.dp_index !== 1) return;
+      const ts = Number(r?.pm_reg_timestamp);
+      if (!ts) return;
+      attendanceDays.add(toDayNumber(ts));
     });
-  };
+
+    if (attendanceDays.size === 0) return 0;
+
+    const todayDayNumber = toDayNumber(Math.floor((Date.now() + KST_OFFSET_MS) / 1000));
+    let cursorDay = attendanceDays.has(todayDayNumber) ? todayDayNumber : todayDayNumber - 1;
+
+    let streak = 0;
+    while (attendanceDays.has(cursorDay) && streak < STREAK_MAX_DAYS) {
+      streak += 1;
+      cursorDay -= 1;
+    }
+
+    console.log('[출석 스트릭] dp_index=1 기록 일자(KST day#):', Array.from(attendanceDays).sort(), '오늘(KST day#):', todayDayNumber, '계산된 연속일수:', streak);
+
+    return streak;
+  }, [myProfile?.memberReward]);
+
+  // 💡 mock 상태입니다. AppContext 메모리에만 존재하며, 실제 보상 수령 서버 반영이 아니고
+  //    새로고침 시 초기값으로 리셋됩니다.
+  const [claimedStreakMilestones, setClaimedStreakMilestones] = useState<number[]>([3]); // 3일 보상은 수령했다고 가정
 
   // 도달한 마일스톤 보상 수령 → walletDp에 반영(mock), 마일스톤 1회만 수령 가능.
   const claimStreakReward = (days: number) => {
@@ -917,7 +939,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         grantLoginBonus,
         attendanceStreak,
         claimedStreakMilestones,
-        checkInStreak,
         claimStreakReward
       }}
     >

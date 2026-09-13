@@ -4,21 +4,31 @@ import { MEMBERSHIP_TIERS, getTierInfo, getNextTier } from '../data/membershipDa
 import { MembershipTierId } from '../types';
 
 export const MembershipDashboardScreen: React.FC = () => {
-  const { user, tierRecords, setCurrentSubScreen, setHasActiveTrip } = useApp();
+  const { user, tierRecords, setCurrentSubScreen, setHasActiveTrip, myProfile } = useApp();
   const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
   const [showCheckInModal, setShowCheckInModal] = useState<boolean>(false);
-  const [activeTierTab, setActiveTierTab] = useState<MembershipTierId>('ETERNITY');
 
-  const currentTier = getTierInfo(user.membershipTier);
-  const nextTier = getNextTier(user.membershipTier);
+  // 서버 memberShip(회원 1인의 현재 등급 1건)의 tb_index를 로컬 membershipData의 id와 매칭해
+  // 주얼리 컨셉/아이콘/혜택 목록 등 API에 없는 보완 정보를 채우고, 표시값은 API를 우선한다.
+  const apiTier = myProfile?.memberShip && typeof myProfile.memberShip === 'object' ? myProfile.memberShip : null;
+  const localCurrentTier = (apiTier ? MEMBERSHIP_TIERS.find((t) => t.id === String(apiTier.tb_index)) : null) || MEMBERSHIP_TIERS[0];
 
-  const tierOrder: Record<MembershipTierId, number> = {
-    BAND: 0,
-    HALO: 1,
-    ETERNITY: 2,
-    SOLITAIRE: 3,
-    CROWN: 4,
+  const currentTier = {
+    ...localCurrentTier,
+    englishName: apiTier?.tb_title_en || localCurrentTier.englishName,
+    koreanName: apiTier?.tb_title_ko || localCurrentTier.koreanName,
+    color: apiTier?.tb_color || localCurrentTier.color,
+    // thresholdScore(진입 임계값)는 로컬 값을 그대로 쓴다 — tb_max_exp는 "이 등급의 최대 경험치"라
+    // 사실상 다음 등급 진입 임계값과 같은 값이라(아래 nextThreshold에서 사용), 여기 넣으면 안 된다.
   };
+
+  // 다음 등급 정보는 API가 내려주지 않으므로(현재 등급 1건만 제공) 로컬 카탈로그 순서로 결정하되,
+  // 다음 등급까지의 임계값(상한)은 현재 등급 API의 tb_max_exp를 우선 사용한다.
+  const nextTier = getNextTier(localCurrentTier.id);
+
+  const [activeTierTab, setActiveTierTab] = useState<MembershipTierId>(localCurrentTier.id);
+
+  const tierIndexOf = (id: MembershipTierId) => MEMBERSHIP_TIERS.findIndex((t) => t.id === id);
 
   const getBenefitCompTag = (benefit: string) => {
     const b = benefit.toLowerCase();
@@ -55,15 +65,16 @@ export const MembershipDashboardScreen: React.FC = () => {
     return null;
   };
 
-  // Score Calculations
-  const currentScore = user.tierScore; // 2,150
-  const nextThreshold = nextTier ? nextTier.thresholdScore : 3800; // 3,800
-  const currentThreshold = currentTier.thresholdScore; // 1,500
-  const scoreNeeded = Math.max(0, nextThreshold - currentScore); // 1,650
-  const progressPercent = Math.min(
-    100,
-    Math.max(0, Math.round(((currentScore - currentThreshold) / (nextThreshold - currentThreshold)) * 100))
-  );
+  // Score Calculations (currentScore는 API의 u_exp를 우선 사용)
+  const currentScore = myProfile?.memberInfo?.u_exp ?? user.tierScore;
+  const currentThreshold = localCurrentTier.thresholdScore;
+  const nextThreshold = nextTier
+    ? (apiTier?.tb_max_exp ?? nextTier.thresholdScore)
+    : currentThreshold;
+  const scoreNeeded = nextTier ? Math.max(0, nextThreshold - currentScore) : 0;
+  const progressPercent = nextTier
+    ? Math.min(100, Math.max(0, Math.round(((currentScore - currentThreshold) / (nextThreshold - currentThreshold || 1)) * 100)))
+    : 100;
 
   const getSourceBadge = (sourceType: '체크인' | '객실' | '식음료') => {
     switch (sourceType) {
@@ -117,7 +128,7 @@ export const MembershipDashboardScreen: React.FC = () => {
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#162639] border border-[#C9CBCF]/40">
           <span className="w-2 h-2 rounded-full bg-[#C9CBCF] shadow-[0_0_8px_#C9CBCF]"></span>
           <span className="text-[11px] font-extrabold text-[#C9CBCF] tracking-wider">
-            {user.membershipTier}
+            {currentTier.englishName}
           </span>
         </div>
       </div>
@@ -190,7 +201,7 @@ export const MembershipDashboardScreen: React.FC = () => {
             다음 등급까지 진행률
           </h3>
           <span className="text-xs font-extrabold text-[#D4AF37] font-mono">
-            다음 등급까지 {scoreNeeded.toLocaleString()}점 남음
+            {nextTier ? `다음 등급까지 ${scoreNeeded.toLocaleString()}점 남음` : '최고 등급 달성'}
           </span>
         </div>
 
@@ -206,7 +217,7 @@ export const MembershipDashboardScreen: React.FC = () => {
 
           <div className="text-right">
             <span className="text-[10px] text-slate-400 block font-medium">
-              다음 등급 ({nextTier?.englishName || 'SOLITAIRE'}) 임계값
+              다음 등급 ({nextTier?.englishName || '최고 등급'}) 임계값
             </span>
             <span className="text-lg font-black text-[#D4AF37] font-mono">
               {nextThreshold.toLocaleString()}{' '}
@@ -218,8 +229,8 @@ export const MembershipDashboardScreen: React.FC = () => {
         {/* Dynamic Progress Bar */}
         <div className="space-y-1.5">
           <div className="flex justify-between text-[11px] font-mono font-bold">
-            <span className="text-[#C9CBCF]">ETERNITY ({currentThreshold.toLocaleString()}점)</span>
-            <span className="text-[#D4AF37]">SOLITAIRE ({nextThreshold.toLocaleString()}점)</span>
+            <span className="text-[#C9CBCF]">{currentTier.englishName} ({currentThreshold.toLocaleString()}점)</span>
+            <span className="text-[#D4AF37]">{nextTier?.englishName || '최고 등급'} ({nextThreshold.toLocaleString()}점)</span>
           </div>
           <div className="w-full bg-[#0D1B2A] h-3 rounded-full overflow-hidden p-0.5 border border-[#1F334D]">
             <div
@@ -237,9 +248,9 @@ export const MembershipDashboardScreen: React.FC = () => {
           <span className="text-[10px] text-slate-400 font-bold block mb-2">5단계 멤버십 승급 로드맵</span>
           <div className="grid grid-cols-5 gap-1 text-center">
             {MEMBERSHIP_TIERS.map((tier) => {
-              const isCurrent = tier.id === user.membershipTier;
+              const isCurrent = tier.id === currentTier.id;
               const isPast = tier.thresholdScore < currentScore;
-              const isNext = tier.id === (nextTier?.id || 'SOLITAIRE');
+              const isNext = tier.id === nextTier?.id;
 
               return (
                 <div
@@ -426,9 +437,9 @@ export const MembershipDashboardScreen: React.FC = () => {
         {/* Selected Tier Detail */}
         {(() => {
           const selected = getTierInfo(activeTierTab);
-          const isCurrentTier = activeTierTab === user.membershipTier;
-          const isHigherTier = tierOrder[activeTierTab] > tierOrder[user.membershipTier];
-          const isLowerTier = tierOrder[activeTierTab] < tierOrder[user.membershipTier];
+          const isCurrentTier = activeTierTab === currentTier.id;
+          const isHigherTier = tierIndexOf(activeTierTab) > tierIndexOf(currentTier.id);
+          const isLowerTier = tierIndexOf(activeTierTab) < tierIndexOf(currentTier.id);
 
           return (
             <div className="bg-[#0D1B2A] p-4 rounded-xl border border-[#1F334D] space-y-3 text-xs">
@@ -498,14 +509,14 @@ export const MembershipDashboardScreen: React.FC = () => {
                       <span>이 등급 도달 시 신청 가능합니다</span>
                     </div>
                     <span className="text-[11px] font-mono text-[#E2C28E] font-bold">
-                      +{(selected.thresholdScore - user.tierScore).toLocaleString()}점 필요
+                      +{(selected.thresholdScore - currentScore).toLocaleString()}점 필요
                     </span>
                   </div>
                 ) : (
                   <div className="w-full py-2 px-3 rounded-xl bg-[#162639]/80 border border-[#1F334D] text-slate-400 text-xs flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-slate-300">
                       <span className="material-symbols-outlined text-xs text-emerald-400">check</span>
-                      <span>현재 상위 등급({user.membershipTier})에 포함된 기본 혜택입니다</span>
+                      <span>현재 상위 등급({currentTier.englishName})에 포함된 기본 혜택입니다</span>
                     </div>
                     <button
                       onClick={() => setCurrentSubScreen('comp-benefits')}
@@ -609,7 +620,7 @@ export const MembershipDashboardScreen: React.FC = () => {
             {/* Notification Body Text */}
             <div className="w-full bg-[#0D1B2A] p-4 rounded-2xl border border-[#C5A059]/40 text-left text-xs space-y-2.5">
               <p className="font-semibold text-slate-100 leading-relaxed">
-                <strong className="text-[#C9CBCF]">{user.membershipTier}</strong> 멤버님, 이번 방문 예상 적립 약 <strong className="text-emerald-400">400점</strong> — 다음 등급(<span className="text-[#D4AF37]">SOLITAIRE</span>)까지 <strong className="text-[#E2C28E]">{scoreNeeded.toLocaleString()}점</strong> 남았어요
+                <strong className="text-[#C9CBCF]">{currentTier.englishName}</strong> 멤버님, 이번 방문 예상 적립 약 <strong className="text-emerald-400">400점</strong> — 다음 등급(<span className="text-[#D4AF37]">{nextTier?.englishName || '최고 등급'}</span>)까지 <strong className="text-[#E2C28E]">{scoreNeeded.toLocaleString()}점</strong> 남았어요
               </p>
 
               <div className="pt-2 border-t border-[#1F334D] space-y-1.5 text-[11px]">
