@@ -48,8 +48,10 @@ React 19 + Vite 기반 앱. 실제 FE 개발은 이 폴더에서 진행합니다
 - **현재 설정 상태 (확인된 사실):**
   - `package.json`: `@capacitor/core` · `@capacitor/cli` · `@capacitor/android`
     (모두 ^8.5.0), `@capacitor/push-notifications` ^8.1.2,
-    `@capawesome/capacitor-google-sign-in` ^0.1.3. devDeps에 `@capacitor/assets`,
-    `vite-plugin-pwa` ^1.3.0.
+    `@capawesome/capacitor-google-sign-in` ^0.1.3, `@capacitor/app` ^8.1.1 ·
+    `@capacitor/browser` ^8.0.4 (2026-09-15 추가 — `LoginScreen.tsx`의 실제 Google
+    OAuth 리다이렉트 처리에 필수, `doubling-client-react`와 버전 동기화). devDeps에
+    `@capacitor/assets`, `vite-plugin-pwa` ^1.3.0.
   - `vite.config.ts`: `VitePWA` 구성(manifest 인라인 `SpoOdds App`,
     `registerType: 'autoUpdate'`, `devOptions.enabled: false`).
   - `capacitor.config.json`: `appId: com.spoodds.prod`, `appName: doubling-app`,
@@ -113,7 +115,8 @@ src/
 │                        #   restoreMainScrollTop()으로 복귀 시 복원하는 경량 유틸.
 ├── components/        # 재사용 UI. Header, BottomNav, Logo, JackpotBanner,
 │   │                  #   PwaInstallBanner, VideoPromoCard, DailyLoginBonusModal,
-│   │                  #   AttendanceStreakWidget, StreakTracker,
+│   │                  #   AttendanceStreakWidget, StreakTracker(BE 최신본 기준
+│   │                  #   동기화됨 — FE 임의 수정 금지, BE 변경사항을 따라갈 것),
 │   │                  #   FreeRoomStickyBanner(App.tsx에서 주석 처리됨).
 │   └── PolyMarketCarousel.tsx  # 홈 화면용 예측 챌린지(폴리마켓) 카드 캐러셀.
 │                      #   polyMarkets를 4.5초 auto-rotate(hover/touch 시 정지),
@@ -139,7 +142,8 @@ src/
 │                      #   polyMarketData(INITIAL_POLY_MARKETS), streakData
 │                      #   (STREAK_MILESTONES, STREAK_MAX_DAYS). API 호출 없음 — 전부 상수.
 ├── assets/           # 이미지, base64 로고
-├── types.ts          # 전역 타입 (Post, UserPersona, Reservation, PolyVote 등)
+├── types.ts          # 전역 타입 (Post, UserPersona, Reservation, PolyVote 등) —
+│                     #   BE 최신본 기준 동기화됨, FE 임의 수정 금지
 └── vite-env.d.ts     # import.meta.env / window.google 타입 선언
 ```
 
@@ -195,6 +199,10 @@ _platform_uid, _platform_bid(게스트 UUID), _memid, _connect_time, ...}, c: {p
   `EmailVerifyScreen.tsx`에 **UI 예시 문구**로만 남아 있음(자격증명 아님) —
   새 코드에서 이 문자열을 인증 로직에 재사용하지 말 것. 실제 백엔드 검증 없이
   "로그인 성공"을 흉내 내는 로직을 새로 추가하지 말 것.
+  (2026-09-15 기준) Google 로그인만 `handleGoogleLogin` + `apiCommonClient`로
+  실연동. X·Facebook·Apple 버튼은 아직 실연동 전이라 "Coming Soon" 토스트만
+  띄우는 상태 — 이 셋을 실제 로그인처럼 동작시키는 mock 핸들러(`handleMockSocial`
+  등)를 되살리거나 새로 추가하지 말 것.
 - **실제 결제/트랜잭션은 미구현.**
   지갑 DP·포인트·베팅 정산은 AppContext 메모리 시뮬레이션. 실제 결제처럼 보이는
   UI/로직을 추가할 때는 mock인지 실연동인지 코드/커밋에 명확히 남길 것.
@@ -223,8 +231,13 @@ BE 연동 계약에 해당하므로 **임의로 수정하지 말 것.** 수정�
 - `src/utils/apiClient.ts`의 a/b/c 요청 엔벌로프 구조, `ResultCode` enum 값,
   localStorage 키 이름(`sessionid`, `_memid`, `_platform_uid`, `guest_id` 등)
 - `src/utils/auth.ts`의 엔드포인트 경로(`/members/uchk` 등)
-- `package.json`의 Capacitor·서버 관련 `dependencies`/`scripts`
-  (화면 작업용 UI 라이브러리 추가는 예외적으로 허용)
+- `package.json`의 Capacitor·서버 관련 `dependencies`/`scripts` — 원칙적으로
+  임의 변경 금지. 단, BE 동기화로 들어온 화면 코드(예: `LoginScreen.tsx`)가
+  `doubling-client-react`엔 있고 여기엔 없는 Capacitor 패키지를 실제로 import해서
+  앱이 안 뜨는 경우, `doubling-client-react`와 동일 버전으로 추가하는 것은 예외
+  허용 — 단 이 경우도 먼저 사용자에게 확인 후 진행할 것 (선례: 2026-09-15,
+  `@capacitor/app` ^8.1.1 · `@capacitor/browser` ^8.0.4 추가, 커밋 `d289a3d`).
+  화면 작업용 순수 UI 라이브러리(스타일링/아이콘 등) 추가는 기존대로 예외 허용.
 
 **신중하게 다룰 것 (삭제·리네이밍 금지, 추가만 허용):**
 - `src/types.ts`의 기존 인터페이스 필드명, 서버 응답 타입의 필드명
@@ -257,3 +270,8 @@ BE 연동 계약에 해당하므로 **임의로 수정하지 말 것.** 수정�
 - **읽기 전용으로만 참고할 것** — 컨벤션 비교, 배포 버전 확인 용도.
 - 직접 수정 금지. FE 패치는 `doubling4ir_app`에서 작업 후 BE팀 전달 프로세스를
   따를 것 (자동 동기화 없음).
+- **2026-09-15**: BE 이번 주 변경사항(`9107c25`→`2e127d7`)과 FE 지난주 작업
+  (`82384de`→`e60c9c2`)을 `doubling-client-react` 워킹트리에서 3-way 병합
+  (`git merge-file`)으로 통합·검증 후, 그 결과만 `doubling4ir_app`으로 동기화
+  반영(커밋 `8d97779`, `d289a3d`). `doubling-client-react`는 검증 완료 후 원래
+  상태(`2e127d7`)로 복구 — 읽기 전용 원칙 유지, 실제 수정 이력 없음.
