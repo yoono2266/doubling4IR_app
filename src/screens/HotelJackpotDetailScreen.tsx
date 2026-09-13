@@ -9,7 +9,7 @@ interface HotelJackpotDetailScreenProps {
 }
 
 export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> = ({ hotelId, onBack }) => {
-  const { selectedHotelId, setCurrentSubScreen, startBooking } = useApp();
+  const { selectedHotelId, setCurrentTab, setCurrentSubScreen, startBooking } = useApp();
   const targetId = hotelId || selectedHotelId || 'okada';
 
   const hotel: HotelJackpotData = useMemo(() => {
@@ -18,10 +18,15 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
 
   const [selectedJackpotId, setSelectedJackpotId] = useState<string | null>(null);
 
+  // 2026-09-16: 이 버튼은 진입 경로(홈 배너 vs 하단 네비)와 무관하게 항상 프로그래시브
+  // 트리맵 리스트(JackpotMapScreen, currentTab='jackpot')로 고정 이동해야 한다.
+  // 예전엔 setCurrentSubScreen(null)만 호출해 "직전 currentTab"에 의존했는데, 홈 배너로
+  // 진입한 경우 currentTab이 'home'에 머물러 있어 뒤로가기가 홈으로 가버리는 버그가 있었다.
   const handleBack = () => {
     if (onBack) {
       onBack();
     } else {
+      setCurrentTab('jackpot');
       setCurrentSubScreen(null);
     }
   };
@@ -50,7 +55,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
           className="text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-1.5 bg-[#162639] border border-[#1F334D] px-3 py-1.5 rounded-full transition hover:border-[#C5A059]/50"
         >
           <span className="material-symbols-outlined text-sm text-[#C5A059]">arrow_back</span>
-          <span>전체 잭팟 목록으로 돌아가기</span>
+          <span>프로그래시브 목록으로</span>
         </button>
 
         <span className="text-[10px] font-bold text-[#E2C28E] bg-[#C5A059]/15 border border-[#C5A059]/30 px-2.5 py-1 rounded-full uppercase">
@@ -74,18 +79,27 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
             <div className="flex items-center gap-1.5">
               {hotel.badge && (
                 <span className="bg-[#C5A059] text-[#0D1B2A] font-extrabold text-[10px] px-2.5 py-0.5 rounded-full shadow">
-                  {hotel.badge}
+                  {/* 2026-09-15: 이 화면 한정으로 "TOP 잭팟" 배지 문구만 "TOP"으로 축약 표시.
+                      공용 데이터(jackpotData.ts)의 원본 badge 값은 그대로 유지 — JackpotMapScreen 등
+                      다른 화면은 영향받지 않음. */}
+                  {hotel.badge === 'TOP 잭팟' ? 'TOP' : hotel.badge}
                 </span>
               )}
+              {/* 2026-09-15 비활성화 (삭제하지 않고 주석 보존).
+                  사유: 잭팟 상세 화면 이미지 우측 상단 "잭팟 N개 보유" 텍스트를 숨기기로 함.
               <span className="bg-black/60 backdrop-blur-sm text-[#E2C28E] border border-[#C5A059]/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
                 잭팟 {hotel.jackpots.length}개 보유
               </span>
+              */}
             </div>
 
+            {/* 2026-09-15 비활성화 (삭제하지 않고 주석 보존).
+                사유: 이미지 우측 상단 별점(★ N.N) 뱃지를 숨기기로 함.
             <div className="flex items-center gap-1 bg-[#0D1B2A]/90 px-2 py-1 rounded border border-[#C5A059]/30 text-amber-400 font-bold text-xs">
               <span className="material-symbols-outlined text-xs fill-1">star</span>
               <span>{hotel.rating}</span>
             </div>
+            */}
           </div>
 
           {/* Bottom Title Info */}
@@ -108,7 +122,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
           {/* Total Jackpot Summary Box */}
           <div className="grid grid-cols-2 gap-2 bg-[#0D1B2A] p-3 rounded-xl border border-[#C5A059]/30">
             <div>
-              <span className="text-[10px] text-slate-400 uppercase font-semibold block">호텔 누적 잭팟 총합</span>
+              <span className="text-[10px] text-slate-400 uppercase font-semibold block">누적 프로그래시브 총합</span>
               <p className="text-lg font-black text-[#E2C28E] font-mono tracking-tight mt-0.5">
                 {formatUsd(totalJackpotSum)}
               </p>
@@ -130,7 +144,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
           <div className="flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[#C5A059] text-base">dashboard</span>
             <h2 className="text-sm font-bold text-white tracking-tight">
-              호텔 내부 잭팟 트리맵 ({hotel.jackpots.length}개 게임)
+              호텔 내부 프로그래시브 트리맵 ({hotel.jackpots.length}개 게임)
             </h2>
           </div>
         </div>
@@ -324,8 +338,8 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
               <span className="material-symbols-outlined text-base">history</span>
             </div>
             <div>
-              <h4 className="text-xs font-bold text-white">Jackpot History</h4>
-              <p className="text-[10px] text-slate-400">역대 잭팟 당첨 기록 · 게임/배팅금액/슬롯넘버/획득자 국적</p>
+              <h4 className="text-xs font-bold text-white">프로그래시브 당첨 내역</h4>
+              <p className="text-[10px] text-slate-400">역대 당첨 기록 · 게임/배팅금액/슬롯넘버/획득자 국적</p>
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
@@ -342,7 +356,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
         <div className="flex items-center justify-between px-1">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
             <span className="material-symbols-outlined text-sm text-[#C5A059]">format_list_numbered</span>
-            <span>잭팟 게임 상세 목록 ({sortedJackpots.length})</span>
+            <span>게임 상세 목록 ({sortedJackpots.length})</span>
           </h3>
           <span className="text-[11px] text-[#C5A059] font-mono">금액순 정렬</span>
         </div>
