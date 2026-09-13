@@ -21,7 +21,6 @@ export const PolyMarketScreen: React.FC = () => {
     setCurrentSubScreen,
     user,
     requireLogin,
-    showToast,
     refreshPlmContents,
   } = useApp();
 
@@ -150,7 +149,7 @@ export const PolyMarketScreen: React.FC = () => {
         <div className="flex items-center gap-2">
           {/* Leaderboard Button */}
           <button
-            onClick={() => showToast('리더보드는 다음 업데이트에서 공개됩니다')}
+            onClick={() => setCurrentSubScreen('poly-leaderboard')}
             className="flex items-center gap-1.5 bg-[#162639] border border-[#C5A059]/40 hover:border-[#C5A059] px-2.5 py-1.5 rounded-xl shadow-sm transition text-[#E2C28E] hover:text-white group active:scale-95"
             title="이번 시즌 리더보드 보기"
           >

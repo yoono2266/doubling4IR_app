@@ -11,6 +11,7 @@ import { HotelJackpotDetailScreen } from './screens/HotelJackpotDetailScreen';
 import { JackpotHistoryScreen } from './screens/JackpotHistoryScreen';
 import { PolyMarketScreen } from './screens/PolyMarketScreen';
 import { PolyMarketDetailScreen } from './screens/PolyMarketDetailScreen';
+import { PolyLeaderboardScreen } from './screens/PolyLeaderboardScreen';
 import { FreeRoomScreen } from './screens/FreeRoomScreen';
 import { MyPageScreen } from './screens/MyPageScreen';
 import { FreeRoomBookingModal } from './screens/FreeRoomBookingModal';
@@ -174,6 +175,8 @@ const AppContent: React.FC = () => {
                 <JackpotHistoryScreen />
               ) : currentSubScreen === 'poly-market-detail' ? (
                 <PolyMarketDetailScreen />
+              ) : currentSubScreen === 'poly-leaderboard' ? (
+                <PolyLeaderboardScreen />
               ) : (
                 renderTabContent()
               )}
