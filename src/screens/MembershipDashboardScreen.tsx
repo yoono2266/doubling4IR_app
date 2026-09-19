@@ -147,7 +147,7 @@ export const MembershipDashboardScreen: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-1 rounded-lg bg-[#C9CBCF]/20 border border-[#C9CBCF]/50 text-[#F1F5F9] font-mono text-[10px] font-bold tracking-wider uppercase flex items-center gap-1">
               <span className="material-symbols-outlined text-xs text-[#C9CBCF]">diamond</span>
-              DOUBLING TIER
+              DOUBLE RING TIER
             </span>
           </div>
 

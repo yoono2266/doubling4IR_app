@@ -474,9 +474,9 @@ export const LoginScreen: React.FC = () => {
         {/* Brand Header */}
         <div className="text-center flex flex-col items-center gap-2 pt-1">
           <div className="w-14 h-14 rounded-2xl bg-[#0D1B2A] border-2 border-[#C5A059] p-2 flex items-center justify-center shadow-lg">
-            <img src={LOGO_BASE64} alt="DOUBLING" className="w-full h-full object-contain" />
+            <img src={LOGO_BASE64} alt="DOUBLE RING" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-2xl font-black text-white tracking-widest font-mono">DOUBLING</h1>
+          <h1 className="text-2xl font-black text-white tracking-widest font-mono">DOUBLE RING</h1>
           <p className="text-[11px] text-[#C5A059] font-medium tracking-wide">
             ASIA&apos;S LARGEST INTEGRATED RESORT TRAVEL PLATFORM
           </p>

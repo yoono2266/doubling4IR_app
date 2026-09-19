@@ -40,7 +40,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onStart }) => {
         <div className="w-20 h-20 rounded-2xl gold-button-gradient flex items-center justify-center text-[#0D1B2A] font-black text-2xl shadow-lg shadow-[#C5A059]/100 mb-5">
           <img src="/icons/icon-512-maskable.png" className='rounded-2xl'/>
         </div>
-        <span className="font-black tracking-[0.2em] gold-gradient-text text-lg mb-3">DOUBLING</span>
+        <span className="font-black tracking-[0.2em] gold-gradient-text text-lg mb-3">DOUBLE RING</span>
 
         {isLoggedIn && (
           <span className="text-[11px] font-bold text-[#E2C28E] bg-[#C5A059]/10 px-2.5 py-1 rounded-full border border-[#C5A059]/30 mb-3 flex items-center gap-1">
@@ -74,15 +74,18 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onStart }) => {
           ))}
         </div>
 
-        {/* 하단 고지 문구 (다른 안내 문구와 톤 통일: 작은 회색 텍스트) */}
-        <div className="w-full text-left space-y-1">
-          <p className="text-[11px] text-slate-500 leading-relaxed">
-            ※ 예측 챌린지는 만 19세 이상 이용 가능합니다.
-          </p>
-          <p className="text-[11px] text-slate-500 leading-relaxed">
-            ※ 포인트(DP)는 현금으로 구매·환전할 수 없습니다.
-          </p>
-        </div>
+        {/*
+          2026-09-19 DOUBLE RING 리브랜딩 지시로 하단 고지 문구 2줄 비활성화 (삭제하지 않고 주석 보존).
+          사유: 랜딩 화면 리뉴얼 범위에서 연령 제한/DP 환전 불가 고지 문구 제거 요청.
+          <div className="w-full text-left space-y-1">
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              ※ 예측 챌린지는 만 19세 이상 이용 가능합니다.
+            </p>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              ※ 포인트(DP)는 현금으로 구매·환전할 수 없습니다.
+            </p>
+          </div>
+        */}
 
         {/*
           2026-09-08 시안 교체로 비활성화 (삭제하지 않고 주석 보존).
@@ -121,7 +124,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onStart }) => {
           </a>
         */}
         <p className="block text-center text-[11px] text-slate-500 mt-4">
-          &copy; 2026 WILDWYNN Corp. All rights reserved.
+          &copy; 2026 WILDWYNN Co., Ltd. All rights reserved.
         </p>
       </div>
     </div>

@@ -62,11 +62,11 @@ export const PwaInstallBanner: React.FC = () => {
     <div className="bg-gradient-to-r from-[#162639] via-[#1D314A] to-[#162639] border-b border-[#C5A059]/40 px-4 py-2.5 flex items-center justify-between text-xs shadow-lg relative z-50 animate-fadeIn">
       <div className="flex items-center gap-2.5">
         <div className="w-8 h-8 rounded-xl bg-[#0D1B2A] border border-[#C5A059] p-1 flex items-center justify-center shrink-0">
-          <img src="/icons/icon-512-maskable.png" alt="DOUBLING" className="w-full h-full object-contain rounded-lg" />
+          <img src="/icons/icon-512-maskable.png" alt="DOUBLE RING" className="w-full h-full object-contain rounded-lg" />
         </div>
         <div>
           <p className="font-extrabold text-white flex items-center gap-1.5">
-            DOUBLING 앱 설치
+            DOUBLE RING 앱 설치
             <span className="text-[9px] bg-[#C5A059] text-[#0D1B2A] font-black px-1.5 py-0.2 rounded uppercase">PWA</span>
           </p>
           <p className="text-[10px] text-slate-300">

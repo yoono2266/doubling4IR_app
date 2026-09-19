@@ -489,7 +489,7 @@ export const MyPageScreen: React.FC = () => {
 
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
           <span className="material-symbols-outlined text-[#C5A059]">account_balance_wallet</span>
-          더블링 포인트 (Doubling Point)
+          더블링 포인트 (Double Ring Point)
         </h2>
 
         {/* 💡 포인트 사용처 mock 교환분(pointRedemptions)만큼 표시값에서 차감한다.
@@ -844,7 +844,7 @@ export const MyPageScreen: React.FC = () => {
                 <span>{tierDisplayName}</span>
               </button>
             </div>
-            <p className="text-xs text-[#E2C28E] font-medium">DOUBLING VIP</p>
+            <p className="text-xs text-[#E2C28E] font-medium">DOUBLE RING VIP</p>
             <p className="text-[10px] text-slate-400 mt-0.5 font-mono truncate">CODE: KEVIN-VIP-2026</p>
           </div>
         </div>

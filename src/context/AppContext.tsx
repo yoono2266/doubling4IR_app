@@ -337,7 +337,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [user, setUser] = useState<UserPersona>({
     name: 'Kevin',
     title: '',
-    company: 'DOUBLING VIP',
+    company: 'DOUBLE RING VIP',
     ageGroup: '50대',
     membership: 'Silver',
     membershipTier: 'ETERNITY',

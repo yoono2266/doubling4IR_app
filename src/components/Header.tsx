@@ -16,7 +16,7 @@ export const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-40 shrink-0 w-full bg-[#0D1B2A]/95 backdrop-blur-md border-b border-[#1F334D] px-4 py-3 flex items-center justify-between">
-      {/* Left: Brand Logo (32x32 Base64 Image + DOUBLING Wordmark) */}
+      {/* Left: Brand Logo (32x32 Base64 Image + DOUBLE RING Wordmark) */}
       <div 
         onClick={() => {
           if (!isAuthScreen) {
@@ -28,14 +28,14 @@ export const Header: React.FC = () => {
       >
         <img 
           src={LOGO_BASE64} 
-          alt="DOUBLING Logo" 
+          alt="DOUBLE RING Logo"
           width={32}
           height={32}
           className="w-8 h-8 rounded-lg object-contain flex-shrink-0"
           referrerPolicy="no-referrer"
         />
         <span className="font-black text-lg tracking-[0.18em] text-transparent bg-clip-text bg-gradient-to-r from-[#F7E2AD] via-[#C5A059] to-[#E2C28E] leading-none">
-          DOUBLING
+          DOUBLE RING
         </span>
       </div>
 

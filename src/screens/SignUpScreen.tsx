@@ -182,7 +182,7 @@ export const SignUpScreen: React.FC = () => {
             기본 정보를 입력해주세요
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            DOUBLING의 모든 서비스를 이용하기 위해 필요합니다
+            DOUBLE RING의 모든 서비스를 이용하기 위해 필요합니다
           </p>
         </div>
 

@@ -233,7 +233,7 @@ export const EmailVerifyScreen: React.FC = () => {
                   <span className="text-[10px] text-slate-400">방금 전</span>
                 </div>
                 <p className="text-xs font-bold text-white">
-                  DOUBLING <span className="text-slate-400 font-normal">&lt;no-reply@doubling.com&gt;</span>
+                  DOUBLE RING <span className="text-slate-400 font-normal">&lt;no-reply@doubling.com&gt;</span>
                 </p>
                 <h2 className="text-sm font-extrabold text-[#E2C28E] pt-1">
                   이메일 인증을 완료해주세요
@@ -243,7 +243,7 @@ export const EmailVerifyScreen: React.FC = () => {
               {/* Mail Body Paragraph */}
               <div className="text-xs text-slate-300 leading-relaxed space-y-3 py-1">
                 <p>
-                  안녕하세요. DOUBLING 서비스 가입을 환영합니다.
+                  안녕하세요. DOUBLE RING 서비스 가입을 환영합니다.
                 </p>
                 <p>
                   가입 절차를 완료하고 안전하게 서비스를 이용하시려면 아래 버튼을 눌러 이메일 주소를 인증해 주세요.
