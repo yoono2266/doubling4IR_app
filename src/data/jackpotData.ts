@@ -6,6 +6,10 @@ export interface JackpotItem {
   amountUsd: number;
   badge?: string;
   type?: string;
+  // jp_currency (API 원본 통화 코드): 1=USD, 2=홍콩달러, 3=페소, 4=한화. 미지정 시 USD로 간주.
+  currency?: string;
+  // jp_thumb_url — 게임 썸네일 이미지 파일명(https://dou-cdn.wildwynn.com/jackpots/{thumbUrl}).
+  thumbUrl?: string;
 }
 
 export interface HotelJackpotData {
@@ -24,6 +28,108 @@ export interface HotelJackpotData {
   vipTables?: number;
   slots?: number;
 }
+
+// ==========================================
+// /jackpot/{countryIndex} API 응답 타입 & 매핑
+// (JackpotMapScreen에서 실서버로 조회한 hotels/jackpots를 HotelJackpotData 형태로 변환)
+// ==========================================
+export interface JackpotCountry {
+  jp_index: number;
+  country_name_ko: string;
+  country_name_en: string;
+  country_name_en_short: string;
+  country_code: string;
+  jp_view: number;
+  jp_sort: number;
+  hotel_count: number;
+}
+
+export interface JackpotHotel {
+  jp_index: number;
+  country_index: number;
+  hotel_name_ko: string;
+  hotel_name_en: string;
+  hotel_code: string;
+  jp_view: number;
+  jp_sort: number;
+  jp_thumb_url: string;
+}
+
+export interface JackpotItemResponse {
+  jp_index: number;
+  hotel_index: number;
+  jp_name_ko: string;
+  jp_name_en: string;
+  jp_sub_name: string;
+  jp_desc: string;
+  jp_type: number;
+  jp_thumb_url: string;
+  jp_amount: number | string;
+  jp_currency: string;
+  jp_sort: number;
+}
+
+export interface JackpotApiResponse {
+  country: JackpotCountry[];
+  hotels: JackpotHotel[];
+  jackpots: JackpotItemResponse[];
+}
+
+export const toNumber = (value: number | string): number => {
+  const parsed = typeof value === 'number' ? value : Number(value.replace(/,/g, ''));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+export const mapRegionCode = (countryCode: string): Exclude<RegionCode, 'ALL'> => {
+  return countryCode.toUpperCase() as Exclude<RegionCode, 'ALL'>;
+};
+
+// API의 hotels/jackpots 목록을 화면(JackpotMapScreen, HotelJackpotDetailScreen)에서 공용으로
+// 쓰는 HotelJackpotData[] 형태로 변환한다.
+export const mapJackpotApiHotels = (data: JackpotApiResponse): HotelJackpotData[] => {
+  const countryByIndex = new Map(data.country.map(country => [country.jp_index, country]));
+  const jackpotsByHotel = new Map<number, JackpotItemResponse[]>();
+
+  [...data.jackpots]
+    .sort((a, b) => a.jp_sort - b.jp_sort)
+    .forEach(jackpot => {
+      const items = jackpotsByHotel.get(jackpot.hotel_index) ?? [];
+      items.push(jackpot);
+      jackpotsByHotel.set(jackpot.hotel_index, items);
+    });
+
+  return [...data.hotels]
+    .sort((a, b) => a.jp_sort - b.jp_sort)
+    .filter(hotel => hotel.jp_view !== 0)
+    .map((hotel, index) => {
+      const country = countryByIndex.get(hotel.country_index);
+      const jackpots = jackpotsByHotel.get(hotel.jp_index) ?? [];
+      const regionCode = mapRegionCode(country?.country_code ?? '');
+
+      return {
+        id: hotel.hotel_code || String(hotel.jp_index),
+        name: hotel.hotel_name_ko,
+        nameEn: hotel.hotel_name_en,
+        region: regionCode,
+        regionLabel: country?.country_name_ko ?? '',
+        desc: '',
+        // jp_thumb_url이 비어 있으면(현재 전부 비어 있음) 국가 코드(MO/PH/SG)별 대체 이미지로 대체.
+        image: hotel.jp_thumb_url
+          ? `https://dou-cdn.wildwynn.com/hotels/${hotel.jp_thumb_url}`
+          : getHotelFallbackImage(regionCode, index),
+        rating: 0,
+        jackpots: jackpots.map(jackpot => ({
+          id: String(jackpot.jp_index),
+          name: jackpot.jp_name_ko,
+          amountUsd: toNumber(jackpot.jp_amount),
+          type: jackpot.jp_type ? String(jackpot.jp_type) : undefined,
+          currency: jackpot.jp_currency,
+          thumbUrl: jackpot.jp_thumb_url,
+        })),
+        totalJackpotUsd: jackpots.reduce((sum, jackpot) => sum + toNumber(jackpot.jp_amount), 0),
+      };
+    });
+};
 
 // 2026-09-15: 아래 이미지들은 전부 Unsplash License(무료 상업적 이용 가능) 스톡 사진입니다.
 // 해당 카지노/리조트의 실제 브랜드 사진이 아니며, 목록/상세 화면에서 카드 이미지가 전부
@@ -61,14 +167,27 @@ export const getHotelFallbackImage = (regionCode: string, index: number): string
   return pair[index % 2];
 };
 
+// jp_thumb_url(게임 썸네일 파일명)을 실제 조회 가능한 URL로 변환한다.
+export const getJackpotThumbUrl = (thumbUrl?: string): string | undefined => {
+  if (!thumbUrl) return undefined;
+  return `https://dou-cdn.wildwynn.com/jackpots/${thumbUrl}`;
+};
+
 const KRW_RATE = 1350;
+
+// jp_currency 코드별 원화 환산 배율: 1=USD, 2=홍콩달러, 3=페소, 4=한화(원본 그대로).
+export const CURRENCY_KRW_RATES: Record<string, number> = {
+  '1': 1350,
+  '2': 150,
+  '3': 25,
+  '4': 1,
+};
 
 export const formatUsd = (val: number): string => {
   return `$${val.toLocaleString()}`;
 };
 
-export const formatKrw = (valUsd: number): string => {
-  const krw = valUsd * KRW_RATE;
+const formatKrwAmount = (krw: number): string => {
   if (krw >= 100_000_000) {
     const eok = Math.floor(krw / 100_000_000);
     const man = Math.round((krw % 100_000_000) / 10_000);
@@ -76,6 +195,17 @@ export const formatKrw = (valUsd: number): string => {
   }
   const man = Math.round(krw / 10_000);
   return `약 ${man.toLocaleString()}만원`;
+};
+
+export const formatKrw = (valUsd: number): string => {
+  return formatKrwAmount(valUsd * KRW_RATE);
+};
+
+// jp_currency 코드에 맞는 배율로 원화 환산한다 (게임 상세 목록 등 개별 잭팟 금액 표시용).
+// currency가 없거나 알 수 없는 코드면 기존 동작(USD 기준)으로 대체한다.
+export const formatKrwByCurrency = (amount: number, currency?: string): string => {
+  const rate = (currency && CURRENCY_KRW_RATES[currency]) || KRW_RATE;
+  return formatKrwAmount(amount * rate);
 };
 
 // 18 Hotels Data

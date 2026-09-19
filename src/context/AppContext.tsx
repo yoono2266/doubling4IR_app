@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { apiCommonClient, setErrorToastHandler, setSessionExpiredHandler } from '../utils/apiClient'; // 💡 apiCommonClient 임포트 추가
+import { apiCommonClient, setErrorToastHandler, setSessionExpiredHandler, ResultCode, CommonResponse } from '../utils/apiClient'; // 💡 apiCommonClient 임포트 추가
 import { checkLogin, clearSession } from '../utils/auth';
 import {
   MyProfile,
@@ -15,6 +15,7 @@ import {
   TierAccrualRecord
 } from '../types';
 import { PolyMarketItem, INITIAL_POLY_MARKETS } from '../data/polyMarketData';
+import { HotelJackpotData, JackpotApiResponse, mapJackpotApiHotels } from '../data/jackpotData';
 import { INITIAL_TIER_RECORDS } from '../data/membershipData';
 import { STREAK_MILESTONES, STREAK_MAX_DAYS } from '../data/streakData';
 
@@ -24,6 +25,7 @@ interface PLMContentsResponse {
   pm_cate_name: string;
   pm_title: string;
   pm_desc: string;
+  pm_rule: string;
   pm_yes: string | number;
   pm_no: string | number;
   pm_pick_dp: number;
@@ -61,8 +63,8 @@ const mapPlmContentsToMarket = (item: PLMContentsResponse): PolyMarketItem => {
     noValue,
     totalVolumeDp: `${(item.pm_pick_dp || 0).toLocaleString()} DP`,
     description: item.pm_desc,
-    rulesText: '실시간 예측 챌린지 기준에 따라 판정됩니다.',
-    contextNews: item.pm_desc,
+    rulesText: item.pm_rule,
+    contextNews: '실시간 마켓 분석 및 뉴스는 준비 중입니다.',
     comments: [],
   };
 };
@@ -71,6 +73,7 @@ interface AppContextType {
   user: UserPersona;
   isLoggedIn: boolean;
   setIsLoggedIn: (val: boolean) => void;
+  authChecked: boolean; // 💡 앱 최초 마운트 시 서버 세션 확인(refreshLogin)이 끝났는지 여부
   currentTab: 'jackpot' | 'poly' | 'home' | 'freeroom' | 'my';
   setCurrentTab: (tab: 'jackpot' | 'poly' | 'home' | 'freeroom' | 'my') => void;
   currentSubScreen: string | null;
@@ -115,6 +118,13 @@ interface AppContextType {
   earlyExitPolyVote: (voteId: string) => { success: boolean; returnDp: number };
   getUserVoteForMarket: (marketId: string) => PolyVote | undefined;
 
+  // 💡 /jackpot/{countryIndex} API로 조회한 호텔+잭팟 목록(ALL 기준 전체 캐시).
+  // JackpotMapScreen이 최초(countryIndex=0) 조회 성공 시 채워 넣고,
+  // HotelJackpotDetailScreen은 이 캐시에서 hotelId로 실데이터를 찾아 사용한다.
+  jackpotHotels: HotelJackpotData[];
+  setJackpotHotels: React.Dispatch<React.SetStateAction<HotelJackpotData[]>>;
+  refreshJackpotHotels: () => Promise<void>;
+
   settings: SettingsState;
   updateSettings: (newSettings: Partial<SettingsState>) => void;
 
@@ -139,6 +149,10 @@ interface AppContextType {
   // 💡 로그인 세션 확인 및 DP 등 최신 회원 정보 갱신 (/member/uchk)
   refreshLogin: () => Promise<boolean>;
 
+  // 💡 u_dp 등 지갑 정보를 포함한 전체 회원 정보 재조회 (/members/{uidx}).
+  // uchk만으로는 비어 있을 수 있는 필드(u_dp 등)를 캐시가 지워진 상태에서도 다시 채워야 할 때 호출.
+  refreshMemberProfile: () => Promise<boolean>;
+
   // 오늘의 로그인 보너스 지급 (mock: walletDp에 +150, 실제 정산 연동 아님)
   grantLoginBonus: () => void;
 
@@ -152,6 +166,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [authChecked, setAuthChecked] = useState<boolean>(false);
   const [currentTab, setCurrentTab] = useState<'jackpot' | 'poly' | 'home' | 'freeroom' | 'my'>('home');
   const [currentSubScreen, setCurrentSubScreen] = useState<string | null>(null);
   const [socialSignupInfo, setSocialSignupInfo] = useState<SocialSignupInfo | null>(null);
@@ -160,6 +175,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [polyMarkets, setPolyMarkets] = useState<PolyMarketItem[]>(INITIAL_POLY_MARKETS);
   const [plmContentsLoading, setPlmContentsLoading] = useState<boolean>(false);
   const [selectedMarket, setSelectedMarket] = useState<PolyMarketItem | null>(null);
+  const [jackpotHotels, setJackpotHotels] = useState<HotelJackpotData[]>([]);
+
+  // 💡 /jackpot/0(ALL) 조회로 jackpotHotels 캐시를 채운다. JackpotMapScreen을 거치지 않고
+  // (예: 하단 네비 '프로그래시브' 탭에서) 바로 HotelJackpotDetailScreen으로 진입하는 경로에서
+  // 캐시가 비어 있을 때 사용한다.
+  const refreshJackpotHotels = useCallback(async (): Promise<void> => {
+    try {
+      const response = await apiCommonClient.post<CommonResponse<JackpotApiResponse>, { jp_index: number }>(
+        '/jackpot/0',
+        { jp_index: 0 },
+        { suppressErrorToast: true }
+      );
+      if (response.result === ResultCode.SUCCESS && response.data) {
+        const countries = [...response.data.country]
+          .filter(country => country.jp_view !== 0)
+          .sort((a, b) => a.jp_sort - b.jp_sort);
+        setJackpotHotels(mapJackpotApiHotels({ ...response.data, country: countries }));
+      }
+    } catch (error) {
+      console.error('/jackpot/0 API 통신 오류:', error);
+    }
+  }, []);
 
   const refreshPlmContents = useCallback(async (): Promise<void> => {
     try {
@@ -167,9 +204,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.log('[PLM] fetch start -> /contents/plm-contents');
 
       const response = await apiCommonClient.post<any, {}>('/contents/plm-contents', {}, { suppressErrorToast: true });
-      console.log('[PLM] raw response:', response.data.data);
+      console.log('[PLM] raw response:', response?.data);
 
-      const payload = Array.isArray(response?.data?.data) ? response.data.data as PLMContentsResponse[] : [];
+      // 서버 응답이 data(배열) 또는 data.data(배열) 두 형태로 올 수 있어 둘 다 안전하게 처리한다.
+      const rawData = response?.data;
+      const payload: PLMContentsResponse[] = Array.isArray(rawData)
+        ? rawData
+        : Array.isArray(rawData?.data)
+        ? rawData.data
+        : [];
       console.log('[PLM] parsed payload:', payload);
 
       if (payload.length > 0) {
@@ -238,9 +281,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // 페이지 새로고침(웹) / 앱 재실행(Capacitor) 시 세션 유효성을 서버에 재확인
+  // authChecked가 true가 되기 전까지는 isLoggedIn이 실제 로그인 상태를 반영하지 못하므로,
+  // 화면단에서 "로그인 여부에 따라 다른 API를 호출"해야 하는 최초 요청은 이 값을 기다려야 한다.
   useEffect(() => {
-    refreshLogin();
+    refreshLogin().finally(() => setAuthChecked(true));
   }, []);
+
+  // 💡 u_dp 등 지갑/포인트를 포함한 "전체" 회원 정보 재조회 (/members/{uidx}).
+  // uchk(refreshLogin)는 세션 유효성 확인 위주라 u_dp 등 일부 필드가 비어 있을 수 있어,
+  // 캐시가 지워진 상태에서 DP가 0으로 보이는 문제를 해결하려면 이 함수로 다시 채워야 한다.
+  // Header 등 myProfile.memberInfo.u_dp가 필요한데 비어 있는 곳에서 공용으로 호출한다.
+  const refreshMemberProfile = useCallback(async (): Promise<boolean> => {
+    let uidx = myProfile?.memberInfo?.uidx;
+    let u_id = myProfile?.memberInfo?.u_id;
+
+    // 세션 신원(uidx)조차 아직 없으면 uchk로 먼저 확보한다 (세션이 살아있는지도 같이 확인됨).
+    if (!uidx) {
+      const result = await checkLogin({ force: true });
+      if (!result) return false;
+      uidx = result.memberInfo?.uidx;
+      u_id = result.memberInfo?.u_id;
+      setMyProfile(result.memberInfo, result.memberShip, result.memPickList, result.memberReward);
+    }
+
+    if (!uidx) return false;
+
+    try {
+      const response = await apiCommonClient.post<any, { u_id: string }>(
+        `/members/${Number(uidx)}`,
+        { u_id: u_id || '' },
+        { suppressErrorToast: true }
+      );
+
+      if (response && (response.result === ResultCode.SUCCESS || response.result === 0)) {
+        const resData = response.data || response;
+        const memberInfo = resData.memberInfo || resData.uinfo || {};
+        const memberShip = resData.memberShip || {};
+        const memPickList = resData.memPickList || [];
+        const memberReward = resData.memberReward || [];
+        setMyProfile(memberInfo, memberShip, memPickList, memberReward);
+        return true;
+      }
+    } catch (error) {
+      console.error('회원 정보 재조회 실패:', error);
+    }
+    return false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myProfile?.memberInfo?.uidx, myProfile?.memberInfo?.u_id]);
 
   // Initial Persona Preset
   // 💡 walletDp / walletCoin 모두 mock 잔액입니다. 실제 결제/충전 연동이 아니라
@@ -323,6 +410,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
+  // 💡 posts 목록과, 상세 화면에 별도로 보관 중인 selectedPost(동일 게시글의 스냅샷)를
+  // 함께 갱신한다. selectedPost는 posts와 별개의 state라서 이걸 빠뜨리면 목록에서는
+  // 좋아요/북마크가 반영되어도 상세 화면(PostDetailScreen)에는 반영되지 않는다.
+  const applyPostPatch = (postId: number, patch: Partial<Post>) => {
+    setPosts((prev) => prev.map((p) => (p.tb_index === postId ? { ...p, ...patch } : p)));
+    setSelectedPost((prev) => (prev && prev.tb_index === postId ? { ...prev, ...patch } : prev));
+  };
+
   // 💡 [1] 좋아요 토글 API 연동 (/sns/ulike)
   const toggleLikePost = async (postId: number) => {
     const targetPost = posts.find((p) => p.tb_index === postId);
@@ -330,20 +425,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const currentStatus = targetPost.is_user_liked ? 1 : 0;
     const nextStatus = currentStatus === 1 ? 0 : 1;
+    const originalCount = targetPost.count_like;
+    const nextCount = nextStatus === 1 ? originalCount + 1 : Math.max(0, originalCount - 1);
 
     // UI 선반영 (Optimistic Update)
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.tb_index === postId) {
-          return {
-            ...p,
-            is_user_liked: nextStatus,
-            count_like: nextStatus === 1 ? p.count_like + 1 : Math.max(0, p.count_like - 1),
-          };
-        }
-        return p;
-      })
-    );
+    applyPostPatch(postId, { is_user_liked: nextStatus, count_like: nextCount });
 
     try {
       const response = await apiCommonClient.post<any, { content_index: number; status: number }>(
@@ -353,33 +439,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       // 실패 시 원래 상태로 롤백
       if (response?.message !== 'SUCCESS' && response?.result !== 0) {
-        setPosts((prev) =>
-          prev.map((p) => {
-            if (p.tb_index === postId) {
-              return {
-                ...p,
-                is_user_liked: currentStatus,
-                count_like: currentStatus === 1 ? p.count_like + 1 : Math.max(0, p.count_like - 1),
-              };
-            }
-            return p;
-          })
-        );
+        applyPostPatch(postId, { is_user_liked: currentStatus, count_like: originalCount });
       }
     } catch (error) {
       // 에러 발생 시 롤백
-      setPosts((prev) =>
-        prev.map((p) => {
-          if (p.tb_index === postId) {
-            return {
-              ...p,
-              is_user_liked: currentStatus,
-              count_like: currentStatus === 1 ? p.count_like + 1 : Math.max(0, p.count_like - 1),
-            };
-          }
-          return p;
-        })
-      );
+      applyPostPatch(postId, { is_user_liked: currentStatus, count_like: originalCount });
       console.error('좋아요 API 통신 오류:', error);
     }
   };
@@ -391,56 +455,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const currentStatus = targetPost.is_user_bookmarked ? 1 : 0;
     const nextStatus = currentStatus === 1 ? 0 : 1;
+    const originalCount = targetPost.count_bookmark;
+    const nextCount = nextStatus === 1 ? originalCount + 1 : Math.max(0, originalCount - 1);
 
     // UI 선반영 (Optimistic Update)
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.tb_index === postId) {
-          return {
-            ...p,
-            is_user_bookmarked: nextStatus,
-            count_bookmark: nextStatus === 1 ? p.count_bookmark + 1 : Math.max(0, p.count_bookmark - 1),
-          };
-        }
-        return p;
-      })
-    );
+    applyPostPatch(postId, { is_user_bookmarked: nextStatus, count_bookmark: nextCount });
 
     try {
       const response = await apiCommonClient.post<any, { content_index: number; status: number }>(
         '/sns/ubookmark',
         { content_index: postId, status: nextStatus }
       );
+      console.log('[북마크] /sns/ubookmark 응답:', response);
 
       // 실패 시 원래 상태로 롤백
       if (response?.message !== 'SUCCESS' && response?.result !== 0) {
-        setPosts((prev) =>
-          prev.map((p) => {
-            if (p.tb_index === postId) {
-              return {
-                ...p,
-                is_user_bookmarked: currentStatus,
-                count_bookmark: currentStatus === 1 ? p.count_bookmark + 1 : Math.max(0, p.count_bookmark - 1),
-              };
-            }
-            return p;
-          })
-        );
+        applyPostPatch(postId, { is_user_bookmarked: currentStatus, count_bookmark: originalCount });
       }
     } catch (error) {
       // 에러 발생 시 롤백
-      setPosts((prev) =>
-        prev.map((p) => {
-          if (p.tb_index === postId) {
-            return {
-              ...p,
-              is_user_bookmarked: currentStatus,
-              count_bookmark: currentStatus === 1 ? p.count_bookmark + 1 : Math.max(0, p.count_bookmark - 1),
-            };
-          }
-          return p;
-        })
-      );
+      applyPostPatch(postId, { is_user_bookmarked: currentStatus, count_bookmark: originalCount });
       console.error('북마크 API 통신 오류:', error);
     }
   };
@@ -933,6 +967,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         user,
         isLoggedIn,
         setIsLoggedIn,
+        authChecked,
         currentTab,
         setCurrentTab,
         currentSubScreen,
@@ -964,6 +999,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         castPolyVote,
         earlyExitPolyVote,
         getUserVoteForMarket,
+        jackpotHotels,
+        setJackpotHotels,
+        refreshJackpotHotels,
         settings,
         updateSettings,
         booking,
@@ -979,6 +1017,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         myProfile,
         setMyProfile,
         refreshLogin,
+        refreshMemberProfile,
         grantLoginBonus,
         attendanceStreak,
         claimedStreakMilestones,
