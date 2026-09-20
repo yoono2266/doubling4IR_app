@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { apiCommonClient, ApiError, ResultCode, CommonResponse } from '../utils/apiClient';
+import { TermsModal, TermsModalType } from '../components/TermsModal';
 
 // /members/ulogin API 요청/응답 타입 정의
 interface MemberParam {
@@ -41,6 +42,7 @@ export const SignUpScreen: React.FC = () => {
   const [termsRequired1, setTermsRequired1] = useState(true);
   const [termsRequired2, setTermsRequired2] = useState(true);
   const [termsMarketing, setTermsMarketing] = useState(false);
+  const [openTermsModal, setOpenTermsModal] = useState<TermsModalType | null>(null);
 
   const allChecked = termsRequired1 && termsRequired2 && termsMarketing;
   const requiredChecked = termsRequired1 && termsRequired2;
@@ -158,7 +160,8 @@ export const SignUpScreen: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-[85vh] justify-between max-w-sm mx-auto py-4">
+    // pb-20: 하단 고정 Footer(회사 정보)에 폼이 짧은 화면에서 가려지지 않도록 여유 확보
+    <div className="flex flex-col min-h-[85vh] justify-between max-w-sm mx-auto pt-4 pb-20">
       {/* Top Navigation Bar */}
       <div className="flex items-center justify-between pb-3 border-b border-[#1F334D]">
         <button 
@@ -382,9 +385,9 @@ export const SignUpScreen: React.FC = () => {
                   <span className="text-[#C5A059] font-bold">[필수]</span> 서비스 이용약관 동의
                 </span>
               </label>
-              <button 
-                type="button" 
-                onClick={() => showToast('서비스 이용약관 상세 내용')}
+              <button
+                type="button"
+                onClick={() => setOpenTermsModal('terms')}
                 className="text-slate-500 hover:text-slate-300"
               >
                 <span className="material-symbols-outlined text-sm">chevron_right</span>
@@ -404,9 +407,9 @@ export const SignUpScreen: React.FC = () => {
                   <span className="text-[#C5A059] font-bold">[필수]</span> 개인정보 수집 및 이용 동의
                 </span>
               </label>
-              <button 
-                type="button" 
-                onClick={() => showToast('개인정보 수집 및 이용 방침 상세')}
+              <button
+                type="button"
+                onClick={() => setOpenTermsModal('privacy')}
                 className="text-slate-500 hover:text-slate-300"
               >
                 <span className="material-symbols-outlined text-sm">chevron_right</span>
@@ -428,7 +431,7 @@ export const SignUpScreen: React.FC = () => {
               </label>
               <button 
                 type="button" 
-                onClick={() => showToast('마케팅 정보 수신 안내')}
+                onClick={() => setOpenTermsModal('marketing')}
                 className="text-slate-500 hover:text-slate-300"
               >
                 <span className="material-symbols-outlined text-sm">chevron_right</span>
@@ -453,6 +456,12 @@ export const SignUpScreen: React.FC = () => {
           가입하기
         </button>
       </div>
+
+      <TermsModal
+        open={openTermsModal !== null}
+        type={openTermsModal ?? 'terms'}
+        onClose={() => setOpenTermsModal(null)}
+      />
     </div>
   );
 };
