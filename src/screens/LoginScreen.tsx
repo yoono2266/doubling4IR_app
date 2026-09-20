@@ -8,6 +8,7 @@ import { useApp } from '../context/AppContext';
 import { LOGO_BASE64 } from '../assets/logoBase64';
 import { apiCommonClient, ApiError, ResultCode } from '../utils/apiClient';
 import { getStoredUserInfo } from '../utils/auth';
+import { getLoginBonusAmount, getLoginBonusTitle } from '../data/streakData';
 
 // /members/uAuth API 응답 타입 (소셜 로그인 서버 인증 체크)
 interface UAuthResponse {
@@ -236,6 +237,7 @@ export const LoginScreen: React.FC = () => {
     setSocialSignupInfo,
     showToast,
     grantLoginBonus,
+    attendanceStreak,
   } = useApp();
 
   const [email, setEmail] = useState('');
@@ -281,7 +283,7 @@ export const LoginScreen: React.FC = () => {
     setIsLoggedIn(true);
     setCurrentTab('home');
     setCurrentSubScreen(null);
-    showToast('오늘의 로그인 보너스 150 DP가 지급되었어요');
+    showToast(`${getLoginBonusTitle(attendanceStreak)} ${getLoginBonusAmount(attendanceStreak).toLocaleString()} DP가 지급되었어요`);
     confetti({ particleCount: 90, spread: 72, origin: { y: 0.5 } });
   };
 
@@ -634,12 +636,9 @@ export const LoginScreen: React.FC = () => {
             </div>
 
             <div>
-              <h3 className="text-base font-black text-white">오늘의 로그인 보너스</h3>
+              <h3 className="text-base font-black text-white">{getLoginBonusTitle(attendanceStreak)}</h3>
               <p className="text-3xl font-extrabold text-[#FFF0D0] gold-gradient-text font-mono mt-1">
-                +150 <span className="text-lg">DP</span>
-              </p>
-              <p className="text-[11px] text-slate-400 mt-1">
-                예측 챌린지 투표에 사용할 수 있는 DP가 지급됩니다.
+                +{getLoginBonusAmount(attendanceStreak).toLocaleString()} <span className="text-3xl">DP</span>
               </p>
             </div>
 
