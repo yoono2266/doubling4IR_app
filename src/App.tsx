@@ -4,6 +4,7 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { App as CapacitorApp } from '@capacitor/app';
 import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/Header';
+import { Footer } from './components/Footer';
 import { BottomNav } from './components/BottomNav';
 import { ForceUpdateModal } from './components/ForceUpdateModal';
 import { FreeRoomStickyBanner } from './components/FreeRoomStickyBanner';
@@ -257,14 +258,8 @@ const AppContent: React.FC = () => {
                 currentSubScreen !== 'email-verify-success' &&
                 currentSubScreen !== 'email-verify-fail' && <BottomNav />}
 
-              {/* 로그인 화면 한정: 하단 네비가 있던 자리에 회사 정보 푸터 표시 */}
-              {currentSubScreen === 'login' && (
-                <footer className="fixed bottom-0 left-0 right-0 z-40 max-w-[430px] mx-auto bg-[#0D1B2A]/95 backdrop-blur-xl border-t border-[#1F334D] px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] text-center">
-                  <p className="text-[11px] text-slate-500">
-                    &copy; 2026 WILDWYNN Co., Ltd. All rights reserved.
-                  </p>
-                </footer>
-              )}
+              {/* 로그인·회원가입 화면: 하단 네비가 있던 자리에 회사 정보 푸터 표시 (공용 Footer 컴포넌트) */}
+              {(currentSubScreen === 'login' || currentSubScreen === 'signup') && <Footer />}
             </>
           </>
         )}

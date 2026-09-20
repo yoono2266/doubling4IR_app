@@ -17,7 +17,7 @@ import {
 import { PolyMarketItem, INITIAL_POLY_MARKETS } from '../data/polyMarketData';
 import { HotelJackpotData, JackpotApiResponse, mapJackpotApiHotels } from '../data/jackpotData';
 import { INITIAL_TIER_RECORDS } from '../data/membershipData';
-import { STREAK_MILESTONES, STREAK_MAX_DAYS } from '../data/streakData';
+import { STREAK_MILESTONES, STREAK_MAX_DAYS, getLoginBonusAmount } from '../data/streakData';
 
 interface PLMContentsResponse {
   pm_index: number;
@@ -892,14 +892,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('신청 및 코인 결제가 완료되었습니다!');
   };
   
-  // 오늘의 로그인 보너스.
-  // 💡 mock: AppContext 메모리의 walletDp에만 +150 하는 시뮬레이션이며,
-  //    실제 보너스 정산/서버 반영이 아닙니다. 새로고침 시 초기값으로 리셋됩니다.
-  const LOGIN_BONUS_DP = 150;
-  const grantLoginBonus = () => {
-    setUser(prev => ({ ...prev, walletDp: prev.walletDp + LOGIN_BONUS_DP }));
-  };
-
   // 연속 출석 스트릭.
   // myProfile.memberReward 중 dp_index === 1(출석 보너스) 기록의 날짜들로부터 실제 연속 출석일수를 계산한다.
   // 오늘 출석 기록이 아직 없어도 어제까지 이어져 있으면 스트릭이 끊기지 않은 것으로 간주한다.
@@ -938,9 +930,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return streak;
   }, [myProfile?.memberReward]);
 
+  // 오늘의 로그인 보너스.
+  // 💡 mock: AppContext 메모리의 walletDp에만 반영되는 시뮬레이션이며, 실제 보너스 정산/서버
+  //    반영이 아닙니다. 새로고침 시 초기값으로 리셋됩니다.
+  // 지급액은 연속 출석일수(attendanceStreak)에 따라 계단식으로 계산된다 (streakData.ts
+  // getLoginBonusAmount 참고 — 1/3/7/14/30일차: 150/1,150/2,650/5,150/15,150 DP, 31일차부터 리셋).
+  // (2026-09-20, 기획 확정)
+  const grantLoginBonus = () => {
+    const bonusDp = getLoginBonusAmount(attendanceStreak);
+    setUser(prev => ({ ...prev, walletDp: prev.walletDp + bonusDp }));
+  };
+
   // 💡 mock 상태입니다. AppContext 메모리에만 존재하며, 실제 보상 수령 서버 반영이 아니고
   //    새로고침 시 초기값으로 리셋됩니다.
-  const [claimedStreakMilestones, setClaimedStreakMilestones] = useState<number[]>([3]); // 3일 보상은 수령했다고 가정
+  const [claimedStreakMilestones, setClaimedStreakMilestones] = useState<number[]>([]); // 실제 수령 여부만 반영 (2026-09-20, leftover mock 초기값 [3] 제거)
 
   // 도달한 마일스톤 보상 수령 → walletDp에 반영(mock), 마일스톤 1회만 수령 가능.
   const claimStreakReward = (days: number) => {
