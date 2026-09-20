@@ -187,10 +187,6 @@ export const PolyMarketCarousel: React.FC = () => {
         {/* Unified YES/NO Bar and Action Buttons */}
         <div className="space-y-2">
           {/* Visual Probability Bar */}
-          <div className="flex justify-between text-xs font-bold font-mono">
-            <span className="text-emerald-400">YES {currentMarket.yesOdds}</span>
-            <span className="text-rose-400">NO {currentMarket.noOdds}</span>
-          </div>
           <div className="w-full bg-[#0D1B2A] h-2 rounded-full overflow-hidden flex">
             <div
               className="bg-emerald-500 h-full transition-all duration-300"
@@ -213,7 +209,7 @@ export const PolyMarketCarousel: React.FC = () => {
               }`}
             >
               <span className="material-symbols-outlined text-xs">thumb_up</span>
-              <span>YES {currentMarket.yesOdds}</span>
+              <span>YES</span>
             </button>
             <button
               onClick={(e) => handleVoteClick('NO', currentMarket.noOdds, e)}
@@ -224,7 +220,7 @@ export const PolyMarketCarousel: React.FC = () => {
               }`}
             >
               <span className="material-symbols-outlined text-xs">thumb_down</span>
-              <span>NO {currentMarket.noOdds}</span>
+              <span>NO</span>
             </button>
           </div>
         </div>

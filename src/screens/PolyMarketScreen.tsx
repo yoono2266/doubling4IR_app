@@ -211,10 +211,6 @@ export const PolyMarketScreen: React.FC = () => {
 
               {/* Voting Probability Bar */}
               <div>
-                <div className="flex justify-between text-xs font-bold font-mono mb-1">
-                  <span className="text-emerald-400">YES {m.yesOdds}</span>
-                  <span className="text-rose-400">NO {m.noOdds}</span>
-                </div>
                 <div className="w-full bg-[#0D1B2A] h-2.5 rounded-full overflow-hidden flex border border-[#1F334D]">
                   <div
                     className="bg-emerald-500 h-full transition-all duration-300"
@@ -238,7 +234,7 @@ export const PolyMarketScreen: React.FC = () => {
                   }`}
                 >
                   <span className="material-symbols-outlined text-sm">thumb_up</span>
-                  <span>YES {m.yesOdds}</span>
+                  <span>YES</span>
                 </button>
 
                 <button
@@ -250,7 +246,7 @@ export const PolyMarketScreen: React.FC = () => {
                   }`}
                 >
                   <span className="material-symbols-outlined text-sm">thumb_down</span>
-                  <span>NO {m.noOdds}</span>
+                  <span>NO</span>
                 </button>
               </div>
             </div>

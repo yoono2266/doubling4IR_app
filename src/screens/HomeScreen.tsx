@@ -288,7 +288,7 @@ useEffect(() => {
         <div className="flex items-center justify-between mb-2.5">
           <h3 className="text-xs font-bold text-[#C5A059] uppercase tracking-wider flex items-center gap-1.5">
             <span className="material-symbols-outlined text-sm">query_stats</span>
-            실시간 예측 챌린지 (100~5,000 DP)
+            실시간 예측 챌린지
           </h3>
           <button
             onClick={handlePolyCardClick}
