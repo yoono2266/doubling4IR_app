@@ -58,12 +58,12 @@ export const BottomNav: React.FC = () => {
   return (
     <nav
       ref={navRef}
-      className="fixed bottom-0 left-0 right-0 z-40 max-w-[430px] mx-auto bg-[#0D1B2A]/95 backdrop-blur-xl border-t border-[#1F334D] px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] flex items-center justify-around"
+      className="fixed bottom-0 left-0 right-0 z-40 max-w-[430px] mx-auto bg-[#0D1B2A]/95 backdrop-blur-xl border-t border-[#1F334D] px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] grid grid-cols-5 items-center"
     >
       {/* 1. Jackpot */}
       <button
         onClick={() => handleTabClick('jackpot')}
-        className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+        className={`w-full flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
           isJackpotActive
             ? 'text-[#C5A059] font-bold scale-105'
             : 'text-slate-400 hover:text-slate-200'
@@ -78,7 +78,7 @@ export const BottomNav: React.FC = () => {
       {/* 2. Poly Market */}
       <button
         onClick={() => handleTabClick('poly')}
-        className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+        className={`w-full flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
           !isJackpotSubScreen && currentTab === 'poly'
             ? 'text-[#C5A059] font-bold scale-105'
             : 'text-slate-400 hover:text-slate-200'
@@ -93,7 +93,7 @@ export const BottomNav: React.FC = () => {
       {/* 3. Home (Center Highlight) */}
       <button
         onClick={() => handleTabClick('home')}
-        className={`relative flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+        className={`w-full relative flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
           !isJackpotSubScreen && currentTab === 'home'
             ? 'text-[#C5A059] font-bold scale-105'
             : 'text-slate-400 hover:text-slate-200'
@@ -114,7 +114,7 @@ export const BottomNav: React.FC = () => {
       {/* 4. FreeRoom */}
       <button
         onClick={() => handleTabClick('freeroom')}
-        className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+        className={`w-full flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
           !isJackpotSubScreen && currentTab === 'freeroom'
             ? 'text-[#C5A059] font-bold scale-105'
             : 'text-slate-400 hover:text-slate-200'
@@ -129,7 +129,7 @@ export const BottomNav: React.FC = () => {
       {/* 5. My */}
       <button
         onClick={() => handleTabClick('my')}
-        className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+        className={`w-full flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
           !isJackpotSubScreen && currentTab === 'my'
             ? 'text-[#C5A059] font-bold scale-105'
             : 'text-slate-400 hover:text-slate-200'
