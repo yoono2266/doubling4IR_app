@@ -1,0 +1,67 @@
+From e70f1d265069c6ee3916313170fec2c29261b4fc Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Wed, 9 Sep 2026 00:48:45 +0900
+Subject: [PATCH 15/34] =?UTF-8?q?=EC=88=98=EC=A0=95:=20=EC=9E=AD=ED=8C=9F?=
+ =?UTF-8?q?=20=EC=83=81=EC=84=B8=20=ED=99=94=EB=A9=B4=20=ED=95=98=EB=8B=A8?=
+ =?UTF-8?q?=20FreePlay=20=EB=B0=94=EC=9A=B0=EC=B2=98=20=EC=8B=A0=EC=B2=AD?=
+ =?UTF-8?q?=20=EB=B0=B0=EB=84=88=20=EC=A3=BC=EC=84=9D=20=EC=B2=98=EB=A6=AC?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ src/screens/HotelJackpotDetailScreen.tsx | 38 ++++++++++++++----------
+ 1 file changed, 22 insertions(+), 16 deletions(-)
+
+diff --git a/src/screens/HotelJackpotDetailScreen.tsx b/src/screens/HotelJackpotDetailScreen.tsx
+index f9c4a07..97024fe 100644
+--- a/src/screens/HotelJackpotDetailScreen.tsx
++++ b/src/screens/HotelJackpotDetailScreen.tsx
+@@ -404,22 +404,28 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
+         </div>
+       </div>
+ 
+-      {/* FreePlay Booking CTA Button */}
+-      <button
+-        onClick={() => {
+-          startBooking({
+-            name: hotel.name,
+-            location: hotel.regionLabel,
+-            roomType: 'VIP Executive Suite',
+-            pricePerNightDp: 600,
+-            image: hotel.image
+-          });
+-        }}
+-        className="w-full py-3.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow-lg hover:brightness-110 active:scale-[0.98] transition flex items-center justify-center gap-2 mt-2"
+-      >
+-        <span className="material-symbols-outlined text-base">hotel</span>
+-        <span>{hotel.name} FreePlay 바우처로 VIP 신청하기</span>
+-      </button>
++      {/*
++        2026-09-08 제거 요청으로 비활성화 (삭제하지 않고 주석 보존).
++        사유: 잭팟 상세 화면 게임 목록 하단의 "FreePlay 바우처로 VIP 신청하기" CTA를 노출하지 않기로 함.
++              이 버튼은 공용 컴포넌트가 아니라 이 화면에만 있는 인라인 코드다.
++              되살릴 경우 useApp()에서 startBooking 구독도 그대로 사용하면 된다(현재는 이 버튼이 유일 호출부).
++        [원본 JSX]
++        <button
++          onClick={() => {
++            startBooking({
++              name: hotel.name,
++              location: hotel.regionLabel,
++              roomType: 'VIP Executive Suite',
++              pricePerNightDp: 600,
++              image: hotel.image
++            });
++          }}
++          className="w-full py-3.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shadow-lg hover:brightness-110 active:scale-[0.98] transition flex items-center justify-center gap-2 mt-2"
++        >
++          <span className="material-symbols-outlined text-base">hotel</span>
++          <span>{hotel.name} FreePlay 바우처로 VIP 신청하기</span>
++        </button>
++      */}
+     </div>
+   );
+ };
+-- 
+2.55.0.windows.3
+

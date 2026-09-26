@@ -3,13 +3,16 @@ import { apiCommonClient, ResultCode } from './apiClient';
 export interface UcheckResponse {
   result: ResultCode | number;
   message?: string;
+  sessionid?: string;
   data?: {
     memberInfo?: any;
+    uinfo?: any; // 실제 서버 응답에서 회원 정보가 담기는 필드명
     memberShip?: any;
     memPickList?: any;
     memberReward?: any;
   };
   memberInfo?: any;
+  uinfo?: any;
   memberShip?: any;
   memPickList?: any;
   memberReward?: any;
@@ -74,6 +77,8 @@ export const clearSession = () => {
     // 로그인 시 syncUserInfoFromResponse가 채워 넣은 로그인 사용자 식별자도 함께 초기화한다.
     localStorage.removeItem('_platform_uid');
     localStorage.removeItem('_memid');
+    // 저장해 둔 FCM 푸시 토큰(앱 실행마다 uupdate에 재사용)도 함께 초기화한다.
+    localStorage.removeItem('fcm_token');
   } catch {
     // ignore
   }
@@ -92,10 +97,22 @@ export const checkLogin = async (options?: { force?: boolean }): Promise<LoginCh
     const response = await apiCommonClient.post<UcheckResponse, {}>('/members/uchk', {}, { suppressErrorToast: true });
 
     if (response.result === ResultCode.SUCCESS || response.result === 0) {
-      // 서버 응답이 data로 감싸져 오는 경우와 최상위로 오는 경우를 모두 지원
+      
+      
+      // 서버가 세션을 롤링 갱신하며 새 sessionid를 내려줄 수 있어, 로컬 저장값과 다르면 갱신한다.
+      // 서버 응답이 data로 감싸져 오는 경우와 최상위로 오는 경우를 모두 지원.
+      // /members/uchk의 실제 회원 정보는 memberInfo가 아니라 uinfo 필드로 내려온다
+      // (예: { data: { uinfo: { uidx, u_dp, u_exp, ... } } }).
       const resData = response.data || response;
+      console.log('로그인 상태 확인(uchk) 성공:', resData.sessionid);
+      console.log('로컬 세션 ID:', localStorage.getItem('sessionid'));
+
+      if (resData.sessionid && resData.sessionid !== localStorage.getItem('sessionid')) {
+        localStorage.setItem('sessionid', resData.sessionid);
+      }
+
       return {
-        memberInfo: resData.memberInfo || {},
+        memberInfo: resData.memberInfo || resData.uinfo || {},
         memberShip: resData.memberShip || {},
         memPickList: resData.memPickList || {},
         memberReward: resData.memberReward || {},

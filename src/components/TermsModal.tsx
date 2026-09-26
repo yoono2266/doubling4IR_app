@@ -43,7 +43,7 @@ function DocumentBody({ body }: { body: string }) {
           key={idx}
           className={`text-xs text-slate-300 leading-relaxed ${line.startsWith('-') ? 'pl-3' : ''}`}
         >
-          {line ? renderInline(line, String(idx)) : ' '}
+          {line ? renderInline(line, String(idx)) : ' '}
         </p>
       ))}
     </>

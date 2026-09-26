@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { PolyMarketItem } from '../data/polyMarketData';
 import { apiCommonClient } from '../utils/apiClient';
+import { getStoredUserInfo } from '../utils/auth';
 
 const DP_PRESETS = [100, 500, 1000, 5000];
 
@@ -20,11 +21,25 @@ export const PolyMarketScreen: React.FC = () => {
     setSelectedMarket,
     setCurrentSubScreen,
     user,
+    isLoggedIn,
+    myProfile,
+    refreshMemberProfile,
     requireLogin,
     refreshPlmContents,
   } = useApp();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+
+  // 확인 모달의 "보유"/"잔여 예상 포인트"는 Header.tsx와 동일하게 실제 서버 잔액
+  // (myProfile.memberInfo.u_dp)을 기준으로 표시한다. (투표 자체의 mock 차감 로직인
+  // user.walletDp와는 별개 — PolyMarketDetailScreen.tsx / PolyMarketCarousel.tsx와 동일한 패턴)
+  const memberInfoDp = myProfile?.memberInfo?.u_dp;
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    if (memberInfoDp !== undefined && memberInfoDp !== null) return;
+    refreshMemberProfile();
+  }, [isLoggedIn, memberInfoDp, refreshMemberProfile]);
+  const headerWalletDp = memberInfoDp ?? getStoredUserInfo()?.u_dp ?? 0;
 
   // Modal states for vote flow
   const [confirmModalData, setConfirmModalData] = useState<{
@@ -258,10 +273,10 @@ export const PolyMarketScreen: React.FC = () => {
       {confirmModalData && (() => {
         const isRevote = confirmModalData.isRevote;
         const prevAmount = confirmModalData.prevAmount || 100;
-        const maxAvailableDp = isRevote ? user.walletDp + prevAmount : user.walletDp;
+        const maxAvailableDp = isRevote ? headerWalletDp + prevAmount : headerWalletDp;
         const projectedBalance = isRevote
-          ? user.walletDp + prevAmount - selectedAmount
-          : user.walletDp - selectedAmount;
+          ? headerWalletDp + prevAmount - selectedAmount
+          : headerWalletDp - selectedAmount;
         const expectedPayout = calcExpectedPayout(selectedAmount, confirmModalData.odds);
 
         return (
@@ -302,7 +317,7 @@ export const PolyMarketScreen: React.FC = () => {
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center text-[11px]">
                     <span className="text-slate-300 font-bold">매수 DP 선택:</span>
-                    <span className="text-slate-400">보유: {user.walletDp.toLocaleString()} DP</span>
+                    <span className="text-slate-400">보유: {headerWalletDp.toLocaleString()} DP</span>
                   </div>
                   <div className="grid grid-cols-4 gap-1.5">
                     {DP_PRESETS.map((preset) => {
@@ -346,7 +361,7 @@ export const PolyMarketScreen: React.FC = () => {
                     </span>
                   </div>
 
-                  {/* Expected Payout based on Odds */}
+                  {/* Expected Payout based on Odds 
                   <div className="pt-2 border-t border-[#1F334D]/80">
                     <div className="bg-[#162639] p-2 rounded-lg border border-[#C5A059]/30 text-center">
                       <span className="text-[11px] text-slate-300 block">
@@ -354,6 +369,7 @@ export const PolyMarketScreen: React.FC = () => {
                       </span>
                     </div>
                   </div>
+                    */}
                 </div>
               </div>
 

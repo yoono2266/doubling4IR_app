@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>Google 로그인 처리 중</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  body { font-family: -apple-system, sans-serif; background: #0D1B2A; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; padding: 24px; box-sizing: border-box; }
+</style>
+</head>
+<body>
+  <p>Google 로그인 처리 중입니다.<br />자동으로 앱으로 돌아가지 않으면 더블링 앱을 직접 열어주세요.</p>
+  <script>
+    // Android App Links(Digital Asset Links) 자동 검증이 실패한 기기/빌드(예: assetlinks.json에
+    // 등록되지 않은 디버그 서명 keystore)에서는 시스템 브라우저가 이 페이지를 그냥 열어버리고
+    // 앱으로 자동 복귀하지 않는다. 그런 경우를 대비해, 현재 URL(access_token/state 포함)을 그대로
+    // 담은 intent:// URI로 명시적으로 앱 패키지를 지정해 강제로 앱을 재실행시킨다.
+    // package가 지정된 explicit intent는 autoVerify 상태와 무관하게, AndroidManifest.xml에 선언된
+    // 동일한 데이터(scheme/host/pathPrefix) intent-filter와 매칭되면 정상적으로 동작한다.
+    (function () {
+      var ua = navigator.userAgent || '';
+      var isAndroid = /Android/i.test(ua);
+      if (!isAndroid) return;
+
+      var target = window.location.href.replace(/^https?:\/\//, '');
+      var intentUrl = 'intent://' + target + '#Intent;scheme=https;package=com.spoodds.prod;end';
+      window.location.replace(intentUrl);
+    })();
+  </script>
+</body>
+</html>

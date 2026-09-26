@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { HOTELS_JACKPOT_DATA, HotelJackpotData, formatUsd, formatKrw, JackpotItem } from '../data/jackpotData';
+import { HOTELS_JACKPOT_DATA, HotelJackpotData, formatUsd, formatKrw, formatKrwByCurrency, getJackpotThumbUrl, JackpotItem } from '../data/jackpotData';
 import { SOLAIRE_JACKPOT_HISTORY } from '../data/jackpotHistoryData';
 
 interface HotelJackpotDetailScreenProps {
@@ -9,12 +9,25 @@ interface HotelJackpotDetailScreenProps {
 }
 
 export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> = ({ hotelId, onBack }) => {
-  const { selectedHotelId, setCurrentTab, setCurrentSubScreen, startBooking } = useApp();
+  const { selectedHotelId, setCurrentTab, setCurrentSubScreen, startBooking, jackpotHotels, refreshJackpotHotels } = useApp();
   const targetId = hotelId || selectedHotelId || 'okada';
 
+  // 잭팟 목록(JackpotMapScreen)에서 실서버(api hotels/jackpots)로 조회해 둔 데이터를 우선 사용하고,
+  // 아직 캐시가 없는 진입 경로(예: 하단 네비 '프로그래시브' 탭, 홈 배너 등 목록 화면을 거치지 않는 경우)에서는
+  // 이 화면이 직접 캐시를 채운다. 그 사이 잠깐은 목데이터로 대체 표시한다.
+  useEffect(() => {
+    if (jackpotHotels.length === 0) {
+      refreshJackpotHotels();
+    }
+  }, [jackpotHotels.length, refreshJackpotHotels]);
+
   const hotel: HotelJackpotData = useMemo(() => {
-    return HOTELS_JACKPOT_DATA.find(h => h.id === targetId) || HOTELS_JACKPOT_DATA.find(h => h.id === 'okada')!;
-  }, [targetId]);
+    return (
+      jackpotHotels.find(h => h.id === targetId) ||
+      HOTELS_JACKPOT_DATA.find(h => h.id === targetId) ||
+      HOTELS_JACKPOT_DATA.find(h => h.id === 'okada')!
+    );
+  }, [targetId, jackpotHotels]);
 
   const [selectedJackpotId, setSelectedJackpotId] = useState<string | null>(null);
 
@@ -150,7 +163,12 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
         </div>
 
         {/* Dynamic Treemap Grid depending on count */}
-        {sortedJackpots.length >= 10 ? (
+        {sortedJackpots.length === 0 ? (
+          // 실서버 데이터 연동 후 잭팟이 아직 등록되지 않은 호텔(다수)에 대한 빈 상태.
+          <div className="min-h-24 flex items-center justify-center bg-[#0D1B2A] rounded-xl border border-[#1F334D]/80 text-xs text-slate-500">
+            등록된 프로그래시브 잭팟 정보가 없습니다.
+          </div>
+        ) : sortedJackpots.length >= 10 ? (
           /* Flagship Treemap Layout (10+ items)
              row-span 기반 겹침 버그 제거: 상단 flex + 중단/하단 독립 grid로 재구성.
              각 섹션이 별도 flow라 타일이 서로 겹치지 않는다. */
@@ -167,7 +185,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="text-[10px] font-extrabold text-[#0D1B2A] bg-[#C5A059] px-1.5 py-0.2 rounded shadow">
-                    #1 {sortedJackpots[0].badge || 'MEGA'}
+                    #1 {sortedJackpots[0].badge || 'PROGRESSIVE'}
                   </span>
                   <span className="text-[9px] text-[#E2C28E] font-mono">{((sortedJackpots[0].amountUsd / totalJackpotSum) * 100).toFixed(1)}%</span>
                 </div>
@@ -194,7 +212,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
                   }`}
                 >
                   <span className="text-[9px] font-bold text-[#E2C28E] bg-[#C5A059]/20 px-1 rounded w-fit">
-                    #2 {sortedJackpots[1].badge || 'HOT'}
+                    #2 {sortedJackpots[1].badge || 'PROGRESSIVE'}
                   </span>
                   <div className="min-w-0">
                     <h4 className="text-[11px] font-bold text-white truncate">{sortedJackpots[1].name}</h4>
@@ -210,8 +228,8 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
                       : 'bg-[#15253A] border border-[#1F334D] hover:border-[#C5A059]/50'
                   }`}
                 >
-                  <span className="text-[9px] font-bold text-slate-300 bg-[#0D1B2A] px-1 rounded w-fit">
-                    #3
+                  <span className="text-[9px] font-bold text-[#E2C28E] bg-[#C5A059]/20 px-1 rounded w-fit">
+                    #3 {sortedJackpots[2].badge || 'PROGRESSIVE'}
                   </span>
                   <div className="min-w-0">
                     <h4 className="text-[10px] font-bold text-white truncate">{sortedJackpots[2].name}</h4>
@@ -221,7 +239,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
               </div>
             </div>
 
-            {/* Mid: #4 ~ #7 (2-col grid) */}
+            {/* Mid: #4 ~ #7 (2-col grid) 
             {sortedJackpots.length > 3 && (
               <div className="grid grid-cols-2 gap-1.5">
                 {sortedJackpots.slice(3, 7).map((jp, idx) => (
@@ -245,8 +263,8 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
                 ))}
               </div>
             )}
-
-            {/* Bottom: #8 ~ #15 (4-col small tiles) */}
+*/}
+            {/* Bottom: #8 ~ #15 (4-col small tiles) 
             {sortedJackpots.length > 7 && (
               <div className="grid grid-cols-4 gap-1">
                 {sortedJackpots.slice(7, 15).map((jp, idx) => (
@@ -266,6 +284,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
                 ))}
               </div>
             )}
+              */}
           </div>
         ) : (
           /* Standard Treemap Layout (3~5 items) */
@@ -377,18 +396,19 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold shrink-0 ${
-                      idx === 0
-                        ? 'bg-[#C5A059] text-[#0D1B2A] shadow'
-                        : idx === 1
-                        ? 'bg-slate-300 text-[#0D1B2A]'
-                        : idx === 2
-                        ? 'bg-[#B08D57] text-[#0D1B2A]'
-                        : 'bg-[#0D1B2A] text-slate-400 border border-[#1F334D]'
-                    }`}
-                  >
-                    {idx + 1}
+                  <div className="w-16 h-10 rounded-lg overflow-hidden shrink-0 border border-[#1F334D] bg-[#0D1B2A]">
+                    {getJackpotThumbUrl(jp.thumbUrl) ? (
+                      <img
+                        src={getJackpotThumbUrl(jp.thumbUrl)}
+                        alt={jp.name}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-500">
+                        <span className="material-symbols-outlined text-base">casino</span>
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -409,7 +429,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
                     {formatUsd(jp.amountUsd)}
                   </p>
                   <p className="text-[9px] text-slate-400 font-mono">
-                    {formatKrw(jp.amountUsd)}
+                    {formatKrwByCurrency(jp.amountUsd, jp.currency)}
                   </p>
                 </div>
               </div>

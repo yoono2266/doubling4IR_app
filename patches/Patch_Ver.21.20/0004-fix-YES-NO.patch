@@ -1,0 +1,138 @@
+From 99f6ff260a218a09678decebc2b8260b43ecad33 Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Sun, 20 Sep 2026 16:54:02 +0900
+Subject: [PATCH 4/8] =?UTF-8?q?fix:=20=EC=98=88=EC=B8=A1=20=EC=B1=8C?=
+ =?UTF-8?q?=EB=A6=B0=EC=A7=80=20YES/NO=20=ED=8D=BC=EC=84=BC=ED=8A=B8=20?=
+ =?UTF-8?q?=ED=91=9C=EC=8B=9C=20=EC=A0=9C=EA=B1=B0?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+홈 화면 실시간 예측 챌린지 카드, 목록 화면, 상세 화면에서
+막대그래프 위/버튼 텍스트에 노출되던 YES/NO 퍼센트 숫자를 제거.
+막대그래프 비율 로직(width 계산)은 그대로 유지.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01JMFMtn43hjnYBbu4npezkf
+---
+ src/components/PolyMarketCarousel.tsx  | 8 ++------
+ src/screens/HomeScreen.tsx             | 2 +-
+ src/screens/PolyMarketDetailScreen.tsx | 8 ++------
+ src/screens/PolyMarketScreen.tsx       | 8 ++------
+ 4 files changed, 7 insertions(+), 19 deletions(-)
+
+diff --git a/src/components/PolyMarketCarousel.tsx b/src/components/PolyMarketCarousel.tsx
+index 48ac3ac..7df5d89 100644
+--- a/src/components/PolyMarketCarousel.tsx
++++ b/src/components/PolyMarketCarousel.tsx
+@@ -187,10 +187,6 @@ export const PolyMarketCarousel: React.FC = () => {
+         {/* Unified YES/NO Bar and Action Buttons */}
+         <div className="space-y-2">
+           {/* Visual Probability Bar */}
+-          <div className="flex justify-between text-xs font-bold font-mono">
+-            <span className="text-emerald-400">YES {currentMarket.yesOdds}</span>
+-            <span className="text-rose-400">NO {currentMarket.noOdds}</span>
+-          </div>
+           <div className="w-full bg-[#0D1B2A] h-2 rounded-full overflow-hidden flex">
+             <div
+               className="bg-emerald-500 h-full transition-all duration-300"
+@@ -213,7 +209,7 @@ export const PolyMarketCarousel: React.FC = () => {
+               }`}
+             >
+               <span className="material-symbols-outlined text-xs">thumb_up</span>
+-              <span>YES {currentMarket.yesOdds}</span>
++              <span>YES</span>
+             </button>
+             <button
+               onClick={(e) => handleVoteClick('NO', currentMarket.noOdds, e)}
+@@ -224,7 +220,7 @@ export const PolyMarketCarousel: React.FC = () => {
+               }`}
+             >
+               <span className="material-symbols-outlined text-xs">thumb_down</span>
+-              <span>NO {currentMarket.noOdds}</span>
++              <span>NO</span>
+             </button>
+           </div>
+         </div>
+diff --git a/src/screens/HomeScreen.tsx b/src/screens/HomeScreen.tsx
+index 55f348c..4a3792a 100644
+--- a/src/screens/HomeScreen.tsx
++++ b/src/screens/HomeScreen.tsx
+@@ -288,7 +288,7 @@ useEffect(() => {
+         <div className="flex items-center justify-between mb-2.5">
+           <h3 className="text-xs font-bold text-[#C5A059] uppercase tracking-wider flex items-center gap-1.5">
+             <span className="material-symbols-outlined text-sm">query_stats</span>
+-            실시간 예측 챌린지 (100~5,000 DP)
++            실시간 예측 챌린지
+           </h3>
+           <button
+             onClick={handlePolyCardClick}
+diff --git a/src/screens/PolyMarketDetailScreen.tsx b/src/screens/PolyMarketDetailScreen.tsx
+index 3837592..8385c18 100644
+--- a/src/screens/PolyMarketDetailScreen.tsx
++++ b/src/screens/PolyMarketDetailScreen.tsx
+@@ -206,10 +206,6 @@ export const PolyMarketDetailScreen: React.FC = () => {
+ 
+         {/* Visual Probability Bar & Yes/No Buttons */}
+         <div className="space-y-2 pt-1">
+-          <div className="flex justify-between text-xs font-bold font-mono px-1">
+-            <span className="text-emerald-400">YES {selectedMarket.yesOdds}</span>
+-            <span className="text-rose-400">NO {selectedMarket.noOdds}</span>
+-          </div>
+           <div className="w-full bg-[#0D1B2A] h-2.5 rounded-full overflow-hidden flex border border-[#1F334D]">
+             <div
+               className="bg-emerald-500 h-full transition-all duration-300"
+@@ -232,7 +228,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
+               }`}
+             >
+               <span className="material-symbols-outlined text-base">thumb_up</span>
+-              <span>YES {selectedMarket.yesOdds}</span>
++              <span>YES</span>
+             </button>
+ 
+             <button
+@@ -244,7 +240,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
+               }`}
+             >
+               <span className="material-symbols-outlined text-base">thumb_down</span>
+-              <span>NO {selectedMarket.noOdds}</span>
++              <span>NO</span>
+             </button>
+           </div>
+         </div>
+diff --git a/src/screens/PolyMarketScreen.tsx b/src/screens/PolyMarketScreen.tsx
+index 109983d..2c73a37 100644
+--- a/src/screens/PolyMarketScreen.tsx
++++ b/src/screens/PolyMarketScreen.tsx
+@@ -211,10 +211,6 @@ export const PolyMarketScreen: React.FC = () => {
+ 
+               {/* Voting Probability Bar */}
+               <div>
+-                <div className="flex justify-between text-xs font-bold font-mono mb-1">
+-                  <span className="text-emerald-400">YES {m.yesOdds}</span>
+-                  <span className="text-rose-400">NO {m.noOdds}</span>
+-                </div>
+                 <div className="w-full bg-[#0D1B2A] h-2.5 rounded-full overflow-hidden flex border border-[#1F334D]">
+                   <div
+                     className="bg-emerald-500 h-full transition-all duration-300"
+@@ -238,7 +234,7 @@ export const PolyMarketScreen: React.FC = () => {
+                   }`}
+                 >
+                   <span className="material-symbols-outlined text-sm">thumb_up</span>
+-                  <span>YES {m.yesOdds}</span>
++                  <span>YES</span>
+                 </button>
+ 
+                 <button
+@@ -250,7 +246,7 @@ export const PolyMarketScreen: React.FC = () => {
+                   }`}
+                 >
+                   <span className="material-symbols-outlined text-sm">thumb_down</span>
+-                  <span>NO {m.noOdds}</span>
++                  <span>NO</span>
+                 </button>
+               </div>
+             </div>
+-- 
+2.55.0.windows.3
+

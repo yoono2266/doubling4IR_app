@@ -1,0 +1,39 @@
+From cdbb85737c37455c967efcd930c0c584ca8f22a0 Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Wed, 9 Sep 2026 00:48:19 +0900
+Subject: [PATCH 09/34] =?UTF-8?q?=EC=88=98=EC=A0=95:=20=EB=A9=A4=EB=B2=84?=
+ =?UTF-8?q?=EC=8B=AD=20=ED=98=9C=ED=83=9D=20=EC=84=A0=ED=83=9D=20=ED=99=94?=
+ =?UTF-8?q?=EB=A9=B4=20=E2=80=94=20=EC=98=A4=EC=B9=B4=EB=8B=A4=E2=86=92?=
+ =?UTF-8?q?=EC=86=94=EB=A0=88=EC=96=B4=20=EC=BD=98=ED=85=90=EC=B8=A0=20?=
+ =?UTF-8?q?=EA=B5=90=EC=B2=B4,=20"FreePlay"=E2=86=92"=EC=98=A4=ED=8D=BC"?=
+ =?UTF-8?q?=20=ED=86=B5=EC=9D=BC?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ src/screens/CompBenefitSelectionScreen.tsx | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/screens/CompBenefitSelectionScreen.tsx b/src/screens/CompBenefitSelectionScreen.tsx
+index 9579109..22ebebd 100644
+--- a/src/screens/CompBenefitSelectionScreen.tsx
++++ b/src/screens/CompBenefitSelectionScreen.tsx
+@@ -9,11 +9,11 @@ export const CompBenefitSelectionScreen: React.FC = () => {
+   const handleBenefitClick = (benefit: CompBenefitItem) => {
+     if (benefit.id === 'freeplay_suite') {
+       startBooking({
+-        name: 'Okada Manila (오카다 마닐라)',
+-        location: 'New Manila Bay, Philippines',
++        name: '솔레어 리조트 앤 카지노 (Solaire Resort & Casino)',
++        location: '필리핀 마닐라 · 엔터테인먼트 시티',
+         roomType: 'Executive Ocean View Suite',
+         pricePerNightDp: 600,
+-        image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80'
++        image: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=800&auto=format&fit=crop&q=80'
+       });
+     } else if (benefit.id === 'gaming_room') {
+       setCurrentSubScreen('gaming-room-booking');
+-- 
+2.55.0.windows.3
+

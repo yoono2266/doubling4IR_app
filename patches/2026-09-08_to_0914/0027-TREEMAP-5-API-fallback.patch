@@ -1,0 +1,259 @@
+From 456a1eb9deae3e8ef0c0500f46e99a0e5f378301 Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Mon, 14 Sep 2026 00:44:16 +0900
+Subject: [PATCH 27/34] =?UTF-8?q?=EC=88=98=EC=A0=95:=20=ED=94=84=EB=A1=9C?=
+ =?UTF-8?q?=EA=B7=B8=EB=9E=98=EC=8B=9C=EB=B8=8C=20=EB=AA=A9=EB=A1=9D=20?=
+ =?UTF-8?q?=ED=99=94=EB=A9=B4=20=EB=AC=B8=EA=B5=AC=20=EC=A0=95=EB=A6=AC?=
+ =?UTF-8?q?=C2=B7TREEMAP=20=ED=86=A0=EA=B8=80=20=EC=A0=9C=EA=B1=B0,=20?=
+ =?UTF-8?q?=ED=98=B8=ED=85=94=20=EC=B9=B4=EB=93=9C=20=EC=9D=B4=EB=AF=B8?=
+ =?UTF-8?q?=EC=A7=80=20=EC=A4=91=EB=B3=B5=20=ED=95=B4=EC=86=8C(=EB=8C=80?=
+ =?UTF-8?q?=EC=B2=B4=20=EC=9D=B4=EB=AF=B8=EC=A7=80=205=EC=A2=85=20+=20?=
+ =?UTF-8?q?=EC=A7=80=EC=97=AD=EB=B3=84=20API=20=EC=8D=B8=EB=84=A4=EC=9D=BC?=
+ =?UTF-8?q?=20fallback)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01JMFMtn43hjnYBbu4npezkf
+---
+ src/data/jackpotData.ts          | 60 +++++++++++++++++++++++++-------
+ src/screens/JackpotMapScreen.tsx | 29 ++++++++++-----
+ 2 files changed, 68 insertions(+), 21 deletions(-)
+
+diff --git a/src/data/jackpotData.ts b/src/data/jackpotData.ts
+index ed01eee..28c7649 100644
+--- a/src/data/jackpotData.ts
++++ b/src/data/jackpotData.ts
+@@ -25,6 +25,42 @@ export interface HotelJackpotData {
+   slots?: number;
+ }
+ 
++// 2026-09-15: 아래 이미지들은 전부 Unsplash License(무료 상업적 이용 가능) 스톡 사진입니다.
++// 해당 카지노/리조트의 실제 브랜드 사진이 아니며, 목록/상세 화면에서 카드 이미지가 전부
++// 동일해 보이는 문제를 완화하기 위한 대체 이미지입니다 (실제 브랜드 사진 확보 전 임시 조치).
++//
++// A) jackpotData.ts 내 HOTELS_JACKPOT_DATA 중 우연히 동일 사진을 공유하던 5개 그룹을
++//    구분하기 위한 대체 이미지 (HotelJackpotDetailScreen.tsx에서 사용).
++const IMG_GROUP_CASINO_CARDS = 'https://images.unsplash.com/photo-1606167668584-78701c57f13d?w=800&auto=format&fit=crop&q=80';
++const IMG_GROUP_RESORT_POOL = 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&auto=format&fit=crop&q=80';
++const IMG_GROUP_SKYLINE_NIGHT = 'https://images.unsplash.com/photo-1535827841776-24afc1e255ac?w=800&auto=format&fit=crop&q=80';
++const IMG_GROUP_HOTEL_LOBBY = 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800&auto=format&fit=crop&q=80';
++const IMG_GROUP_OUTDOOR_NIGHT = 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&auto=format&fit=crop&q=80';
++
++// B) JackpotMapScreen.tsx(잭팟 목록, 실서버 API 연동 화면)에서 API가 내려주는
++//    jp_thumb_url이 비어 있을 때 쓰는 지역별 대체 이미지. 국가 코드(MO/PH/SG)당 2종을
++//    번갈아 배정해 "전부 동일 사진" 문제를 완화한다. (A)의 이미지 일부를 재사용한다.
++const IMG_FALLBACK_RESORT_EXTERIOR = 'https://images.unsplash.com/photo-1519449556851-5720b33024e7?w=800&auto=format&fit=crop&q=80';
++const IMG_FALLBACK_SLOT_MACHINE = 'https://images.unsplash.com/photo-1518895312237-a9e23508077d?w=800&auto=format&fit=crop&q=80';
++
++export const REGION_FALLBACK_IMAGES: Record<'MO' | 'PH' | 'SG', [string, string]> = {
++  MO: [IMG_GROUP_CASINO_CARDS, IMG_GROUP_SKYLINE_NIGHT],
++  PH: [IMG_GROUP_RESORT_POOL, IMG_GROUP_HOTEL_LOBBY],
++  SG: [IMG_GROUP_OUTDOOR_NIGHT, IMG_FALLBACK_RESORT_EXTERIOR],
++};
++
++// 위 3개 국가(MO/PH/SG) 외 지역(API에 KR/JP 등이 추가될 경우) 또는 국가 코드를 알 수 없을 때의
++// 최종 대체 이미지.
++export const DEFAULT_FALLBACK_IMAGE = IMG_FALLBACK_SLOT_MACHINE;
++
++// regionCode(국가 코드)와 목록 내 순번(index)을 받아 대체 이미지를 반환한다.
++// JackpotMapScreen.tsx의 mapHotels()에서 jp_thumb_url이 비어 있을 때 호출한다.
++export const getHotelFallbackImage = (regionCode: string, index: number): string => {
++  const pair = REGION_FALLBACK_IMAGES[regionCode as 'MO' | 'PH' | 'SG'];
++  if (!pair) return DEFAULT_FALLBACK_IMAGE;
++  return pair[index % 2];
++};
++
+ const KRW_RATE = 1350;
+ 
+ export const formatUsd = (val: number): string => {
+@@ -52,7 +88,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
+     region: 'KR',
+     regionLabel: '대한민국 인천',
+     desc: '동북아 최초의 아트테인먼트 복합 리조트, 외국인 전용',
+-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
++    image: IMG_GROUP_CASINO_CARDS,
+     badge: 'HOT 잭팟',
+     rating: 4.8,
+     vipTables: 40,
+@@ -72,7 +108,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
+     region: 'KR',
+     regionLabel: '대한민국 영종도',
+     desc: '15,000석 규모 아레나와 대형 디지털 거리를 갖춘 초대형 엔터테인먼트 리조트',
+-    image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop&q=80',
++    image: IMG_GROUP_RESORT_POOL,
+     badge: 'NEW 리조트',
+     rating: 4.9,
+     vipTables: 50,
+@@ -92,7 +128,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
+     region: 'KR',
+     regionLabel: '대한민국 강원도',
+     desc: '국내 유일 내국인 출입 허용 사계절 산악형 리조트',
+-    image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&auto=format&fit=crop&q=80',
++    image: IMG_GROUP_OUTDOOR_NIGHT,
+     badge: '국내유일',
+     rating: 4.7,
+     vipTables: 60,
+@@ -176,7 +212,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
+     region: 'PH',
+     regionLabel: '필리핀 마닐라',
+     desc: '럭셔리 호텔 브랜드(하얏트,누와,노부)가 결합된 글로벌 복합 리조트',
+-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
++    image: IMG_GROUP_CASINO_CARDS,
+     badge: 'HOT 잭팟',
+     rating: 4.8,
+     vipTables: 40,
+@@ -207,7 +243,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
+     region: 'PH',
+     regionLabel: '필리핀 파사이',
+     desc: '마닐라 공항 터미널 3과 직결된 필리핀 최초의 복합 카지노 단지',
+-    image: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&auto=format&fit=crop&q=80',
++    image: IMG_GROUP_SKYLINE_NIGHT,
+     badge: '공항직결',
+     rating: 4.7,
+     vipTables: 38,
+@@ -227,7 +263,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
+     region: 'PH',
+     regionLabel: '필리핀 클락',
+     desc: '필리핀 클락 경제특구 내 최초의 5성급 럭셔리 카지노 리조트',
+-    image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&auto=format&fit=crop&q=80',
++    image: IMG_GROUP_HOTEL_LOBBY,
+     badge: '클락1위',
+     rating: 4.7,
+     vipTables: 35,
+@@ -290,7 +326,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
+     region: 'MO',
+     regionLabel: '마카오 코타이',
+     desc: '화려한 생화 장식과 스카이캡(케이블카)이 특징인 극강의 하이엔드 리조트',
+-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
++    image: IMG_GROUP_CASINO_CARDS,
+     badge: '초호화 VIP',
+     rating: 4.9,
+     vipTables: 65,
+@@ -310,7 +346,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
+     region: 'MO',
+     regionLabel: '마카오 코타이',
+     desc: '금빛 외관과 대형 인공 워터파크를 갖춘 코타이 최대 규모 리조트 단지',
+-    image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop&q=80',
++    image: IMG_GROUP_RESORT_POOL,
+     badge: '코타이최대',
+     rating: 4.9,
+     vipTables: 80,
+@@ -331,7 +367,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
+     region: 'MO',
+     regionLabel: '마카오 코타이',
+     desc: '자하 하디드가 설계한 모피어스 호텔 등 미래지향적 건축미의 리조트',
+-    image: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&auto=format&fit=crop&q=80',
++    image: IMG_GROUP_SKYLINE_NIGHT,
+     badge: '미래지향',
+     rating: 4.9,
+     vipTables: 60,
+@@ -351,7 +387,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
+     region: 'MO',
+     regionLabel: '마카오 코타이',
+     desc: '보석함을 쌓아 올린 외관과 디지털 아트 광장을 갖춘 예술 리조트',
+-    image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&auto=format&fit=crop&q=80',
++    image: IMG_GROUP_HOTEL_LOBBY,
+     badge: '아트IR',
+     rating: 4.8,
+     vipTables: 55,
+@@ -371,7 +407,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
+     region: 'MO',
+     regionLabel: '마카오 코타이',
+     desc: 'SJM 그룹의 코타이 플래그십 리조트로 유럽 궁전과 중국 전통의 조화',
+-    image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&auto=format&fit=crop&q=80',
++    image: IMG_GROUP_OUTDOOR_NIGHT,
+     badge: '궁전스타일',
+     rating: 4.8,
+     vipTables: 55,
+@@ -424,7 +460,7 @@ export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
+     region: 'SG',
+     regionLabel: '싱가포르 센토사',
+     desc: '유니버설 스튜디오와 대형 아쿠아리움이 결합된 가족형 복합 리조트',
+-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
++    image: IMG_GROUP_CASINO_CARDS,
+     badge: '센토사 랜드마크',
+     rating: 4.8,
+     vipTables: 45,
+diff --git a/src/screens/JackpotMapScreen.tsx b/src/screens/JackpotMapScreen.tsx
+index 4cc6a01..8ec6dee 100644
+--- a/src/screens/JackpotMapScreen.tsx
++++ b/src/screens/JackpotMapScreen.tsx
+@@ -1,6 +1,6 @@
+ import React, { useState, useMemo, useEffect } from 'react';
+ import { useApp } from '../context/AppContext';
+-import { RegionCode, formatUsd, formatKrw } from '../data/jackpotData';
++import { RegionCode, formatUsd, formatKrw, getHotelFallbackImage } from '../data/jackpotData';
+ import { apiCommonClient, CommonResponse, ResultCode } from '../utils/apiClient';
+ 
+ // /contents/main-content API 요청/응답 타입
+@@ -100,18 +100,25 @@ const mapHotels = (data: JackpotApiResponse): HotelJackpotData[] => {
+   return [...data.hotels]
+     .sort((a, b) => a.jp_sort - b.jp_sort)
+     .filter(hotel => hotel.jp_view !== 0)
+-    .map(hotel => {
++    .map((hotel, index) => {
+       const country = countryByIndex.get(hotel.country_index);
+       const jackpots = jackpotsByHotel.get(hotel.jp_index) ?? [];
++      const regionCode = mapRegionCode(country?.country_code ?? '');
+ 
+       return {
+         id: hotel.hotel_code || String(hotel.jp_index),
+         name: hotel.hotel_name_ko,
+         nameEn: hotel.hotel_name_en,
+-        region: mapRegionCode(country?.country_code ?? ''),
++        region: regionCode,
+         regionLabel: country?.country_name_ko ?? '',
+         desc: '',
+-        image: hotel.jp_thumb_url ? `https://dou-cdn.wildwynn.com/static/upload/hotels/${hotel.jp_thumb_url}`: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop&q=80',
++        // 2026-09-15: API가 내려주는 jp_thumb_url이 비어 있으면(현재 전부 비어 있음),
++        // 예전엔 모든 호텔에 동일한 하드코딩 이미지 1개를 썼음(카드가 전부 똑같아 보이는 원인).
++        // 국가 코드(MO/PH/SG)별로 2종씩 번갈아 배정하는 jackpotData.ts의
++        // getHotelFallbackImage()로 대체 — 실제 브랜드 사진이 아닌 임시 대체 이미지임.
++        image: hotel.jp_thumb_url
++          ? `https://dou-cdn.wildwynn.com/static/upload/hotels/${hotel.jp_thumb_url}`
++          : getHotelFallbackImage(regionCode, index),
+         rating: 0,
+         jackpots: jackpots.map(jackpot => ({
+           id: String(jackpot.jp_index),
+@@ -127,8 +134,8 @@ const mapHotels = (data: JackpotApiResponse): HotelJackpotData[] => {
+ // 순위·비중에 따라 자동 부여되는 동적 뱃지
+ const getDynamicBadges = (rankIndex: number, sharePercent: number): string[] => {
+   const badges: string[] = [];
+-  if (rankIndex === 0) badges.push('1위 잭팟');
+-  else if (rankIndex <= 2) badges.push('TOP 잭팟');
++  if (rankIndex === 0) badges.push('1위');
++  else if (rankIndex <= 2) badges.push('TOP');
+   if (sharePercent >= 15) badges.push('글로벌 랜드마크');
+   return badges;
+ };
+@@ -224,11 +231,14 @@ export const JackpotMapScreen: React.FC = () => {
+         <div>
+           <h2 className="text-lg font-bold text-white flex items-center gap-2">
+             <span className="material-symbols-outlined text-[#C5A059]">grid_view</span>
+-            Jackpot Tree-map
++            프로그래시브 트리 맵 리스트
+           </h2>
+-          <p className="text-xs text-slate-400">아시아 주요 호텔 & 리조트 잭팟</p>
++          <p className="text-xs text-slate-400">아시아 주요 호텔 & 리조트 프로그래시브</p>
+         </div>
+-        {/* 리스트 뷰 ↔ 트리맵 뷰 토글 */}
++        {/* 2026-09-15 비활성화 (삭제하지 않고 주석 보존).
++            사유: 리스트 뷰 ↔ 트리맵 뷰 토글 버튼을 화면에서 제거하기로 함. viewMode는 항상
++            초기값 'list'로 고정되며, 아래 트리맵 렌더링 블록은 이 토글이 없으면 도달 불가능한
++            상태로 남음(제거 요청 범위 밖이라 코드는 보존).
+         <button
+           onClick={() => setViewMode((v) => (v === 'list' ? 'treemap' : 'list'))}
+           className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-extrabold border transition active:scale-95 ${
+@@ -242,6 +252,7 @@ export const JackpotMapScreen: React.FC = () => {
+           </span>
+           <span>{viewMode === 'treemap' ? 'LIST' : 'TREEMAP'}</span>
+         </button>
++        */}
+       </div>
+ 
+       {/* 1. Region Filter Tabs (ALL / KR / MO / SG / PH / JP) */}
+-- 
+2.55.0.windows.3
+

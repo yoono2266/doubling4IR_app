@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { JackpotBanner } from '../components/JackpotBanner';
 import { PolyMarketCarousel } from '../components/PolyMarketCarousel';
-import { displayLikeCount, displayBookmarkCount } from '../data/mockCounts';
 import { VideoPromoCard } from '../components/VideoPromoCard';
 import { apiCommonClient, ApiError, ResultCode, CommonResponse } from '../utils/apiClient';
 import { saveMainScrollTop, restoreMainScrollTop } from '../utils/scrollMemory';
@@ -61,6 +60,7 @@ export const HomeScreen: React.FC = () => {
     toggleLikePost,
     toggleBookmarkPost, // 💡 추가
     isLoggedIn,
+    authChecked,
     requireLogin,
     setSelectedHotelId,
     refreshPlmContents,
@@ -72,9 +72,12 @@ export const HomeScreen: React.FC = () => {
   };
 
   // "라이브 잭팟" 전체보기 → 잭팟 리스트가 아닌 "솔레어 리조트 앤 카지노" 상세로 직접 이동
+  // "라이브 프로그래시브" 섹션(전체보기 버튼) 클릭 시, 실제 잭팟 데이터가 등록된
+  // "솔레어 엔터테인먼트 시티"(jp_index=19, hotel_code=SREC) 상세로 바로 이동한다.
+  // id는 mapJackpotApiHotels()가 쓰는 것과 동일하게 hotel_code 기준('SREC')이어야 한다.
   const handleJackpotMoreClick = () => {
     if (!requireLogin()) return;
-    setSelectedHotelId('solaire');
+    setSelectedHotelId('SREC');
     setCurrentSubScreen('hotel-jackpot-detail');
   };
  const [page, setPage] = useState<number>(1);
@@ -183,9 +186,12 @@ const fetchPosts = useCallback(async (pageNum: number) => {
 }, [isLoading, isLoggedIn, requireLogin, setPosts]);
 
 // 마운트 시 1페이지 데이터 로드
+// authChecked(서버 세션 확인 완료)를 기다리지 않으면 isLoggedIn이 아직 false인 상태로
+// fetchPosts가 호출되어, 실제로는 로그인된 사용자에게도 sample-content가 요청되는 문제가 있었다.
 useEffect(() => {
+  if (!authChecked) return;
   fetchPosts(1);
-}, []);
+}, [authChecked]);
 
 useEffect(() => {
   console.log('[HomeScreen] mount -> refreshPlmContents()');
@@ -236,13 +242,13 @@ useEffect(() => {
     // 비디오 파일 URL 구성 (상대경로/절대경로 판별)
     let videoFullUrl = post.tb_file_url || '';
     if (videoFullUrl && !videoFullUrl.startsWith('http')) {
-      videoFullUrl = `https://dou-cdn.wildwynn.com/static/upload/contents/${videoFullUrl}`;
+      videoFullUrl = `https://dou-cdn.wildwynn.com/contents/${videoFullUrl}`;
     }
 
     // 비디오 썸네일 파일 URL 구성 (상대경로/절대경로 판별)
     let videoThumbUrl = post.tb_thumb_url || '';
     if (videoThumbUrl && !videoThumbUrl.startsWith('http')) {
-      videoThumbUrl = `https://dou-cdn.wildwynn.com/static/upload/contents/thumb/${videoThumbUrl}`;
+      videoThumbUrl = `https://dou-cdn.wildwynn.com/contents/thumb/${videoThumbUrl}`;
     }
 
     setVideoModal({
@@ -335,7 +341,7 @@ useEffect(() => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <img 
-                      src={`https://dou-cdn.wildwynn.com/static/upload/aimanager/logo/${post.tb_logo}`}
+                      src={`https://dou-cdn.wildwynn.com/aimanager/logo/${post.tb_logo}`}
                       alt={post.cate_name} 
                       className="w-8 h-8 rounded-full object-cover border border-[#C5A059]/40"
                     />
@@ -366,7 +372,7 @@ useEffect(() => {
                 {/* Attached Image if exists */}
                 {post.tb_thumb_url && (
                   <div className="rounded-xl overflow-hidden h-36 w-full my-1">
-                    <img src={`https://dou-cdn.wildwynn.com/static/upload/contents/thumb/${post.tb_thumb_url}`}  alt={post.tb_title} className="w-full h-full object-cover" />
+                    <img src={`https://dou-cdn.wildwynn.com/contents/thumb/${post.tb_thumb_url}`}  alt={post.tb_title} className="w-full h-full object-cover" />
                   </div>
                 )}
 
@@ -389,13 +395,23 @@ useEffect(() => {
                       <span className={`material-symbols-outlined text-sm ${post.is_user_liked ? 'fill-1 text-rose-400' : ''}`}>
                         favorite
                       </span>
-                      <span>{displayLikeCount(post.tb_index, post.count_like)}</span>
+                      <span>{post.count_like}</span>
                     </button>
 
-                    <div className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">bookmark</span>
-                      <span>{displayBookmarkCount(post.tb_index, post.count_bookmark)}</span>
-                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (requireLogin()) void toggleBookmarkPost(post.tb_index);
+                      }}
+                      className={`flex items-center gap-1 hover:text-[#C5A059] transition ${
+                        post.is_user_bookmarked ? 'text-[#C5A059] font-bold' : ''
+                      }`}
+                    >
+                      <span className={`material-symbols-outlined text-sm ${post.is_user_bookmarked ? 'fill-1 text-[#C5A059]' : ''}`}>
+                        bookmark
+                      </span>
+                      <span>{post.count_bookmark}</span>
+                    </button>
                   </div>
                 </div>
               </div>

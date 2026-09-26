@@ -1,0 +1,44 @@
+From 3ed131dbd8618d50cd665529767f8f8519ab562c Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Wed, 9 Sep 2026 00:48:18 +0900
+Subject: [PATCH 07/34] =?UTF-8?q?=EC=88=98=EC=A0=95:=20=EC=98=A4=ED=8D=BC?=
+ =?UTF-8?q?=20=ED=98=9C=ED=83=9D=20=EB=8D=B0=EC=9D=B4=ED=84=B0=20=E2=80=94?=
+ =?UTF-8?q?=20=EC=86=94=EB=A0=88=EC=96=B4=20=EB=A6=AC=EC=A1=B0=ED=8A=B8=20?=
+ =?UTF-8?q?=EC=A0=95=EB=B3=B4=20=EB=B0=98=EC=98=81,=20"FreePlay"=E2=86=92"?=
+ =?UTF-8?q?=EC=98=A4=ED=8D=BC"=20=ED=86=B5=EC=9D=BC?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ src/data/compBenefitData.ts | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/src/data/compBenefitData.ts b/src/data/compBenefitData.ts
+index e377516..8d14fab 100644
+--- a/src/data/compBenefitData.ts
++++ b/src/data/compBenefitData.ts
+@@ -16,16 +16,16 @@ export interface CompBenefitItem {
+ export const COMP_BENEFITS: CompBenefitItem[] = [
+   {
+     id: 'freeplay_suite',
+-    title: 'FreePlay 스위트',
++    title: '오퍼 스위트',
+     subtitle: '럭셔리 스위트룸 무상/우대 이용',
+-    tagline: '마카오·마닐라·싱가포르 최고급 복합리조트 스위트',
+-    description: 'ETERNITY 등급 회원에게 주어지는 분기별 무상 바우처로 아시아 최고급 복합리조트의 이그제큐티브 스위트룸을 우선 배정받으세요.',
++    tagline: '마닐라 엔터테인먼트 시티 · 솔레어 리조트 앤 카지노 스위트',
++    description: 'ETERNITY 등급 회원에게 주어지는 분기별 무상 바우처로 솔레어 리조트 앤 카지노(마닐라 엔터테인먼트 시티)의 이그제큐티브 스위트룸을 우선 배정받으세요.',
+     icon: 'king_bed',
+     badge: 'ETERNITY 등급 즉시 이용 가능',
+     tierRequirement: 'BAND 이상 (ETERNITY 분기 바우처 적용)',
+     isAvailable: true,
+     actionType: 'suite_booking',
+-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
++    image: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=800&auto=format&fit=crop&q=80',
+     highlights: [
+       '24시간 전담 VIP 버틀러 서비스',
+       '이그제큐티브 라운지 올액세스 (동반 1인)',
+-- 
+2.55.0.windows.3
+

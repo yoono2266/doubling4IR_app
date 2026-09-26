@@ -1,6 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { RegionCode, formatUsd, formatKrw, getHotelFallbackImage } from '../data/jackpotData';
+import {
+  RegionCode,
+  formatUsd,
+  formatKrw,
+  HotelJackpotData,
+  JackpotApiResponse,
+  mapRegionCode,
+  mapJackpotApiHotels,
+} from '../data/jackpotData';
 import { apiCommonClient, CommonResponse, ResultCode } from '../utils/apiClient';
 
 // /contents/main-content API 요청/응답 타입
@@ -15,122 +23,6 @@ interface Region {
   count: number;
 }
 
-interface JackpotCountry {
-  jp_index: number;
-  country_name_ko: string;
-  country_name_en: string;
-  country_name_en_short: string;
-  country_code: string;
-  jp_view: number;
-  jp_sort: number;
-  hotel_count: number;
-}
-
-interface JackpotHotel {
-  jp_index: number;
-  country_index: number;
-  hotel_name_ko: string;
-  hotel_name_en: string;
-  hotel_code: string;
-  jp_view: number;
-  jp_sort: number;
-  jp_thumb_url: string;
-}
-
-interface JackpotItemResponse {
-  jp_index: number;
-  hotel_index: number;
-  jp_name_ko: string;
-  jp_name_en: string;
-  jp_sub_name: string;
-  jp_desc: string;
-  jp_type: number;
-  jp_thumb_url:string;
-  jp_amount: number | string;
-  jp_currency: string;
-  jp_sort: number;
-}
-
-interface JackpotApiResponse {
-  country: JackpotCountry[];
-  hotels: JackpotHotel[];
-  jackpots: JackpotItemResponse[];
-}
-
-interface HotelJackpotData {
-  id: string;
-  name: string;
-  nameEn: string;
-  region: Exclude<RegionCode, 'ALL'>;
-  regionLabel: string;
-  desc: string;
-  image: string;
-  badge?: string;
-  rating: number;
-  jackpots: {
-    id: string;
-    name: string;
-    amountUsd: number;
-    type: number;
-  }[];
-  totalJackpotUsd: number;
-}
-
-const toNumber = (value: number | string): number => {
-  const parsed = typeof value === 'number' ? value : Number(value.replace(/,/g, ''));
-  return Number.isFinite(parsed) ? parsed : 0;
-};
-
-const mapRegionCode = (countryCode: string): Exclude<RegionCode, 'ALL'> => {
-  return countryCode.toUpperCase() as Exclude<RegionCode, 'ALL'>;
-};
-
-const mapHotels = (data: JackpotApiResponse): HotelJackpotData[] => {
-  const countryByIndex = new Map(data.country.map(country => [country.jp_index, country]));
-  const jackpotsByHotel = new Map<number, JackpotItemResponse[]>();
-
-  [...data.jackpots]
-    .sort((a, b) => a.jp_sort - b.jp_sort)
-    .forEach(jackpot => {
-      const items = jackpotsByHotel.get(jackpot.hotel_index) ?? [];
-      items.push(jackpot);
-      jackpotsByHotel.set(jackpot.hotel_index, items);
-    });
-
-  return [...data.hotels]
-    .sort((a, b) => a.jp_sort - b.jp_sort)
-    .filter(hotel => hotel.jp_view !== 0)
-    .map((hotel, index) => {
-      const country = countryByIndex.get(hotel.country_index);
-      const jackpots = jackpotsByHotel.get(hotel.jp_index) ?? [];
-      const regionCode = mapRegionCode(country?.country_code ?? '');
-
-      return {
-        id: hotel.hotel_code || String(hotel.jp_index),
-        name: hotel.hotel_name_ko,
-        nameEn: hotel.hotel_name_en,
-        region: regionCode,
-        regionLabel: country?.country_name_ko ?? '',
-        desc: '',
-        // 2026-09-15: API가 내려주는 jp_thumb_url이 비어 있으면(현재 전부 비어 있음),
-        // 예전엔 모든 호텔에 동일한 하드코딩 이미지 1개를 썼음(카드가 전부 똑같아 보이는 원인).
-        // 국가 코드(MO/PH/SG)별로 2종씩 번갈아 배정하는 jackpotData.ts의
-        // getHotelFallbackImage()로 대체 — 실제 브랜드 사진이 아닌 임시 대체 이미지임.
-        image: hotel.jp_thumb_url
-          ? `https://dou-cdn.wildwynn.com/static/upload/hotels/${hotel.jp_thumb_url}`
-          : getHotelFallbackImage(regionCode, index),
-        rating: 0,
-        jackpots: jackpots.map(jackpot => ({
-          id: String(jackpot.jp_index),
-          name: jackpot.jp_name_ko,
-          amountUsd: toNumber(jackpot.jp_amount),
-          type: jackpot.jp_type,
-        })),
-        totalJackpotUsd: jackpots.reduce((sum, jackpot) => sum + toNumber(jackpot.jp_amount), 0),
-      };
-    });
-};
-
 // 순위·비중에 따라 자동 부여되는 동적 뱃지
 const getDynamicBadges = (rankIndex: number, sharePercent: number): string[] => {
   const badges: string[] = [];
@@ -141,7 +33,7 @@ const getDynamicBadges = (rankIndex: number, sharePercent: number): string[] => 
 };
 
 export const JackpotMapScreen: React.FC = () => {
-  const { setSelectedHotelId, setCurrentSubScreen } = useApp();
+  const { setSelectedHotelId, setCurrentSubScreen, setJackpotHotels } = useApp();
   const [activeCountryIndex, setActiveCountryIndex] = useState<number>(0);
   const [regions, setRegions] = useState<Region[]>([]);
   const [hotels, setHotels] = useState<HotelJackpotData[]>([]);
@@ -167,7 +59,7 @@ export const JackpotMapScreen: React.FC = () => {
           const countries = [...response.data.country]
             .filter(country => country.jp_view !== 0)
             .sort((a, b) => a.jp_sort - b.jp_sort);
-          const apiHotels = mapHotels({ ...response.data, country: countries });
+          const apiHotels = mapJackpotApiHotels({ ...response.data, country: countries });
           const allCount = countryIndex === 0 ? apiHotels.length : countries.reduce(
             (count, country) => count + country.hotel_count,
             0
@@ -183,6 +75,12 @@ export const JackpotMapScreen: React.FC = () => {
             })),
           ]);
           setHotels(apiHotels);
+
+          // countryIndex===0(ALL) 조회는 전체 호텔+잭팟을 담고 있으므로, 상세 화면(HotelJackpotDetailScreen)이
+          // hotelId만으로 실데이터를 찾을 수 있도록 AppContext에 캐시해 둔다.
+          if (countryIndex === 0) {
+            setJackpotHotels(apiHotels);
+          }
         }
       } catch (error) {
         console.error(`/jackpot/${countryIndex} API 통신 오류:`, error);

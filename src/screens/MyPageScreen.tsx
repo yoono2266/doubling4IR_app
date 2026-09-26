@@ -131,7 +131,7 @@ export const MyPageScreen: React.FC = () => {
   }, []);
 
   const rewardUserCode = () => {
-    return `DBL-${myProfile?.memberInfo.u_language}-10${myProfile?.memberInfo?.uidx}00`;
+    return String(1000000 + Number(myProfile?.memberInfo?.uidx || 0));
   }
   const handleCopyReferral = () => {
     
@@ -157,7 +157,7 @@ export const MyPageScreen: React.FC = () => {
   // 프로필 이미지 주소 판별 (상대경로 대응)
   let profileImg = memberInfo?.u_profile || user?.avatar || '';
   if (profileImg && !profileImg.startsWith('http')) {
-    profileImg = `https://dou-cdn.wildwynn.com/static/upload/member/${profileImg}`;
+    profileImg = `https://dou-cdn.wildwynn.com/avatar/${profileImg}`;
   }
 
   // 사용자가 직접 등록한 프로필 사진 (mock — 실제 업로드 API 연동이 아니라 브라우저 로컬 저장).
@@ -311,10 +311,12 @@ export const MyPageScreen: React.FC = () => {
           </div>
 
           <div className="space-y-3 text-xs">
+            {/*
             <div className="flex justify-between py-1 border-b border-[#1F334D]/60">
               <span className="text-slate-400">그룹</span>
               <span className="font-bold text-white">마카오</span>
             </div>
+            */}
             <div className="flex justify-between py-1 border-b border-[#1F334D]/60">
               <span className="text-slate-400">멤버십 등급</span>
               <span className="font-bold text-[#E2C28E]">{tierDisplayName} VIP</span>
@@ -489,7 +491,7 @@ export const MyPageScreen: React.FC = () => {
 
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
           <span className="material-symbols-outlined text-[#C5A059]">account_balance_wallet</span>
-          더블링 포인트 (Double Ring Point)
+          더블링 포인트 (DOUBLE RING POINT)
         </h2>
 
         {/* 💡 포인트 사용처 mock 교환분(pointRedemptions)만큼 표시값에서 차감한다.
@@ -833,7 +835,7 @@ export const MyPageScreen: React.FC = () => {
           )}
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-white">Kevin 님</h2>
+              <h2 className="text-lg font-bold text-white">{memberInfo?.u_name || '게스트'}</h2>
               {/* ETERNITY 등급 뱃지 — 클릭 시 멤버십 등급 관리로 이동 */}
               <button
                 onClick={() => setCurrentSubScreen('my-membership')}
@@ -845,7 +847,7 @@ export const MyPageScreen: React.FC = () => {
               </button>
             </div>
             <p className="text-xs text-[#E2C28E] font-medium">DOUBLE RING VIP</p>
-            <p className="text-[10px] text-slate-400 mt-0.5 font-mono truncate">CODE: KEVIN-VIP-2026</p>
+            <p className="text-[10px] text-slate-400 mt-0.5 font-mono truncate">CODE: {1000000 + Number(memberInfo?.uidx || 0)}</p>
           </div>
         </div>
 

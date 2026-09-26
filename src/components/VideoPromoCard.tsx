@@ -1,6 +1,5 @@
 import React from 'react';
 import { Post, useApp } from '../context/AppContext';
-import { displayLikeCount, displayBookmarkCount } from '../data/mockCounts';
 import { saveMainScrollTop } from '../utils/scrollMemory';
 
 interface VideoPromoCardProps {
@@ -41,7 +40,7 @@ export const VideoPromoCard: React.FC<VideoPromoCardProps> = ({ post }) => {
       {/* 3. 1:1 Square Video Thumbnail with Play Button Overlay */}
       <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-[#0D1B2A] border border-[#1F334D]/80">
         <img 
-          src={`https://dou-cdn.wildwynn.com/static/upload/contents/thumb/${post.tb_thumb_url}`}
+          src={`https://dou-cdn.wildwynn.com/contents/thumb/${post.tb_thumb_url}`}
           alt={post.tb_title} 
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           referrerPolicy="no-referrer"
@@ -101,7 +100,7 @@ export const VideoPromoCard: React.FC<VideoPromoCardProps> = ({ post }) => {
             <span className={`material-symbols-outlined text-base ${post.is_user_liked ? 'text-rose-400 fill-1' : ''}`}>
               favorite
             </span>
-            <span className="text-xs font-mono">{displayLikeCount(post.tb_index, post.count_like)}</span>
+            <span className="text-xs font-mono">{post.count_like}</span>
           </button>
 
           {/* 💡 북마크 토글 버튼 */}
@@ -117,7 +116,7 @@ export const VideoPromoCard: React.FC<VideoPromoCardProps> = ({ post }) => {
             <span className={`material-symbols-outlined text-base ${post.is_user_bookmarked ? 'text-[#C5A059] fill-1' : ''}`}>
               bookmark
             </span>
-            <span className="text-xs font-mono">{displayBookmarkCount(post.tb_index, post.count_bookmark)}</span>
+            <span className="text-xs font-mono">{post.count_bookmark}</span>
           </button>
 
 

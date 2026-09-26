@@ -144,24 +144,6 @@ export const EmailVerifyScreen: React.FC = () => {
         </button>
       </div>
         */}
-      {/* Top Back Header (Only Back Button for Request, Back button or title for others) */}
-      <div className="flex items-center justify-between pb-3 border-b border-[#1F334D]">
-        <button 
-          onClick={() => {
-            if (step === 'request') setCurrentSubScreen('signup');
-            else if (step === 'receipt') setStep('request');
-            else setCurrentSubScreen('login');
-          }}
-          className="w-8 h-8 rounded-full bg-[#162639] border border-[#1F334D] flex items-center justify-center text-slate-300 hover:text-white transition"
-        >
-          <span className="material-symbols-outlined text-lg">chevron_left</span>
-        </button>
-        {step === 'receipt' && (
-          <span className="text-xs font-bold text-white">이메일 수신함</span>
-        )}
-        <div className="w-8"></div>
-      </div>
-
       {/* Main View Area by Step */}
       <div className="flex-1 my-auto flex flex-col justify-center items-center py-6">
 

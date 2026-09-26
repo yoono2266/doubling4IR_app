@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Device } from '@capacitor/device';
 import { apiCommonClient, setErrorToastHandler, setSessionExpiredHandler, ResultCode, CommonResponse } from '../utils/apiClient'; // 💡 apiCommonClient 임포트 추가
 import { checkLogin, clearSession } from '../utils/auth';
 import {
@@ -149,6 +151,9 @@ interface AppContextType {
   // 💡 로그인 세션 확인 및 DP 등 최신 회원 정보 갱신 (/member/uchk)
   refreshLogin: () => Promise<boolean>;
 
+  // 💡 FCM 푸시 토큰이 새로 발급/갱신될 때 호출 — localStorage 저장 + (로그인 상태면) /members/uupdate로 즉시 반영
+  updatePushToken: (token: string) => void;
+
   // 💡 u_dp 등 지갑 정보를 포함한 전체 회원 정보 재조회 (/members/{uidx}).
   // uchk만으로는 비어 있을 수 있는 필드(u_dp 등)를 캐시가 지워진 상태에서도 다시 채워야 할 때 호출.
   refreshMemberProfile: () => Promise<boolean>;
@@ -265,6 +270,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  // 💡 앱 실행마다(매 론치) 디바이스 정보 + FCM 푸시 토큰을 서버에 동기화한다.
+  // utoken은 App.tsx의 PushNotifications 'registration' 리스너가 발급받아 저장해 둔 마지막
+  // FCM 토큰을 재사용한다 — 아직 발급 전(웹 환경 등)이면 utoken 없이 호출한다.
+  const syncDeviceAndToken = async (uidx: number, overrideToken?: string): Promise<void> => {
+    try {
+      const platform = Capacitor.getPlatform();
+      const { identifier: deviceid } = await Device.getId();
+      const utoken = overrideToken ?? localStorage.getItem('fcm_token');
+
+      // 서버 스키마가 deviceid/utoken을 Optional[str] = Field(...)로 선언하고 있어(값은 null 허용,
+      // 키 자체는 필수) undefined로 보내 키가 통째로 빠지면 422가 난다 — 반드시 null로 명시한다.
+      await apiCommonClient.post<CommonResponse, { mem_index: number; platform: string; deviceid: string | null; utoken: string | null }>(
+        '/members/uupdate',
+        { mem_index: Number(uidx), platform, deviceid: deviceid ?? null, utoken: utoken || null },
+        { suppressErrorToast: true }
+      );
+    } catch (error) {
+      console.error('디바이스/토큰 동기화(uupdate) 실패:', error);
+    }
+  };
+
+  // 💡 FCM 토큰이 새로 발급/갱신될 때(App.tsx의 PushNotifications 'registration' 이벤트)
+  // 호출한다. localStorage에 저장해 다음 앱 실행 시에도 재사용하고, 이미 로그인되어 있으면
+  // 앱 실행 시점의 동기화를 기다리지 않고 즉시 서버에 반영한다.
+  const updatePushToken = (token: string) => {
+    try {
+      localStorage.setItem('fcm_token', token);
+    } catch {
+      // ignore
+    }
+    const uidx = myProfile?.memberInfo?.uidx;
+    if (uidx) {
+      syncDeviceAndToken(uidx, token);
+    }
+  };
+
   // 💡 로그인 세션 확인 + DP 등 최신 회원 정보 갱신 (/member/uchk)
   // Header, 앱 최초 마운트 등 로그인 상태를 다시 확인해야 하는 곳에서 공용으로 호출
   const refreshLogin = async (): Promise<boolean> => {
@@ -273,6 +314,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (result) {
       setIsLoggedIn(true);
       setMyProfile(result.memberInfo, result.memberShip, result.memPickList, result.memberReward);
+      if (result.memberInfo?.uidx) {
+        syncDeviceAndToken(result.memberInfo.uidx);
+      }
       return true;
     }
 
@@ -1020,6 +1064,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         myProfile,
         setMyProfile,
         refreshLogin,
+        updatePushToken,
         refreshMemberProfile,
         grantLoginBonus,
         attendanceStreak,

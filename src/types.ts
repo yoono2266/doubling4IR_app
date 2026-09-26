@@ -6,7 +6,7 @@ export interface MyProfile {
 }
 
 // 더블링 5단계 멤버십 등급
-export type MembershipTierId = 'BAND' | 'HALO' | 'ETERNITY' | 'SOLITAIRE' | 'CROWN';
+export type MembershipTierId = '1' | '2' | '3' | '4' | '5';
 
 export interface MembershipTierInfo {
   id: MembershipTierId;

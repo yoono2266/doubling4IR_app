@@ -1,0 +1,61 @@
+From 429afb69a04a8929577068f52a44bacac9cc9f5e Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Mon, 14 Sep 2026 01:07:50 +0900
+Subject: [PATCH 33/34] =?UTF-8?q?=EA=B8=B0=EB=8A=A5:=20=EC=B6=9C=EC=84=9D?=
+ =?UTF-8?q?=20=EC=8A=A4=ED=8A=B8=EB=A6=AD=203/7/14/30=EC=9D=BC=20=EB=A7=88?=
+ =?UTF-8?q?=EC=9D=BC=EC=8A=A4=ED=86=A4=EB=B3=84=20=EC=B6=95=ED=95=98=20?=
+ =?UTF-8?q?=EB=A9=94=EC=8B=9C=EC=A7=80=20=EC=B0=A8=EB=B3=84=ED=99=94?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+기존엔 모든 마일스톤이 동일한 템플릿 토스트("N일 연속 출석 보상 지급!")를
+썼는데, StreakMilestone에 message 필드를 추가해 마일스톤마다 다른 축하
+문구가 뜨도록 함.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01JMFMtn43hjnYBbu4npezkf
+---
+ src/context/AppContext.tsx | 2 +-
+ src/data/streakData.ts     | 9 +++++----
+ 2 files changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/src/context/AppContext.tsx b/src/context/AppContext.tsx
+index e0e4173..a135485 100644
+--- a/src/context/AppContext.tsx
++++ b/src/context/AppContext.tsx
+@@ -881,7 +881,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children
+     }
+     setUser(prev => ({ ...prev, walletDp: prev.walletDp + milestone.reward }));
+     setClaimedStreakMilestones(prev => [...prev, days]);
+-    showToast(`${milestone.days}일 연속 출석 보상 ${milestone.reward.toLocaleString()} DP 지급!`);
++    showToast(`${milestone.message} +${milestone.reward.toLocaleString()} DP 지급!`);
+   };
+ 
+   const [showWriteModal, setShowWriteModal] = useState<boolean>(false);
+diff --git a/src/data/streakData.ts b/src/data/streakData.ts
+index 4e7ede3..400e34d 100644
+--- a/src/data/streakData.ts
++++ b/src/data/streakData.ts
+@@ -4,13 +4,14 @@
+ export interface StreakMilestone {
+   days: number;
+   reward: number; // 지급 DP
++  message: string; // 마일스톤 달성 축하 토스트 문구 (마일스톤마다 다르게)
+ }
+ 
+ export const STREAK_MILESTONES: StreakMilestone[] = [
+-  { days: 3, reward: 100 },
+-  { days: 7, reward: 250 },
+-  { days: 14, reward: 500 },
+-  { days: 30, reward: 1500 },
++  { days: 3, reward: 100, message: '3일 연속 출석 달성! 좋은 습관의 첫걸음이에요 🎉' },
++  { days: 7, reward: 250, message: '7일 연속 출석 성공! 일주일 개근을 축하드려요 🔥' },
++  { days: 14, reward: 500, message: '14일 연속 출석 달성! 꾸준함이 빛나고 있어요 💎' },
++  { days: 30, reward: 1500, message: '30일 연속 출석 완주! 이달의 진정한 승부사시네요 👑' },
+ ];
+ 
+ export const STREAK_MAX_DAYS = STREAK_MILESTONES[STREAK_MILESTONES.length - 1].days;
+-- 
+2.55.0.windows.3
+

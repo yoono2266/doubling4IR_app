@@ -1,0 +1,68 @@
+From 12ea9d889fb4cebb112f2fe2371478847aa3ae7f Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Wed, 9 Sep 2026 00:48:47 +0900
+Subject: [PATCH 19/34] =?UTF-8?q?=EC=88=98=EC=A0=95:=20=EB=A7=88=EC=9D=B4?=
+ =?UTF-8?q?=ED=8E=98=EC=9D=B4=EC=A7=80=20"FreePlay"=E2=86=92"=EC=98=A4?=
+ =?UTF-8?q?=ED=8D=BC"=20=EB=AA=85=EC=B9=AD=20=EB=B3=80=EA=B2=BD,=20?=
+ =?UTF-8?q?=EB=A1=9C=EA=B7=B8=EC=95=84=EC=9B=83=20=EB=B2=84=ED=8A=BC=20?=
+ =?UTF-8?q?=EB=AC=B8=EA=B5=AC=20=EC=88=98=EC=A0=95?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ src/screens/MyPageScreen.tsx | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/src/screens/MyPageScreen.tsx b/src/screens/MyPageScreen.tsx
+index c5b5c40..e3623c2 100644
+--- a/src/screens/MyPageScreen.tsx
++++ b/src/screens/MyPageScreen.tsx
+@@ -335,7 +335,7 @@ export const MyPageScreen: React.FC = () => {
+         <div className="flex items-center justify-between">
+           <h2 className="text-lg font-bold text-white flex items-center gap-2">
+             <span className="material-symbols-outlined text-[#C5A059]">calendar_month</span>
+-            FreePlay 신청 내역 ({reservations?.length || 0}건)
++            오퍼 신청 내역 ({reservations?.length || 0}건)
+           </h2>
+           <button
+             onClick={() => setCurrentSubScreen('comp-benefits')}
+@@ -357,7 +357,7 @@ export const MyPageScreen: React.FC = () => {
+                       {bType === 'freeplay_suite' && (
+                         <span className="text-[10px] font-extrabold text-[#0D1B2A] bg-[#C5A059] px-2 py-0.5 rounded flex items-center gap-1 shadow-sm">
+                           <span className="material-symbols-outlined text-xs">king_bed</span>
+-                          FreePlay 스위트
++                          오퍼 스위트
+                         </span>
+                       )}
+                       {bType === 'gaming_room' && (
+@@ -927,7 +927,7 @@ export const MyPageScreen: React.FC = () => {
+               <div className="min-w-0">
+                 <span className="text-[10px] font-bold text-slate-400 uppercase block">코인 월렛</span>
+                 <span className="text-[9px] font-bold text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded border border-sky-500/20 whitespace-nowrap inline-block mt-0.5">
+-                  FreePlay 실결제용
++                  오퍼 실결제용
+                 </span>
+               </div>
+             </div>
+@@ -982,7 +982,7 @@ export const MyPageScreen: React.FC = () => {
+               <span className="material-symbols-outlined text-lg">calendar_month</span>
+             </div>
+             <div className="min-w-0">
+-              <span className="text-xs font-bold text-white block">2. FreePlay 신청 내역</span>
++              <span className="text-xs font-bold text-white block">2. 오퍼 신청 내역</span>
+               <span className="text-[10px] text-slate-400">스위트룸 · 게이밍룸 · 다이닝 신청 관리</span>
+             </div>
+           </div>
+@@ -1100,7 +1100,7 @@ export const MyPageScreen: React.FC = () => {
+         }}
+         className="w-full py-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 font-bold text-xs hover:bg-rose-500/20 transition mt-2"
+       >
+-        로그아웃 (데모 계정)
++        로그아웃
+       </button>
+     </div>
+   );
+-- 
+2.55.0.windows.3
+

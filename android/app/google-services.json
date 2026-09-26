@@ -7,14 +7,14 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:8775686699:android:3d4391635dc1c497d8e86e",
+        "mobilesdk_app_id": "1:8775686699:android:6309996943c2b920d8e86e",
         "android_client_info": {
           "package_name": "com.spoodds.prod"
         }
       },
       "oauth_client": [
         {
-          "client_id": "8775686699-193tk1u90dfeihps7gep55b5g0jt7e40.apps.googleusercontent.com",
+          "client_id": "8775686699-amdejmb02ei6hkp05upe488potqdiraa.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.spoodds.prod",
@@ -28,7 +28,7 @@
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCLF3GtTZkp1B4Ex7FllKqVL1bpUJE1OmQ"
+          "current_key": "AIzaSyDHhLVN4Dv1uWIob117V77ACEpj2bt6V34"
         }
       ],
       "services": {

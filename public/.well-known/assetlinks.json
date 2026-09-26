@@ -1,0 +1,14 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.spoodds.prod",
+      "sha256_cert_fingerprints": [
+        "48:0A:0D:8F:46:43:99:9D:01:A4:6D:7F:4F:52:7C:B1:D1:30:C1:E6:56:D1:CE:D5:64:07:83:37:C9:48:CE:3D",
+        "7E:E3:0D:C4:C3:53:B0:95:F6:48:89:D3:A1:82:D5:B0:E2:AC:CC:15:34:E0:65:17:41:73:D1:27:F5:CF:A0:93",
+        "71:4E:DF:83:CD:3D:F9:DA:10:4E:0C:6E:E1:86:59:D4:CE:B8:F2:7E:62:E3:77:58:0C:A9:BE:94:51:21:AA:6F"
+      ]
+    }
+  }
+]

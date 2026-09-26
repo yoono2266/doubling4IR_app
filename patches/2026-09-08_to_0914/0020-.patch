@@ -1,0 +1,35 @@
+From 6e06c4a9e6bd052b5e3fc201ab28bb904c30b969 Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Wed, 9 Sep 2026 00:48:57 +0900
+Subject: [PATCH 20/34] =?UTF-8?q?=EC=88=98=EC=A0=95:=20=EC=98=88=EC=B8=A1?=
+ =?UTF-8?q?=20=EC=B1=8C=EB=A6=B0=EC=A7=80=20=ED=99=94=EB=A9=B4=20=EB=B6=80?=
+ =?UTF-8?q?=EC=A0=9C=20=EB=AC=B8=EA=B5=AC=20=EC=82=AD=EC=A0=9C?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ src/screens/PolyMarketScreen.tsx | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/src/screens/PolyMarketScreen.tsx b/src/screens/PolyMarketScreen.tsx
+index a74b836..a96e584 100644
+--- a/src/screens/PolyMarketScreen.tsx
++++ b/src/screens/PolyMarketScreen.tsx
+@@ -140,7 +140,12 @@ export const PolyMarketScreen: React.FC = () => {
+             <span className="material-symbols-outlined text-[#C5A059]">query_stats</span>
+             예측 챌린지
+           </h2>
+-          <p className="text-xs text-slate-400">웹3 기반 사회·연예·정치·인물 실시간 오즈 &amp; 100~5,000 DP 투표</p>
++          {/*
++            2026-09-08 제거 요청으로 비활성화 (삭제하지 않고 주석 보존).
++            사유: 예측 챌린지 화면 제목 아래 부제 문구를 노출하지 않기로 함.
++            [원본 JSX]
++            <p className="text-xs text-slate-400">웹3 기반 사회·연예·정치·인물 실시간 오즈 &amp; 100~5,000 DP 투표</p>
++          */}
+         </div>
+         <div className="flex items-center gap-2">
+           {/* Leaderboard Button */}
+-- 
+2.55.0.windows.3
+

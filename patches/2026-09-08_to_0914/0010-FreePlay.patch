@@ -1,0 +1,31 @@
+From 739b1f3909a9166b282e42db90bf52d27c175bd9 Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Wed, 9 Sep 2026 00:48:31 +0900
+Subject: [PATCH 10/34] =?UTF-8?q?=EC=88=98=EC=A0=95:=20=ED=98=84=EC=9E=AC?=
+ =?UTF-8?q?=20=ED=88=AC=EC=88=99=20=EC=9A=94=EC=95=BD=20=ED=99=94=EB=A9=B4?=
+ =?UTF-8?q?=20"FreePlay"=E2=86=92"=EC=98=A4=ED=8D=BC"=20=ED=85=8D=EC=8A=A4?=
+ =?UTF-8?q?=ED=8A=B8=20=EB=B0=98=EC=98=81?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ src/screens/CurrentTripSummaryScreen.tsx | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/screens/CurrentTripSummaryScreen.tsx b/src/screens/CurrentTripSummaryScreen.tsx
+index fbeb6e5..f5d8b1a 100644
+--- a/src/screens/CurrentTripSummaryScreen.tsx
++++ b/src/screens/CurrentTripSummaryScreen.tsx
+@@ -285,7 +285,7 @@ export const CurrentTripSummaryScreen: React.FC = () => {
+         </div>
+ 
+         <p className="text-xs text-slate-300 leading-relaxed bg-[#0D1B2A]/80 p-3 rounded-xl border border-[#1F334D]">
+-          투숙 기간 동안 FreePlay 스위트 룸, VIP 살롱 게이밍룸, 미쉐린 파인다이닝 등 <strong className="text-white">{user.membershipTier}</strong> 등급 전용 Comp 특전을 바로 신청하고 이용하실 수 있습니다.
++          투숙 기간 동안 오퍼 스위트 룸, VIP 살롱 게이밍룸, 미쉐린 파인다이닝 등 <strong className="text-white">{user.membershipTier}</strong> 등급 전용 Comp 특전을 바로 신청하고 이용하실 수 있습니다.
+         </p>
+ 
+         <button
+-- 
+2.55.0.windows.3
+

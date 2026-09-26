@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(curl -s -D - https://doubling.wildwynn.com/oauth2redirect?x=__TRACKED_VAR__ -o /tmp/o3.html)",
+      "Bash(npx cap *)",
+      "Bash(./gradlew.bat assembleDebug)",
+      "Bash(adb devices *)",
+      "Bash(adb -s R5KL605HDDD install -r \"/d/Doubling/_repo/douClient/android/app/build/outputs/apk/debug/app-debug.apk\")",
+      "Bash(adb -s R5KL605HDDD shell pm clear com.spoodds.prod)",
+      "Bash(adb -s R5KL605HDDD logcat -c)",
+      "Bash(adb -s R5KL605HDDD shell monkey -p com.spoodds.prod -c android.intent.category.LAUNCHER 1)",
+      "Bash(adb -s R5KL605HDDD shell pm list packages)",
+      "Bash(echo \"clear exit: $?\")",
+      "Bash(adb -s R5KL605HDDD shell pm list users)",
+      "Bash(adb -s R5KL605HDDD shell pm list packages --user 0)",
+      "Bash(adb -s R5KL605HDDD install -r --user 0 \"/d/Doubling/_repo/douClient/android/app/build/outputs/apk/debug/app-debug.apk\")",
+      "Bash(adb -s R5KL605HDDD shell pm clear --user 0 com.spoodds.prod)"
+    ]
+  }
+}

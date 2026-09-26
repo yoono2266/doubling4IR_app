@@ -7,8 +7,8 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        // AGP 버전을 Android Studio 호환 버전(8.5.1)으로 변경
-        classpath 'com.android.tools.build:gradle:8.5.1'
+        // @capacitor/browser가 끌어오는 androidx.browser:browser:1.9.0이 AGP 8.9.1+를 요구해 상향
+        classpath 'com.android.tools.build:gradle:9.3.2'
         classpath 'com.google.gms:google-services:4.4.2'
 
         // NOTE: Do not place your application dependencies here; they belong

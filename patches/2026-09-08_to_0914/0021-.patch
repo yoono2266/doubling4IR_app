@@ -1,0 +1,48 @@
+From c67082705ee609355144789fbc8be9acc03734fd Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Wed, 9 Sep 2026 00:48:58 +0900
+Subject: [PATCH 21/34] =?UTF-8?q?=EC=88=98=EC=A0=95:=20=EC=98=88=EC=B8=A1?=
+ =?UTF-8?q?=20=EC=B1=8C=EB=A6=B0=EC=A7=80=20=EC=B0=B8=EC=97=AC=20=EB=82=B4?=
+ =?UTF-8?q?=EC=97=AD=20=ED=99=94=EB=A9=B4=20=EC=A0=9C=EB=AA=A9=C2=B7?=
+ =?UTF-8?q?=EB=B2=84=ED=8A=BC=20=EB=AC=B8=EA=B5=AC=20=EB=B3=80=EA=B2=BD?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ src/screens/PolyPortfolioHistoryScreen.tsx | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/src/screens/PolyPortfolioHistoryScreen.tsx b/src/screens/PolyPortfolioHistoryScreen.tsx
+index 1bfdea0..b742089 100644
+--- a/src/screens/PolyPortfolioHistoryScreen.tsx
++++ b/src/screens/PolyPortfolioHistoryScreen.tsx
+@@ -44,9 +44,14 @@ export const PolyPortfolioHistoryScreen: React.FC = () => {
+         <div>
+           <h2 className="text-base font-bold text-white flex items-center gap-1.5">
+             <span className="material-symbols-outlined text-[#C5A059] text-xl">account_balance_wallet</span>
+-            <span>예측 포트폴리오 참여 내역</span>
++            <span>예측 챌린지 참여 내역</span>
+           </h2>
+-          <p className="text-[11px] text-slate-400">오즈 기반 실시간 포지션 관리 및 조기 정리</p>
++          {/*
++            2026-09-09 제거 요청으로 비활성화 (삭제하지 않고 주석 보존).
++            사유: 제목 아래 부제 문구를 노출하지 않기로 함.
++            [원본 JSX]
++            <p className="text-[11px] text-slate-400">오즈 기반 실시간 포지션 관리 및 조기 정리</p>
++          */}
+         </div>
+         <button
+           onClick={() => {
+@@ -55,7 +60,7 @@ export const PolyPortfolioHistoryScreen: React.FC = () => {
+           }}
+           className="px-3 py-1.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-black text-xs shadow hover:brightness-110 active:scale-95 transition"
+         >
+-          새 마켓 참여 →
++          챌린지 참여 →
+         </button>
+       </div>
+ 
+-- 
+2.55.0.windows.3
+

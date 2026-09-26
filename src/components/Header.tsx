@@ -1,12 +1,27 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { LOGO_BASE64 } from '../assets/logoBase64';
 import { getStoredUserInfo } from '../utils/auth';
 
 export const Header: React.FC = () => {
-  const { user, isLoggedIn, currentSubScreen, setCurrentTab, setCurrentSubScreen } = useApp();
+  const { user, isLoggedIn, currentSubScreen, setCurrentTab, setCurrentSubScreen, myProfile, refreshMemberProfile } = useApp();
 
   const uinfo = getStoredUserInfo();
+  // 구글 프로필 이미지 로드 실패(예: lh3.googleusercontent.com 429 등) 시 기본 아바타로 대체
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
+
+  // myProfile.memberInfo에 u_dp가 없으면(uchk 응답에는 빠져 있을 수 있음), /members/{uidx}로
+  // 전체 회원 정보를 다시 받아와 채운다. 캐시가 지워진 상태에서도 세션이 살아있으면 복구된다.
+  const memberInfoDp = myProfile?.memberInfo?.u_dp;
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    if (memberInfoDp !== undefined && memberInfoDp !== null) return;
+
+    refreshMemberProfile();
+  }, [isLoggedIn, memberInfoDp, refreshMemberProfile]);
+
+  // DP는 서버에서 상시 갱신되는 myProfile.memberInfo를 우선 사용하고, 마지막으로 기존 로컬 캐시로 폴백한다.
+  const walletDp = memberInfoDp ?? uinfo?.u_dp ?? 0;
 
   const isAuthScreen = !isLoggedIn || 
     currentSubScreen === 'login' || 
@@ -28,13 +43,13 @@ export const Header: React.FC = () => {
       >
         <img 
           src={LOGO_BASE64} 
-          alt="DOUBLE RING Logo"
+          alt="DOUBLE RING Logo" 
           width={32}
           height={32}
           className="w-8 h-8 rounded-lg object-contain flex-shrink-0"
           referrerPolicy="no-referrer"
         />
-        <span className="font-black text-lg tracking-[0.18em] text-transparent bg-clip-text bg-gradient-to-r from-[#F7E2AD] via-[#C5A059] to-[#E2C28E] leading-none">
+        <span className="font-black text-lg tracking-[0.02em] text-transparent bg-clip-text bg-gradient-to-r from-[#F7E2AD] via-[#C5A059] to-[#E2C28E] leading-none">
           DOUBLE RING
         </span>
       </div>
@@ -52,7 +67,7 @@ export const Header: React.FC = () => {
               className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#162639] border border-[#C5A059]/40 hover:border-[#C5A059] transition cursor-pointer"
             >
               <span className="text-xs font-bold text-[#E2C28E] font-mono">
-                {uinfo.u_dp} <span className="text-[10px] text-slate-400">DP</span>
+                {walletDp.toLocaleString()} <span className="text-[10px] text-slate-400">DP</span>
               </span>
             </div>
           )}
@@ -70,10 +85,12 @@ export const Header: React.FC = () => {
             className="relative cursor-pointer"
             title={user.name}
           >
-            {isLoggedIn && uinfo?.u_profile ? (
-              <img 
-                src={uinfo.u_profile} 
-                alt={uinfo.u_name || 'User Avatar'} 
+            {isLoggedIn && uinfo?.u_profile && !avatarLoadFailed ? (
+              <img
+                src={uinfo.u_profile}
+                alt={uinfo.u_name || 'User Avatar'}
+                referrerPolicy="no-referrer"
+                onError={() => setAvatarLoadFailed(true)}
                 className="w-8 h-8 rounded-full object-cover border-2 border-[#C5A059]"
               />
             ) : (

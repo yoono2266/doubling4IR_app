@@ -1,0 +1,30 @@
+From 7e6720476a473d5dc7009a55f816f852278a943a Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Wed, 9 Sep 2026 00:48:17 +0900
+Subject: [PATCH 05/34] =?UTF-8?q?=EC=88=98=EC=A0=95:=20PWA=20=EC=84=A4?=
+ =?UTF-8?q?=EC=B9=98=20=EB=B0=B0=EB=84=88=20=EC=95=88=EB=82=B4=20=EB=AC=B8?=
+ =?UTF-8?q?=EA=B5=AC=20=EB=B3=80=EA=B2=BD?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ src/components/PwaInstallBanner.tsx | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/components/PwaInstallBanner.tsx b/src/components/PwaInstallBanner.tsx
+index 206c22f..6df748e 100644
+--- a/src/components/PwaInstallBanner.tsx
++++ b/src/components/PwaInstallBanner.tsx
+@@ -70,7 +70,7 @@ export const PwaInstallBanner: React.FC = () => {
+             <span className="text-[9px] bg-[#C5A059] text-[#0D1B2A] font-black px-1.5 py-0.2 rounded uppercase">PWA</span>
+           </p>
+           <p className="text-[10px] text-slate-300">
+-            {isIos ? '사파리 공유 버튼 → "홈 화면에 추가"' : '홈 화면에 앱을 추가하여 이용해보세요'}
++            {isIos ? '사파리 공유 버튼 → "홈 화면에 추가"' : '홈 화면에 추가하고 더 빠르게 만나보세요'}
+           </p>
+         </div>
+       </div>
+-- 
+2.55.0.windows.3
+

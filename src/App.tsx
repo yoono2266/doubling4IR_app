@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import { App as CapacitorApp } from '@capacitor/app';
 import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/Header';
@@ -43,6 +44,22 @@ interface ClientVersionResponse {
 // 앱 최초 로드 시 게스트 식별자(guest_id)가 없으면 생성해 localStorage에 저장한다.
 getOrCreateGuestId();
 
+// "1.1.21" 형태의 버전 문자열을 구간별 숫자로 비교한다 (문자열 비교 시 "1.9" > "1.10"으로 잘못
+// 판정되는 것을 방지). currentVersion이 requiredVersion보다 낮을 때만 true — 로컬이 서버보다
+// 높은 경우(예: 아직 배포 전인 테스트 빌드)는 강제 업데이트 대상이 아니다.
+const isVersionOlder = (currentVersion: string, requiredVersion: string): boolean => {
+  const current = currentVersion.split('.').map((n) => parseInt(n, 10) || 0);
+  const required = requiredVersion.split('.').map((n) => parseInt(n, 10) || 0);
+  const length = Math.max(current.length, required.length);
+
+  for (let i = 0; i < length; i++) {
+    const c = current[i] ?? 0;
+    const r = required[i] ?? 0;
+    if (c !== r) return c < r;
+  }
+  return false;
+};
+
 const AppContent: React.FC = () => {
   const {
     isLoggedIn,
@@ -54,10 +71,9 @@ const AppContent: React.FC = () => {
     setCurrentTab,
     setCurrentSubScreen,
     setShowWriteModal,
-    showToast
+    showToast,
+    updatePushToken
   } = useApp();
-
-  const [fcmToken, setFcmToken] = useState<string>('');
 
   // 강제 업데이트: 안드로이드 앱에서만, 로그인 여부와 무관하게 최초 마운트 시 1회 확인한다.
   const [forceUpdateInfo, setForceUpdateInfo] = useState<{ current: string; required: string } | null>(null);
@@ -84,7 +100,7 @@ const AppContent: React.FC = () => {
           : rawData;
 
         const requiredVersion = versionData?.up_version;
-        if (requiredVersion && requiredVersion !== currentVersion) {
+        if (requiredVersion && isVersionOlder(currentVersion, requiredVersion)) {
           setForceUpdateInfo({ current: currentVersion, required: requiredVersion });
         }
       } catch (error) {
@@ -130,6 +146,13 @@ const AppContent: React.FC = () => {
           if (permStatus.receive === 'granted') {
             await PushNotifications.register();
           }
+
+          // 포그라운드 수신 시 로컬 알림(시스템 알림 센터)으로도 띄우기 위한 권한.
+          // 안드로이드는 위 POST_NOTIFICATIONS 권한과 사실상 동일하지만, 플러그인 별도 체크가 필요하다.
+          let localPermStatus = await LocalNotifications.checkPermissions();
+          if (localPermStatus.display === 'prompt') {
+            localPermStatus = await LocalNotifications.requestPermissions();
+          }
         } catch (error) {
           console.error('푸시 알림 초기화 실패:', error);
         }
@@ -141,7 +164,7 @@ const AppContent: React.FC = () => {
         'registration',
         (token) => {
           console.log('발급된 FCM 토큰:', token.value);
-          setFcmToken(token.value);
+          updatePushToken(token.value);
         }
       );
 
@@ -154,8 +177,29 @@ const AppContent: React.FC = () => {
 
       const notificationReceivedListener = PushNotifications.addListener(
         'pushNotificationReceived',
-        (notification) => {
+        async (notification) => {
           console.log('앱 열린 상태에서 푸시 수신:', notification);
+
+          // pushNotificationReceived는 앱이 포그라운드일 때만 발생하며, 이 경우 시스템이 알림을
+          // 자동으로 띄워주지 않는다(백그라운드/종료 상태와 다름) — 인앱 배너 + 로컬 알림으로 직접 노출한다.
+          const title = notification.title || (notification.data as any)?.title || 'DOUBLE RING';
+          const body = notification.body || (notification.data as any)?.body || '';
+
+          showToast(body ? `${title}: ${body}` : title);
+
+          try {
+            await LocalNotifications.schedule({
+              notifications: [
+                {
+                  id: Date.now() % 2147483647,
+                  title,
+                  body,
+                },
+              ],
+            });
+          } catch (error) {
+            console.error('로컬 알림 표시 실패:', error);
+          }
         }
       );
 

@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { MarketComment } from '../data/polyMarketData';
 import { apiCommonClient } from '../utils/apiClient';
+import { getStoredUserInfo } from '../utils/auth';
+import { useComments, COMMENT_TYPE_CHALLENGE, formatCommentTime } from '../hooks/useComments';
 
 const DP_PRESETS = [100, 500, 1000, 5000];
+
+// 모바일 카드 폭 기준 2줄 정도로 보이는 글자 수 제한
+const COMMENT_MAX_LENGTH = 60;
 
 const calcExpectedPayout = (amount: number, oddsStr: string): number => {
   const percent = parseFloat(oddsStr.replace(/[^0-9.]/g, '')) || 50;
@@ -19,16 +23,37 @@ export const PolyMarketDetailScreen: React.FC = () => {
     castPolyVote,
     getUserVoteForMarket,
     user,
+    isLoggedIn,
+    myProfile,
+    refreshMemberProfile,
     requireLogin,
     showToast
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'rules' | 'news'>('rules');
   const [selectedAmount, setSelectedAmount] = useState<number>(100);
-
-  // 현재 사용자가 이 상세 화면에서 새로 남긴 의견 (mock, 새로고침 시 초기화)
-  const [userComments, setUserComments] = useState<MarketComment[]>([]);
   const [commentInput, setCommentInput] = useState('');
+
+  // 상단 "보유 DP" 배지는 Header.tsx와 동일하게 실제 서버 잔액(myProfile.memberInfo.u_dp)을 표시한다.
+  // (아래 투표 확인/완료 모달의 DP 계산은 예측 챌린지 전용 mock 지갑(user.walletDp)을 그대로 사용 — 별개 값)
+  const memberInfoDp = myProfile?.memberInfo?.u_dp;
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    if (memberInfoDp !== undefined && memberInfoDp !== null) return;
+    refreshMemberProfile();
+  }, [isLoggedIn, memberInfoDp, refreshMemberProfile]);
+  const headerWalletDp = memberInfoDp ?? getStoredUserInfo()?.u_dp ?? 0;
+
+  // pm_index(=target_index) — 마켓이 없을 때는 0으로 두고, 훅 내부에서 target_index 존재 여부로 가드한다.
+  const targetIndex = selectedMarket ? Number(selectedMarket.id.replace(/^plm-/, '')) || 0 : 0;
+  const {
+    comments,
+    commentsLoading,
+    isSubmitting: isSubmittingComment,
+    myUidx,
+    submitComment,
+    deleteComment: handleDeleteComment,
+  } = useComments(COMMENT_TYPE_CHALLENGE, targetIndex);
 
   const [confirmModalData, setConfirmModalData] = useState<{
     choice: string;
@@ -64,31 +89,11 @@ export const PolyMarketDetailScreen: React.FC = () => {
 
   const existingVote = getUserVoteForMarket(selectedMarket.id);
 
-  // 원본(seed) 의견 + 사용자가 이번에 남긴 의견을 합쳐서 렌더링
-  const allComments: MarketComment[] = [...selectedMarket.comments, ...userComments];
-
-  const handleAddComment = (e: React.FormEvent) => {
+  const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!requireLogin()) return;
-    const text = commentInput.trim();
-    if (!text) return;
-
-    const profileImg = user?.avatar && user.avatar.startsWith('http') ? user.avatar : '';
-
-    setUserComments(prev => [
-      ...prev,
-      {
-        id: `uc-${Date.now()}`,
-        author: `${user?.name || '나'} (나)`,
-        avatar: profileImg,
-        choice: existingVote?.choice,
-        timeAgo: '방금 전',
-        content: text,
-        likes: 0
-      }
-    ]);
-    setCommentInput('');
-    showToast('의견이 등록되었습니다.');
+    const success = await submitComment(commentInput);
+    if (success) setCommentInput('');
   };
 
   const handleOpenVoteModal = (choice: string, odds: string) => {
@@ -170,7 +175,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
         <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#162639] border border-[#C5A059]/40">
           <span className="text-[10px] text-slate-400 font-medium">보유 DP:</span>
           <span className="text-xs font-bold text-[#E2C28E] font-mono">
-            {user.walletDp.toLocaleString()} DP
+            {headerWalletDp.toLocaleString()} DP
           </span>
         </div>
       </div>
@@ -280,9 +285,11 @@ export const PolyMarketDetailScreen: React.FC = () => {
               <p className="text-slate-300 bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D]">
                 {selectedMarket.rulesText}
               </p>
+              {/* 
               <p className="text-[10px] text-slate-500 pt-1">
                 * 블록체인 스마트 컨트랙트에 의해 공식 공시 발표 즉시 정산 및 배당 분배가 실행됩니다.
               </p>
+              */}
             </div>
           ) : (
             <div className="space-y-2">
@@ -290,10 +297,14 @@ export const PolyMarketDetailScreen: React.FC = () => {
               <p className="text-slate-300 bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D] leading-relaxed">
                 {selectedMarket.contextNews}
               </p>
+              {/* 
               <div className="flex items-center gap-2 pt-1 text-[11px] text-[#C5A059]">
                 <span className="material-symbols-outlined text-sm">trending_up</span>
+                
                 <span>최근 24시간 동안 총 {selectedMarket.totalVolumeDp}의 예측 투표가 유입되었습니다.</span>
+                
               </div>
+              */}
             </div>
           )}
         </div>
@@ -307,62 +318,83 @@ export const PolyMarketDetailScreen: React.FC = () => {
             <span>참여자 실시간 토론 & 의견</span>
           </h3>
           <span className="text-[10px] text-slate-400 font-mono">
-            {allComments.length}개의 분석 의견
+            {commentsLoading ? '불러오는 중...' : `${comments.length}개의 분석 의견`}
           </span>
         </div>
 
         <div className="space-y-2.5">
-          {allComments.map((comment) => (
-            <div
-              key={comment.id}
-              className="bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D] flex flex-col gap-1.5 text-xs"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {comment.avatar ? (
-                    <img
-                      src={comment.avatar}
-                      alt={comment.author}
-                      className="w-6 h-6 rounded-full object-cover border border-[#C5A059]/40"
-                    />
-                  ) : (
-                    <span className="w-6 h-6 rounded-full bg-[#162639] border border-[#C5A059]/40 flex items-center justify-center text-[#C5A059]">
-                      <span className="material-symbols-outlined text-sm">person</span>
-                    </span>
-                  )}
-                  <span className="font-bold text-white">{comment.author}</span>
-                  {comment.choice && (
-                    <span className="text-[10px] font-bold text-[#E2C28E] bg-[#C5A059]/15 px-1.5 py-0.2 rounded border border-[#C5A059]/30">
-                      선택: {comment.choice}
-                    </span>
-                  )}
+          {comments.map((comment) => {
+            const authorName = comment.u_name || comment.mem_name || `회원 ${comment.mem_index}`;
+            const authorAvatar = comment.u_profile || comment.mem_profile || '';
+            const isMine = myUidx != null && comment.mem_index === myUidx;
+
+            return (
+              <div
+                key={comment.tb_index}
+                className="bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D] flex flex-col gap-1.5 text-xs"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {authorAvatar ? (
+                      <img
+                        src={authorAvatar}
+                        alt={authorName}
+                        referrerPolicy="no-referrer"
+                        className="w-6 h-6 rounded-full object-cover border border-[#C5A059]/40"
+                      />
+                    ) : (
+                      <span className="w-6 h-6 rounded-full bg-[#162639] border border-[#C5A059]/40 flex items-center justify-center text-[#C5A059]">
+                        <span className="material-symbols-outlined text-sm">person</span>
+                      </span>
+                    )}
+                    <span className="font-bold text-white">{authorName}{isMine ? ' (나)' : ''}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-500 font-mono">{formatCommentTime(comment.reg_timestamp)}</span>
+                    {isMine && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteComment(comment.tb_index)}
+                        className="text-slate-500 hover:text-rose-400 transition"
+                        aria-label="의견 삭제"
+                      >
+                        <span className="material-symbols-outlined text-sm">delete</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <span className="text-[10px] text-slate-500 font-mono">{comment.timeAgo}</span>
+                <p className="text-slate-300 leading-relaxed pl-8 line-clamp-2">{comment.tb_comment}</p>
               </div>
-              <p className="text-slate-300 leading-relaxed pl-8">{comment.content}</p>
-              <div className="flex justify-end items-center gap-1 text-[10px] text-slate-400 pl-8">
-                <span className="material-symbols-outlined text-xs text-rose-400">favorite</span>
-                <span>{comment.likes}</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
+          {!commentsLoading && comments.length === 0 && (
+            <p className="text-center text-slate-500 py-4">아직 등록된 의견이 없습니다. 첫 의견을 남겨보세요!</p>
+          )}
         </div>
 
         {/* 의견 입력 (더블링 파트너스 커뮤니티 댓글 입력 형식 참고) */}
-        <form onSubmit={handleAddComment} className="flex gap-2 pt-1">
-          <input
-            type="text"
-            placeholder="이 마켓에 대한 의견을 남겨보세요..."
-            value={commentInput}
-            onChange={(e) => setCommentInput(e.target.value)}
-            className="flex-1 bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3 py-2 text-white text-xs focus:border-[#C5A059] focus:outline-none"
-          />
-          <button
-            type="submit"
-            className="px-3 py-2 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shrink-0"
-          >
-            등록
-          </button>
+        <form onSubmit={handleAddComment} className="flex flex-col gap-1 pt-1">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="이 예측 챌린지에 대한 의견을 남겨보세요..."
+              value={commentInput}
+              onChange={(e) => setCommentInput(e.target.value.slice(0, COMMENT_MAX_LENGTH))}
+              maxLength={COMMENT_MAX_LENGTH}
+              disabled={isSubmittingComment}
+              className="flex-1 bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3 py-2 text-white text-xs focus:border-[#C5A059] focus:outline-none disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              disabled={isSubmittingComment}
+              className="px-3 py-2 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shrink-0 disabled:opacity-50"
+            >
+              등록
+            </button>
+          </div>
+          <span className="text-[10px] text-slate-500 text-right font-mono pr-1">
+            {commentInput.length}/{COMMENT_MAX_LENGTH}
+          </span>
         </form>
       </div>
 
@@ -370,10 +402,10 @@ export const PolyMarketDetailScreen: React.FC = () => {
       {confirmModalData && (() => {
         const isRevote = confirmModalData.isRevote;
         const prevAmount = confirmModalData.prevAmount || 100;
-        const maxAvailableDp = isRevote ? user.walletDp + prevAmount : user.walletDp;
+        const maxAvailableDp = isRevote ? headerWalletDp + prevAmount : headerWalletDp;
         const projectedBalance = isRevote
-          ? user.walletDp + prevAmount - selectedAmount
-          : user.walletDp - selectedAmount;
+          ? headerWalletDp + prevAmount - selectedAmount
+          : headerWalletDp - selectedAmount;
         const expectedPayout = calcExpectedPayout(selectedAmount, confirmModalData.odds);
 
         return (
@@ -414,7 +446,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center text-[11px]">
                     <span className="text-slate-300 font-bold">매수 DP 선택:</span>
-                    <span className="text-slate-400">보유: {user.walletDp.toLocaleString()} DP</span>
+                    <span className="text-slate-400">보유: {headerWalletDp.toLocaleString()} DP</span>
                   </div>
                   <div className="grid grid-cols-4 gap-1.5">
                     {DP_PRESETS.map((preset) => {
@@ -458,7 +490,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
                     </span>
                   </div>
 
-                  {/* Expected Payout based on Odds */}
+                  {/* Expected Payout based on Odds 
                   <div className="pt-2 border-t border-[#1F334D]/80">
                     <div className="bg-[#162639] p-2 rounded-lg border border-[#C5A059]/30 text-center">
                       <span className="text-[11px] text-slate-300 block">
@@ -466,6 +498,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
                       </span>
                     </div>
                   </div>
+                      */}
                 </div>
               </div>
 

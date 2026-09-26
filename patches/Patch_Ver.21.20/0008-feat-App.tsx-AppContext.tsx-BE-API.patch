@@ -1,0 +1,115 @@
+From a890c6d63508e65330369bc60219af9a583ccc1f Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Sun, 20 Sep 2026 17:00:13 +0900
+Subject: [PATCH 8/8] =?UTF-8?q?feat:=20=ED=9A=8C=EC=9B=90=EA=B0=80?=
+ =?UTF-8?q?=EC=9E=85=20=ED=91=B8=ED=84=B0=20=EC=A0=81=EC=9A=A9=20=EB=B2=94?=
+ =?UTF-8?q?=EC=9C=84=20=ED=99=95=EC=9E=A5(App.tsx)=20=EB=B0=8F=20=EC=8A=A4?=
+ =?UTF-8?q?=ED=8A=B8=EB=A6=AD/=EB=A1=9C=EA=B7=B8=EC=9D=B8=EB=B3=B4?=
+ =?UTF-8?q?=EB=84=88=EC=8A=A4=20=EB=A1=9C=EC=A7=81=20=EB=B0=98=EC=98=81(Ap?=
+ =?UTF-8?q?pContext.tsx)=20=E2=80=94=20BE=20=EB=AF=BC=EA=B0=90=20=EC=98=81?=
+ =?UTF-8?q?=EC=97=AD=20=EB=B3=80=EA=B2=BD,=20=EB=9D=BC=EC=9A=B0=ED=8C=85/A?=
+ =?UTF-8?q?PI/=EC=83=81=ED=83=9C=EB=B3=80=EC=88=98=EB=AA=85=20=EB=AF=B8?=
+ =?UTF-8?q?=EB=B3=80=EA=B2=BD?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+App.tsx: 로그인 화면 전용 인라인 footer JSX를 공용 Footer 컴포넌트로 교체하고
+적용 범위를 로그인 → 로그인+회원가입으로 확장 (회원가입 약관 모달 작업과 세트).
+
+AppContext.tsx: grantLoginBonus가 고정 150 DP 대신 streakData.ts의
+getLoginBonusAmount(attendanceStreak)로 연속 출석일수 기반 계단식 지급액을
+계산하도록 변경, claimedStreakMilestones 초기값을 [3] → []로 수정해 3일차
+보상이 실제 수령 없이 "이미 수령됨"으로 보이던 mock 결함 제거.
+
+두 파일 모두 server.js 호출부·API 엔벌로프·기존 상태 변수명은 변경하지 않음.
+
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01JMFMtn43hjnYBbu4npezkf
+---
+ src/App.tsx                | 11 +++--------
+ src/context/AppContext.tsx | 23 +++++++++++++----------
+ 2 files changed, 16 insertions(+), 18 deletions(-)
+
+diff --git a/src/App.tsx b/src/App.tsx
+index f9089e8..5321849 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -4,6 +4,7 @@ import { PushNotifications } from '@capacitor/push-notifications';
+ import { App as CapacitorApp } from '@capacitor/app';
+ import { AppProvider, useApp } from './context/AppContext';
+ import { Header } from './components/Header';
++import { Footer } from './components/Footer';
+ import { BottomNav } from './components/BottomNav';
+ import { ForceUpdateModal } from './components/ForceUpdateModal';
+ import { FreeRoomStickyBanner } from './components/FreeRoomStickyBanner';
+@@ -257,14 +258,8 @@ const AppContent: React.FC = () => {
+                 currentSubScreen !== 'email-verify-success' &&
+                 currentSubScreen !== 'email-verify-fail' && <BottomNav />}
+ 
+-              {/* 로그인 화면 한정: 하단 네비가 있던 자리에 회사 정보 푸터 표시 */}
+-              {currentSubScreen === 'login' && (
+-                <footer className="fixed bottom-0 left-0 right-0 z-40 max-w-[430px] mx-auto bg-[#0D1B2A]/95 backdrop-blur-xl border-t border-[#1F334D] px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] text-center">
+-                  <p className="text-[11px] text-slate-500">
+-                    &copy; 2026 WILDWYNN Co., Ltd. All rights reserved.
+-                  </p>
+-                </footer>
+-              )}
++              {/* 로그인·회원가입 화면: 하단 네비가 있던 자리에 회사 정보 푸터 표시 (공용 Footer 컴포넌트) */}
++              {(currentSubScreen === 'login' || currentSubScreen === 'signup') && <Footer />}
+             </>
+           </>
+         )}
+diff --git a/src/context/AppContext.tsx b/src/context/AppContext.tsx
+index aff9257..110248f 100644
+--- a/src/context/AppContext.tsx
++++ b/src/context/AppContext.tsx
+@@ -17,7 +17,7 @@ import {
+ import { PolyMarketItem, INITIAL_POLY_MARKETS } from '../data/polyMarketData';
+ import { HotelJackpotData, JackpotApiResponse, mapJackpotApiHotels } from '../data/jackpotData';
+ import { INITIAL_TIER_RECORDS } from '../data/membershipData';
+-import { STREAK_MILESTONES, STREAK_MAX_DAYS } from '../data/streakData';
++import { STREAK_MILESTONES, STREAK_MAX_DAYS, getLoginBonusAmount } from '../data/streakData';
+ 
+ interface PLMContentsResponse {
+   pm_index: number;
+@@ -892,14 +892,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children
+     showToast('신청 및 코인 결제가 완료되었습니다!');
+   };
+   
+-  // 오늘의 로그인 보너스.
+-  // 💡 mock: AppContext 메모리의 walletDp에만 +150 하는 시뮬레이션이며,
+-  //    실제 보너스 정산/서버 반영이 아닙니다. 새로고침 시 초기값으로 리셋됩니다.
+-  const LOGIN_BONUS_DP = 150;
+-  const grantLoginBonus = () => {
+-    setUser(prev => ({ ...prev, walletDp: prev.walletDp + LOGIN_BONUS_DP }));
+-  };
+-
+   // 연속 출석 스트릭.
+   // myProfile.memberReward 중 dp_index === 1(출석 보너스) 기록의 날짜들로부터 실제 연속 출석일수를 계산한다.
+   // 오늘 출석 기록이 아직 없어도 어제까지 이어져 있으면 스트릭이 끊기지 않은 것으로 간주한다.
+@@ -938,9 +930,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children
+     return streak;
+   }, [myProfile?.memberReward]);
+ 
++  // 오늘의 로그인 보너스.
++  // 💡 mock: AppContext 메모리의 walletDp에만 반영되는 시뮬레이션이며, 실제 보너스 정산/서버
++  //    반영이 아닙니다. 새로고침 시 초기값으로 리셋됩니다.
++  // 지급액은 연속 출석일수(attendanceStreak)에 따라 계단식으로 계산된다 (streakData.ts
++  // getLoginBonusAmount 참고 — 1/3/7/14/30일차: 150/1,150/2,650/5,150/15,150 DP, 31일차부터 리셋).
++  // (2026-09-20, 기획 확정)
++  const grantLoginBonus = () => {
++    const bonusDp = getLoginBonusAmount(attendanceStreak);
++    setUser(prev => ({ ...prev, walletDp: prev.walletDp + bonusDp }));
++  };
++
+   // 💡 mock 상태입니다. AppContext 메모리에만 존재하며, 실제 보상 수령 서버 반영이 아니고
+   //    새로고침 시 초기값으로 리셋됩니다.
+-  const [claimedStreakMilestones, setClaimedStreakMilestones] = useState<number[]>([3]); // 3일 보상은 수령했다고 가정
++  const [claimedStreakMilestones, setClaimedStreakMilestones] = useState<number[]>([]); // 실제 수령 여부만 반영 (2026-09-20, leftover mock 초기값 [3] 제거)
+ 
+   // 도달한 마일스톤 보상 수령 → walletDp에 반영(mock), 마일스톤 1회만 수령 가능.
+   const claimStreakReward = (days: number) => {
+-- 
+2.55.0.windows.3
+

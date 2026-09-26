@@ -28,9 +28,11 @@ export const JackpotBanner: React.FC = () => {
     return () => clearInterval(timer);
   }, [banners.length]);
 
-  // 배너(리조트 이름 등) 클릭 시 "솔레어 리조트 앤 카지노" 상세 페이지로 직접 이동
+  // 배너 클릭 시, 실제 잭팟 데이터가 등록된 "솔레어 엔터테인먼트 시티"(jp_index=19, hotel_code=SREC)
+  // 상세 페이지로 직접 이동한다. id는 mapJackpotApiHotels()가 쓰는 것과 동일하게
+  // hotel_code 기준('SREC')이어야 jackpotHotels 캐시에서 정상적으로 매칭된다.
   const handleBannerClick = () => {
-    setSelectedHotelId('solaire');
+    setSelectedHotelId('SREC');
     setCurrentSubScreen('hotel-jackpot-detail');
   };
 

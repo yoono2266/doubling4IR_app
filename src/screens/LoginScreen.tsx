@@ -65,9 +65,14 @@ const fetchGoogleUserInfo = async (accessToken: string): Promise<GoogleUserInfo>
 
 // 네이티브 앱에서도 Android/iOS 전용 OAuth 클라이언트 없이 "웹 애플리케이션" 타입 Client ID만으로
 // 로그인할 수 있도록, 시스템 브라우저(Custom Tabs)를 띄워 OAuth 2.0 구현 흐름(implicit flow)을 직접 수행한다.
-// 리다이렉트는 HTTPS App Link(https://doubling.wildwynn.com/oauth2redirect)로 받아 앱으로 되돌아온다.
+// 리다이렉트는 HTTPS App Link(https://doubling.wildwynn.com/oauth2redirect.html)로 받아 앱으로 되돌아온다.
 // (Google은 "웹 애플리케이션" 클라이언트의 리다이렉트 URI로 커스텀 스킴을 허용하지 않고 HTTPS만 허용한다.)
-const GOOGLE_OAUTH_REDIRECT_URI = 'https://doubling.wildwynn.com/oauth2redirect';
+// 2026-09-19: 확장자 없는 /oauth2redirect 경로는 서버가 Content-Type을 application/octet-stream으로
+// 내려줘 브라우저가 페이지 대신 파일 다운로드로 처리하는 문제가 있어, 정상적으로 text/html이 내려오는
+// .html 경로로 변경. Google Cloud Console OAuth 클라이언트의 승인된 리다이렉트 URI에도 이 .html
+// 버전이 등록되어 있어야 한다 (redirect_uri_mismatch 방지). AndroidManifest.xml의 intent-filter는
+// pathPrefix="/oauth2redirect" 방식이라 .html이 붙어도 계속 매칭된다.
+const GOOGLE_OAUTH_REDIRECT_URI = 'https://doubling.wildwynn.com/oauth2redirect.html';
 const GOOGLE_OAUTH_STATE_KEY = 'google_oauth_state';
 
 const startNativeGoogleOAuth = (webClientId: string): Promise<{ accessToken: string }> => {

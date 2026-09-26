@@ -13,6 +13,7 @@ interface MemberParam {
   u_require_2: boolean;
   u_require_3: boolean;
   u_select_1: boolean;
+  recommand_code?: string;
 }
 
 interface MemberResponse {
@@ -92,8 +93,9 @@ export const SignUpScreen: React.FC = () => {
               u_name: nickname.trim(),
               u_require_1: termsRequired1,
               u_require_2: termsRequired2,
-              u_require_3: true, 
+              u_require_3: true,
               u_select_1: termsMarketing,
+              ...(referralCode.trim() ? { recommand_code: referralCode.trim() } : {}),
             },
             isSocialSignup && socialSignupInfo
               ? {
@@ -115,7 +117,7 @@ export const SignUpScreen: React.FC = () => {
               setIsLoggedIn(false);
               setCurrentTab('home');
               setCurrentSubScreen('login');
-              showToast('회원가입 정보가 입력되었습니다. 인증 메일이 발송됩니다.');
+              showToast('회원가입이 완료되었습니다.');
               setCurrentSubScreen('email-verify-request');
               break;
             
@@ -385,8 +387,8 @@ export const SignUpScreen: React.FC = () => {
                   <span className="text-[#C5A059] font-bold">[필수]</span> 서비스 이용약관 동의
                 </span>
               </label>
-              <button
-                type="button"
+              <button 
+                type="button" 
                 onClick={() => setOpenTermsModal('terms')}
                 className="text-slate-500 hover:text-slate-300"
               >
@@ -407,8 +409,8 @@ export const SignUpScreen: React.FC = () => {
                   <span className="text-[#C5A059] font-bold">[필수]</span> 개인정보 수집 및 이용 동의
                 </span>
               </label>
-              <button
-                type="button"
+              <button 
+                type="button" 
                 onClick={() => setOpenTermsModal('privacy')}
                 className="text-slate-500 hover:text-slate-300"
               >

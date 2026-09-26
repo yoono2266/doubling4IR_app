@@ -20,6 +20,17 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- Google OAuth(웹 애플리케이션 타입 Client ID) 시스템 브라우저 로그인 후 App Link로 복귀 -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="doubling.wildwynn.com"
+                    android:pathPrefix="/oauth2redirect" />
+            </intent-filter>
         </activity>
 
         <provider

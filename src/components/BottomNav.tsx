@@ -43,10 +43,12 @@ export const BottomNav: React.FC = () => {
     if (tab === 'my' && !requireLogin()) return;
 
     // '잭팟' 탭은 잭팟 목록(JackpotMapScreen)이 아니라
-    // "솔레어 리조트 앤 카지노" 상세 화면(HotelJackpotDetailScreen)으로 바로 진입한다.
+    // 실제 잭팟 데이터가 등록된 "솔레어 엔터테인먼트 시티"(jp_index=19, hotel_code=SREC) 상세 화면
+    // (HotelJackpotDetailScreen)으로 바로 진입한다. id는 mapJackpotApiHotels()가 쓰는 것과 동일하게
+    // hotel_code 기준('SREC')이어야 jackpotHotels 캐시에서 정상적으로 매칭된다.
     if (tab === 'jackpot') {
       setCurrentTab('jackpot');
-      setSelectedHotelId('solaire');
+      setSelectedHotelId('SREC');
       setCurrentSubScreen('hotel-jackpot-detail');
       return;
     }
