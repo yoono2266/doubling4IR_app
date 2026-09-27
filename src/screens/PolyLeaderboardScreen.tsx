@@ -146,6 +146,9 @@ export const PolyLeaderboardScreen: React.FC = () => {
       .map((entry, idx) => ({ ...entry, rank: idx + 1 }));
   }, [scope]);
 
+  // 2026-09-27 UI/UX 정리: 시즌 헤더·개인 지표 카드 정리(같은 34%가 두 번 보이던 중복 제거),
+  // 카테고리 알약 → h-8 사각 태그, 정렬 라벨을 다른 목록과 같은 금색 표기, 순위 행 글로우·링 제거,
+  // font-mono → Pretendard tabular-nums, 8~10px 글자 → 11~13px. 순위·지표 데이터는 기존 mock 그대로.
   return (
     <div className="flex flex-col gap-4 pb-44 pt-2">
       {/* Back Button */}
@@ -158,6 +161,149 @@ export const PolyLeaderboardScreen: React.FC = () => {
       </button>
 
       {/* Top Title & Season Header */}
+      <div className="flex flex-col gap-2.5">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <span className="material-symbols-outlined text-[#C5A059]">leaderboard</span>
+            이번 시즌 리더보드
+          </h2>
+          <span className="shrink-0 h-6 px-2 rounded-md text-[11px] font-bold text-slate-300 bg-[#162639] border border-[#1F334D] inline-flex items-center tabular-nums">
+            2026년 8월 시즌
+          </span>
+        </div>
+
+        {/* Clear Notice: Monthly Reset / No Lifetime Records */}
+        <p className="flex items-start gap-1.5 text-xs text-slate-400 leading-relaxed break-keep px-1">
+          <span className="material-symbols-outlined text-sm text-slate-500 shrink-0">info</span>
+          매월 초기화되는 이번 달 정답률 순위입니다. 역대 기록은 제공하지 않습니다.
+        </p>
+      </div>
+
+      {/* Individual Stat Card (Completely separate from competition ranking) — 수치는 mock(34%) */}
+      <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="material-symbols-outlined text-base text-[#C5A059]">psychology</span>
+            <span className="text-[13px] font-bold text-white">남다른 시각 적중률</span>
+            <span className="h-5 px-1.5 rounded text-[11px] text-slate-400 bg-[#0D1B2A] border border-[#1F334D] inline-flex items-center">
+              비경쟁 참고용
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-slate-400 leading-relaxed break-keep">
+            소수의견에 투표해 적중한 비율입니다. 순위에는 반영되지 않습니다.
+          </p>
+        </div>
+        <span className="shrink-0 text-2xl font-extrabold text-[#E2C28E] tabular-nums leading-none">
+          34<span className="text-sm font-bold">%</span>
+        </span>
+      </div>
+
+      {/* Category Scope Tabs: 전체 / 사회 / 연예 / 정치 / 인물 */}
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar -mx-1 px-1">
+        {SCOPES.map((sc) => {
+          const isActive = scope === sc;
+          return (
+            <button
+              key={sc}
+              type="button"
+              onClick={() => setScope(sc)}
+              aria-pressed={isActive}
+              className={`shrink-0 h-8 px-3 rounded-lg border text-xs font-bold whitespace-nowrap transition ${
+                isActive
+                  ? 'bg-[#C5A059] border-[#C5A059] text-[#0D1B2A]'
+                  : 'bg-[#162639] border-[#1F334D] text-slate-300 hover:border-[#C5A059]/50'
+              }`}
+            >
+              {sc}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Ranking List Header */}
+      <div className="flex items-center justify-between px-1">
+        <h3 className="text-xs font-bold text-slate-400 tracking-wider flex items-center gap-1.5 tabular-nums">
+          <span className="material-symbols-outlined text-sm text-[#C5A059]">format_list_numbered</span>
+          {scope} 정답률 TOP {ranked.length}
+        </h3>
+        <span className="text-xs font-normal tracking-wider text-[#C5A059]">정답률순</span>
+      </div>
+
+      {/* Ranking List */}
+      <div className="flex flex-col gap-2">
+        {ranked.map(({ user, stat, rank }) => {
+          const isMe = user.isCurrentUser;
+          const initial = user.nickname.substring(0, 1).toUpperCase();
+
+          return (
+            <div
+              key={user.nickname}
+              className={`rounded-xl px-3.5 py-3 flex items-center justify-between gap-3 border tabular-nums ${
+                isMe ? 'bg-[#C5A059]/10 border-[#C5A059]' : 'bg-[#162639] border-[#1F334D]'
+              }`}
+            >
+              {/* Left: Pure Numeric Rank (No badges/trophies) + User Avatar + Nickname */}
+              <div className="flex items-center gap-3 min-w-0">
+                <span
+                  className={`w-6 text-center text-base font-extrabold ${
+                    isMe ? 'text-[#E2C28E]' : rank <= 3 ? 'text-white' : 'text-slate-500'
+                  }`}
+                >
+                  {rank}
+                </span>
+
+                {/* User Initial Avatar (Strictly no badges or tier icons) */}
+                <div
+                  className={`w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold border shrink-0 ${
+                    isMe ? 'bg-[#C5A059]/20 text-[#E2C28E] border-[#C5A059]/60' : 'bg-[#0D1B2A] text-slate-300 border-[#1F334D]'
+                  }`}
+                >
+                  {initial}
+                </div>
+
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className={`text-[13px] font-bold truncate ${isMe ? 'text-[#E2C28E]' : 'text-slate-100'}`}>
+                      {user.nickname}
+                    </span>
+                    {isMe && (
+                      <span className="shrink-0 h-5 px-1.5 rounded text-[11px] font-bold bg-[#C5A059] text-[#0D1B2A] inline-flex items-center">
+                        나
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-slate-400">참여 {stat.totalVotes}건</span>
+                </div>
+              </div>
+
+              {/* Right: Accuracy Rate (%) + 누적 수익 DP(보조 표시, 정렬 기준 아님) */}
+              <div className="text-right flex flex-col items-end shrink-0">
+                <span className={`text-lg font-extrabold leading-none ${isMe ? 'text-[#E2C28E]' : 'text-white'}`}>
+                  {stat.accuracyRate}
+                  <span className="text-xs font-bold text-slate-400">%</span>
+                </span>
+                <span className={`mt-1 text-[11px] font-bold ${stat.profitDp >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
+                  {stat.profitDp >= 0 ? '+' : ''}
+                  {stat.profitDp.toLocaleString()} DP
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* [기존 화면 JSX — 2026-09-27 위 레이아웃으로 대체, 삭제하지 않고 주석 보존.
+          주석 안에 넣기 위해 내부 주석 구분자는 "/ *", "* /"로 바꿔 둠]
+      {/ * Back Button * /}
+      <button
+        onClick={() => setCurrentSubScreen(null)}
+        className="text-xs text-slate-400 hover:text-white flex items-center gap-1 w-fit transition"
+      >
+        <span className="material-symbols-outlined text-sm">arrow_back</span>
+        <span>예측 챌린지 목록으로</span>
+      </button>
+
+      {/ * Top Title & Season Header * /}
       <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-2.5 shadow-lg relative overflow-hidden">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -174,7 +320,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
           </span>
         </div>
 
-        {/* Clear Notice: Monthly Reset / No Lifetime Records */}
+        {/ * Clear Notice: Monthly Reset / No Lifetime Records * /}
         <div className="bg-[#0D1B2A]/90 border border-[#1F334D] rounded-xl px-3 py-2 flex items-start gap-2 text-[11px] text-slate-400 leading-relaxed">
           <span className="material-symbols-outlined text-xs text-slate-400 shrink-0 mt-0.5">info</span>
           <span>
@@ -183,7 +329,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* Individual Stat Card (Completely separate from competition ranking) */}
+      {/ * Individual Stat Card (Completely separate from competition ranking) * /}
       <div className="bg-[#121E2C] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3 shadow-md">
         <div className="flex items-center justify-between border-b border-[#1F334D] pb-3">
           <div className="flex items-center gap-2">
@@ -212,7 +358,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* Category Scope Tabs: 전체 / 사회 / 연예 / 정치 / 인물 */}
+      {/ * Category Scope Tabs: 전체 / 사회 / 연예 / 정치 / 인물 * /}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
         {SCOPES.map((s) => (
           <button
@@ -229,7 +375,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
         ))}
       </div>
 
-      {/* Ranking List Header */}
+      {/ * Ranking List Header * /}
       <div className="flex items-center justify-between px-1">
         <span className="text-xs font-bold text-slate-300">
           {scope} 정답률 랭킹 TOP {ranked.length}
@@ -237,7 +383,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
         <span className="text-[10px] text-slate-400">정렬: 정답률 (%)</span>
       </div>
 
-      {/* Ranking List Table */}
+      {/ * Ranking List Table * /}
       <div className="flex flex-col gap-2">
         {ranked.map(({ user, stat, rank }) => {
           const isMe = user.isCurrentUser;
@@ -252,9 +398,9 @@ export const PolyLeaderboardScreen: React.FC = () => {
                   : 'bg-[#162639] border-[#1F334D]'
               }`}
             >
-              {/* Left: Pure Numeric Rank (No badges/trophies) + User Avatar + Nickname */}
+              {/ * Left: Pure Numeric Rank (No badges/trophies) + User Avatar + Nickname * /}
               <div className="flex items-center gap-3">
-                {/* Pure Numeric Rank (Strictly Numbers Only) */}
+                {/ * Pure Numeric Rank (Strictly Numbers Only) * /}
                 <span
                   className={`w-6 text-center text-sm font-black font-mono ${
                     isMe ? 'text-[#E2C28E]' : rank <= 3 ? 'text-white' : 'text-slate-400'
@@ -263,7 +409,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
                   {rank}
                 </span>
 
-                {/* User Initial Avatar (Strictly no badges or tier icons) */}
+                {/ * User Initial Avatar (Strictly no badges or tier icons) * /}
                 <div
                   className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold font-mono border ${
                     isMe
@@ -274,7 +420,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
                   {initial}
                 </div>
 
-                {/* Nickname & Participation */}
+                {/ * Nickname & Participation * /}
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1.5">
                     <span className={`text-xs font-bold font-mono ${isMe ? 'text-[#E2C28E]' : 'text-slate-200'}`}>
@@ -292,7 +438,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
                 </div>
               </div>
 
-              {/* Right: Accuracy Rate (%) + 누적 수익 DP(보조 표시, 정렬 기준 아님) */}
+              {/ * Right: Accuracy Rate (%) + 누적 수익 DP(보조 표시, 정렬 기준 아님) * /}
               <div className="text-right flex flex-col items-end">
                 <div className="flex items-baseline gap-0.5">
                   <span className={`text-base font-black font-mono ${isMe ? 'text-[#E2C28E]' : 'text-white'}`}>
@@ -314,6 +460,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
           );
         })}
       </div>
+      */}
     </div>
   );
 };
