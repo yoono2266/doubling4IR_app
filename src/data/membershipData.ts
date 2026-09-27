@@ -11,7 +11,8 @@ export const MEMBERSHIP_TIERS: MembershipTierInfo[] = [
     icon: 'circle',
     jewelryConcept: '클래식 밴드 링 (기본 웰컴)',
     benefits: [
-      '더블링 파트너스 기본 가입 혜택',
+      // 2026-09-27: 화면 표기 서비스명 통일 (기존: 더블링 파트너스 기본 가입 혜택)
+      'DOUBLE RING 파트너스 기본 가입 혜택',
       '오퍼 호텔 시즌별 우선 예약 권한',
       '아시아 제휴 IR 웰컴 음료 서비스'
     ]
