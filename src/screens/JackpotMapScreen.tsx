@@ -129,7 +129,8 @@ export const JackpotMapScreen: React.FC = () => {
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-[#C5A059]">grid_view</span>
-            프로그래시브 트리 맵 리스트
+            {/* 2026-09-27: 제목 변경 (기존: 프로그래시브 트리 맵 리스트 — 트리맵 뷰 비활성 상태라 목록만 표시) */}
+            프로그래시브 리스트
           </h2>
           <p className="text-xs text-slate-400">아시아 주요 호텔 & 리조트 프로그래시브</p>
         </div>
@@ -181,6 +182,8 @@ export const JackpotMapScreen: React.FC = () => {
           사유: 한 줄에 라벨·USD 합계·원화 환산을 모두 넣는 구조라 폭 여유가 거의 없었고, font-mono가
           Android에서 폭 넓은 시스템 monospace로 대체되어 모바일(약 412px)에서 각 항목이 두 줄로 깨짐.
           → 왼쪽 라벨 / 오른쪽 금액 2단(USD 위·원화 아래) + whitespace-nowrap + Pretendard tabular-nums로 변경.
+          → 2026-09-27 재수정: 1행 라벨, 2행 "합계 USD"(좌정렬) · "원화 환산"(우정렬) 구조로 변경 (요청 레이아웃).
+            두 금액은 호텔 상세 요약과 동일하게 같은 크기(화면 폭 비례, 최대 15px)·굵기로 통일.
       <div className="bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3.5 py-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-slate-300">
@@ -195,16 +198,16 @@ export const JackpotMapScreen: React.FC = () => {
         </span>
       </div>
       */}
-      <div className="bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-3">
-        <span className="min-w-0 truncate text-xs font-bold text-slate-300">
+      <div className="bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3.5 py-2.5 flex flex-col gap-1.5">
+        <span className="truncate text-xs font-bold text-slate-300">
           {activeCountryIndex === 0 ? `아시아 전체 ${regions[0]?.count ?? regions[0]?.count}개 호텔` : `${activeRegion} 지역 ${filteredHotels.length}개 호텔`}
         </span>
-        <div className="shrink-0 flex flex-col items-end">
-          <span className="whitespace-nowrap text-sm font-extrabold text-[#C5A059] tabular-nums">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="whitespace-nowrap text-[clamp(12px,3.6vw,15px)] font-extrabold text-[#E2C28E] tabular-nums">
             <span className="mr-1 text-[10px] font-bold text-slate-400">합계</span>
             {formatUsd(totalRegionJackpot)}
           </span>
-          <span className="whitespace-nowrap text-[10px] text-slate-400 tabular-nums">
+          <span className="whitespace-nowrap text-right text-[clamp(12px,3.6vw,15px)] font-extrabold text-slate-200 tabular-nums">
             {formatKrw(totalRegionJackpot)}
           </span>
         </div>
