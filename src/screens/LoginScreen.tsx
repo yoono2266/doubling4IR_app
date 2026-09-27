@@ -547,8 +547,15 @@ export const LoginScreen: React.FC = () => {
             <button
               type="button"
               onClick={() => {
+                /*
+                  2026-09-27 비활성화 (삭제하지 않고 주석 보존).
+                  사유: 'email-verify-request'는 회원가입용 이메일 인증 화면이며, 임시 코드로 항상
+                  "회원가입 완료" 단계가 표시되고 "시작하기" 클릭 시 서버 인증 없이 로그인 상태가 됨.
+                  비밀번호 재설정 API가 아직 없으므로 Coming Soon 안내로 대체 (API 요청안은 패치노트에 기재).
                 setCurrentSubScreen('email-verify-request');
                 showToast('비밀번호 재설정 이메일 안내로 이동합니다.');
+                */
+                showToast('비밀번호 재설정 기능은 준비 중입니다. (Coming Soon)');
               }}
               className="text-[11px] font-semibold text-[#C5A059] hover:underline"
             >
