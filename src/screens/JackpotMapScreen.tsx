@@ -207,7 +207,7 @@ export const JackpotMapScreen: React.FC = () => {
             <span className="mr-1 text-[10px] font-bold text-slate-400">합계</span>
             {formatUsd(totalRegionJackpot)}
           </span>
-          <span className="whitespace-nowrap text-right text-[clamp(12px,3.6vw,15px)] font-extrabold text-slate-200 tabular-nums">
+          <span className="whitespace-nowrap text-right text-[clamp(12px,3.6vw,15px)] font-extrabold text-slate-400 tabular-nums">
             {formatKrw(totalRegionJackpot)}
           </span>
         </div>
@@ -331,7 +331,8 @@ export const JackpotMapScreen: React.FC = () => {
             </span>
           </h3>
           {/* 2026-09-27: font-mono 제거 — Android 시스템 monospace에서 한글이 고정폭으로 벌어져 보임 */}
-          <span className="whitespace-nowrap text-[11px] font-semibold text-[#C5A059]">누적 잭팟 순</span>
+          {/* 2026-09-27: 호텔 상세 "금액순 정렬"과 같은 스타일로 통일 (기존: text-[11px] font-semibold) */}
+          <span className="whitespace-nowrap text-xs font-normal tracking-wider text-[#C5A059]">누적 잭팟 순</span>
         </div>
 
         <div className="space-y-2.5">
@@ -382,14 +383,17 @@ export const JackpotMapScreen: React.FC = () => {
                 </div>
               </div>
 
+              {/* 2026-09-27: 달러(12px)·원화(10px) font-mono → 호텔 상세 게임 목록과 같은 규칙
+                  (둘 다 12px·같은 굵기·우측 정렬, 원화 회색, Pretendard tabular-nums),
+                  "상세보기" 9px → 좌측 "잭팟 N개 · 지역"과 같은 10px */}
               <div className="text-right shrink-0">
-                <span className="text-xs font-black text-[#E2C28E] font-mono block">
+                <span className="block whitespace-nowrap text-xs leading-5 font-extrabold text-[#E2C28E] tabular-nums">
                   {formatUsd(h.totalJackpotUsd)}
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono block">
+                <span className="block whitespace-nowrap text-xs leading-4 font-extrabold text-slate-400 tabular-nums">
                   {formatKrw(h.totalJackpotUsd)}
                 </span>
-                <span className="text-[9px] text-[#C5A059] font-semibold flex items-center justify-end gap-0.5 mt-0.5">
+                <span className="text-[10px] text-[#C5A059] font-semibold flex items-center justify-end gap-0.5 mt-1">
                   <span>상세보기</span>
                   <span className="material-symbols-outlined text-[11px]">arrow_forward</span>
                 </span>
