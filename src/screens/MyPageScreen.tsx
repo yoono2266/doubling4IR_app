@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useApp } from '../context/AppContext';
+import { resetMainScrollTop } from '../utils/scrollMemory';
 import { apiCommonClient, ApiError, ResultCode } from '../utils/apiClient';
 import { StreakTracker } from '../components/StreakTracker';
 import { CopyTextButton } from '../components/CopyTextButton';
 import { MembershipBadge } from '../components/MembershipBadge';
+import { OfferReservationCard } from '../components/OfferReservationCard';
 import { MembershipDashboardScreen } from './MembershipDashboardScreen';
 import { PolyPortfolioHistoryScreen } from './PolyPortfolioHistoryScreen';
 import { CompBenefitSelectionScreen } from './CompBenefitSelectionScreen';
@@ -74,9 +76,18 @@ export const MyPageScreen: React.FC = () => {
     setHasActiveTrip,
     currentSubScreen,
     setCurrentSubScreen,
+    setCurrentTab,
     setIsLoggedIn,
     showToast
   } = useApp();
+
+  // 2026-09-27: 오퍼 신청 내역의 "추가 혜택 신청"·"오퍼 혜택 신청하기" → GNB 오퍼 탭으로 이동
+  // (기존: comp-benefits 서브화면). BottomNav의 탭 이동과 같게 스크롤 최상단에서 시작.
+  const goToOfferTab = () => {
+    resetMainScrollTop();
+    setCurrentTab('freeroom');
+    setCurrentSubScreen(null);
+  };
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -370,16 +381,37 @@ export const MyPageScreen: React.FC = () => {
             <span className="material-symbols-outlined text-[#C5A059]">calendar_month</span>
             오퍼 신청 내역 ({reservations?.length || 0}건)
           </h2>
+          {/* 2026-09-27: 텍스트 링크 "+ 추가 혜택 신청 →" → 마이페이지 "상세 내역"과 같은 아웃라인 버튼.
+              연결: comp-benefits → GNB 오퍼 탭 */}
           <button
-            onClick={() => setCurrentSubScreen('comp-benefits')}
-            className="text-[11px] font-bold text-[#E2C28E] hover:underline flex items-center gap-0.5"
+            type="button"
+            onClick={goToOfferTab}
+            className="shrink-0 h-8 pl-2 pr-3 rounded-lg border border-[#C5A059]/50 bg-[#C5A059]/10 text-[#E2C28E] text-xs font-bold flex items-center gap-1 hover:bg-[#C5A059]/20 active:scale-[0.97] transition"
           >
-            <span>+ 추가 혜택 신청</span>
-            <span className="material-symbols-outlined text-xs">arrow_forward</span>
+            <span className="material-symbols-outlined text-base">add</span>
+            <span>추가 혜택 신청</span>
           </button>
         </div>
 
         <div className="space-y-3">
+          {/* 2026-09-27: 카드 UI를 OfferReservationCard 컴포넌트로 분리하고 가독성 정리 (기존 인라인 JSX는 아래 주석에 보존).
+              신청 내역이 없을 때 빈 상태 + 신청 버튼 추가 */}
+          {(reservations || []).length === 0 ? (
+            <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-6 flex flex-col items-center gap-3 text-center">
+              <span className="material-symbols-outlined text-3xl text-[#C5A059]">calendar_month</span>
+              <p className="text-[13px] text-slate-300 break-keep">아직 신청한 오퍼가 없습니다.</p>
+              <button
+                type="button"
+                onClick={goToOfferTab}
+                className="h-10 px-4 rounded-xl gold-button-gradient text-[#0D1B2A] text-[13px] font-extrabold hover:brightness-110 active:scale-[0.98] transition"
+              >
+                오퍼 혜택 신청하기
+              </button>
+            </div>
+          ) : (
+            (reservations || []).map((res) => <OfferReservationCard key={res.id} reservation={res} />)
+          )}
+          {/* [기존 인라인 카드 JSX — 2026-09-27 OfferReservationCard로 대체]
           {(reservations || []).map((res) => {
             const bType = res.benefitType || 'freeplay_suite';
             return (
@@ -494,6 +526,7 @@ export const MyPageScreen: React.FC = () => {
               </div>
             );
           })}
+          */}
         </div>
       </div>
     );
