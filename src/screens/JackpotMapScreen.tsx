@@ -24,8 +24,14 @@ interface Region {
 }
 
 // 순위·비중에 따라 자동 부여되는 동적 뱃지
+// 2026-09-27 뱃지 전체 비활성화 (코드는 보존).
+// 사유: 1위·TOP은 금액 순위가 아닌 목록 순서(jp_sort)로, 글로벌 랜드마크는 지역 합계 대비 비중 15% 이상으로
+// 자동 부여되어 실제 의미와 어긋남(금액 $0 호텔이 "1위" 등). 뱃지 정의·종류가 정리되면 이 값을 true로 바꾸고 기준을 수정.
+const SHOW_BADGES = false;
+
 const getDynamicBadges = (rankIndex: number, sharePercent: number): string[] => {
   const badges: string[] = [];
+  if (!SHOW_BADGES) return badges;
   if (rankIndex === 0) badges.push('1위');
   else if (rankIndex <= 2) badges.push('TOP');
   if (sharePercent >= 15) badges.push('글로벌 랜드마크');
@@ -360,7 +366,7 @@ export const JackpotMapScreen: React.FC = () => {
                     <h4 className="text-xs font-bold text-white truncate group-hover:text-[#E2C28E] transition">
                       {h.name}
                     </h4>
-                    {h.badge && (
+                    {SHOW_BADGES && h.badge && (
                       <span className="text-[8px] font-extrabold text-[#0D1B2A] bg-[#C5A059] px-1.5 py-0.2 rounded shrink-0">
                         {h.badge}
                       </span>

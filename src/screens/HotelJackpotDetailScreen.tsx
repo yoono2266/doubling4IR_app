@@ -8,6 +8,11 @@ interface HotelJackpotDetailScreenProps {
   onBack?: () => void;
 }
 
+// 2026-09-27 뱃지 전체 비활성화 (코드는 보존).
+// 사유: 1위·TOP은 금액 순위가 아닌 목록 순서(jp_sort)로, 글로벌 랜드마크는 지역 합계 대비 비중 15% 이상으로
+// 자동 부여되어 실제 의미와 어긋남(금액 $0 호텔이 "1위" 등). 뱃지 정의·종류가 정리되면 이 값을 true로 바꾸고 기준을 수정.
+const SHOW_BADGES = false;
+
 // 2026-09-27: 트리맵 1~3위 타일 뒷배경 — 게임 상세 목록 좌측 썸네일과 같은 게임 이미지(jp_thumb_url)를
 // 30% 불투명도로 깔아 준다. 썸네일이 없으면 아무것도 그리지 않음(기존 배경색 유지).
 const TreemapTileBg: React.FC<{ thumbUrl?: string; alt: string }> = ({ thumbUrl, alt }) => {
@@ -106,7 +111,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
           {/* Top Badges */}
           <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              {hotel.badge && (
+              {SHOW_BADGES && hotel.badge && (
                 <span className="bg-[#C5A059] text-[#0D1B2A] font-extrabold text-[10px] px-2.5 py-0.5 rounded-full shadow">
                   {/* 2026-09-15: 이 화면 한정으로 "TOP 잭팟" 배지 문구만 "TOP"으로 축약 표시.
                       공용 데이터(jackpotData.ts)의 원본 badge 값은 그대로 유지 — JackpotMapScreen 등
@@ -333,7 +338,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
             >
               <div className="flex items-center justify-between w-full mb-1">
                 <span className="text-[10px] font-extrabold text-[#0D1B2A] bg-[#C5A059] px-2 py-0.5 rounded shadow">
-                  #1 {sortedJackpots[0].badge || 'MEGA'}
+                  #1 {SHOW_BADGES ? (sortedJackpots[0].badge || 'MEGA') : ''}
                 </span>
                 <span className="text-xs text-[#E2C28E] font-mono font-bold">
                   {((sortedJackpots[0].amountUsd / totalJackpotSum) * 100).toFixed(1)}%
@@ -363,7 +368,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[9px] font-bold text-slate-300 bg-[#0D1B2A] px-1.5 py-0.5 rounded">
-                    #{idx + 2} {jp.badge || ''}
+                    #{idx + 2} {SHOW_BADGES ? (jp.badge || '') : ''}
                   </span>
                   <span className="text-[9px] text-slate-400 font-mono">
                     {((jp.amountUsd / totalJackpotSum) * 100).toFixed(0)}%
@@ -453,7 +458,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 h-5">
                       <h4 className="truncate text-xs leading-5 font-bold text-white">{jp.name}</h4>
-                      {jp.badge && (
+                      {SHOW_BADGES && jp.badge && (
                         <span className="text-[9px] font-bold text-[#0D1B2A] bg-[#C5A059] px-1.5 rounded">
                           {jp.badge}
                         </span>
