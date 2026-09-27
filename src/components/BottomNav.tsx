@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { resetMainScrollTop } from '../utils/scrollMemory';
 
 export const BottomNav: React.FC = () => {
   const { currentTab, currentSubScreen, setCurrentTab, setCurrentSubScreen, setSelectedHotelId, requireLogin } = useApp();
@@ -41,6 +42,9 @@ export const BottomNav: React.FC = () => {
 
   const handleTabClick = (tab: 'jackpot' | 'poly' | 'home' | 'freeroom' | 'my') => {
     if (tab === 'my' && !requireLogin()) return;
+
+    // 2026-09-27: 탭 이동은 항상 최상단에서 시작 (이전 화면 스크롤 위치·게시글 복원값이 넘어오지 않도록)
+    resetMainScrollTop();
 
     // '잭팟' 탭은 잭팟 목록(JackpotMapScreen)이 아니라
     // 실제 잭팟 데이터가 등록된 "솔레어 엔터테인먼트 시티"(jp_index=19, hotel_code=SREC) 상세 화면
