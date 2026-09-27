@@ -126,23 +126,29 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
 
         {/* Description & Overview */}
         <div className="p-4 flex flex-col gap-3">
+          {/* 2026-09-27 비활성화 (삭제하지 않고 주석 보존).
+              사유: API 호텔 데이터의 desc가 비어 있어(mapJackpotApiHotels에서 '' 고정) 호텔명 아래에
+              빈 박스만 표시됨. 불필요하다는 요청으로 숨김.
           <div className="bg-[#0D1B2A] border border-[#1F334D] rounded-xl p-3">
             <p className="text-xs text-slate-200 leading-relaxed">
               {hotel.desc}
             </p>
           </div>
+          */}
 
           {/* Total Jackpot Summary Box */}
+          {/* 2026-09-27: 달러(text-lg·font-mono)와 한화(text-xs·font-mono)의 크기·여백이 달라 줄이 맞지 않던 것을
+              동일 크기(화면 폭 비례, 최대 15px)·굵기 + Pretendard tabular-nums + whitespace-nowrap으로 통일 (색상만 구분) */}
           <div className="grid grid-cols-2 gap-2 bg-[#0D1B2A] p-3 rounded-xl border border-[#C5A059]/30">
-            <div>
+            <div className="min-w-0">
               <span className="text-[10px] text-slate-400 uppercase font-semibold block">누적 프로그래시브 총합</span>
-              <p className="text-lg font-black text-[#E2C28E] font-mono tracking-tight mt-0.5">
+              <p className="mt-1 whitespace-nowrap text-[clamp(12px,3.6vw,15px)] font-extrabold leading-tight tabular-nums text-[#E2C28E]">
                 {formatUsd(totalJackpotSum)}
               </p>
             </div>
-            <div>
+            <div className="min-w-0">
               <span className="text-[10px] text-slate-400 uppercase font-semibold block">한화 환산</span>
-              <p className="text-xs font-bold text-slate-200 mt-1 font-mono">
+              <p className="mt-1 whitespace-nowrap text-[clamp(12px,3.6vw,15px)] font-extrabold leading-tight tabular-nums text-slate-200">
                 {formatKrw(totalJackpotSum)}
               </p>
             </div>
