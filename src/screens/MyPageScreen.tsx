@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { apiCommonClient, ApiError, ResultCode } from '../utils/apiClient';
 import { StreakTracker } from '../components/StreakTracker';
 import { CopyTextButton } from '../components/CopyTextButton';
+import { MembershipBadge } from '../components/MembershipBadge';
 import { MembershipDashboardScreen } from './MembershipDashboardScreen';
 import { PolyPortfolioHistoryScreen } from './PolyPortfolioHistoryScreen';
 import { CompBenefitSelectionScreen } from './CompBenefitSelectionScreen';
@@ -247,7 +248,8 @@ export const MyPageScreen: React.FC = () => {
 
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
           <span className="material-symbols-outlined text-[#C5A059]">badge</span>
-          파트너 프로필 정보
+          {/* 2026-09-27: 제목 변경 (기존: 파트너 프로필 정보) */}
+          프로필 정보
         </h2>
 
         <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-5 flex flex-col gap-4 shadow-md">
@@ -286,10 +288,20 @@ export const MyPageScreen: React.FC = () => {
             </div>
 
             <div className="min-w-0">
+              {/* 2026-09-27: 닉네임 우측에 멤버십 뱃지 추가, "{등급} VIP Member" 줄은 삭제 요청으로 주석 처리
               <h3 className="text-base font-bold text-white">{userName} 님</h3>
               <p className="text-xs text-[#E2C28E] font-medium">{tierDisplayName} VIP Member</p>
+              */}
+              {/* 2026-09-27: "-" 줄 삭제로 생긴 높이만큼 닉네임 16px → 20px, 뱃지 md → lg로 키움 */}
+              <div className="flex items-center gap-2 min-w-0">
+                <h3 className="text-xl font-bold text-white truncate">{userName} 님</h3>
+                <MembershipBadge tierName={tierDisplayName} size="lg" />
+              </div>
+              {/* 2026-09-27 비활성화 (삭제하지 않고 주석 보존).
+                  사유: 초기 데모 페르소나용 소속 회사(company) 칸으로, 서버 회원 정보에 값이 없어 항상 "-"만 표시됨.
               <p className="text-xs text-slate-400">{myProfile?.memberInfo?.company || '-'}</p>
-              <div className="flex items-center gap-2 mt-1.5">
+              */}
+              <div className="flex items-center gap-2 mt-2">
                 <button
                   type="button"
                   onClick={() => avatarInputRef.current?.click()}
@@ -318,13 +330,22 @@ export const MyPageScreen: React.FC = () => {
               <span className="font-bold text-white">마카오</span>
             </div>
             */}
-            <div className="flex justify-between py-1 border-b border-[#1F334D]/60">
+            {/* 2026-09-27: 멤버십 등급 값 "{등급} VIP" 텍스트 → 멤버십 뱃지, 추천인 코드에 복사 버튼 추가,
+                font-mono → Pretendard tabular-nums, 행 높이를 맞추기 위해 items-center */}
+            <div className="flex items-center justify-between py-1.5 border-b border-[#1F334D]/60">
               <span className="text-slate-400">멤버십 등급</span>
-              <span className="font-bold text-[#E2C28E]">{tierDisplayName} VIP</span>
+              <MembershipBadge tierName={tierDisplayName} />
             </div>
-            <div className="flex justify-between py-1 border-b border-[#1F334D]/60">
+            <div className="flex items-center justify-between py-1.5 border-b border-[#1F334D]/60">
               <span className="text-slate-400">추천인 코드</span>
-              <span className="font-mono font-bold text-[#C5A059]">{rewardUserCode()}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[13px] font-bold text-[#E2C28E] tabular-nums">{rewardUserCode()}</span>
+                <CopyTextButton
+                  text={rewardUserCode()}
+                  successMessage="추천인 코드가 복사되었습니다."
+                  ariaLabel="추천인 코드 복사"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -893,15 +914,12 @@ export const MyPageScreen: React.FC = () => {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold text-white">{memberInfo?.u_name || '게스트'}</h2>
-              {/* ETERNITY 등급 뱃지 — 클릭 시 멤버십 등급 관리로 이동 */}
-              <button
+              {/* 등급 뱃지 — 클릭 시 멤버십 등급 관리로 이동. 2026-09-27: 프로필 정보 화면과 같은 공용 MembershipBadge 사용 */}
+              <MembershipBadge
+                tierName={tierDisplayName}
                 onClick={() => setCurrentSubScreen('my-membership')}
-                title="더블링 멤버십 등급 관리"
-                className="flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#C5A059]/30 to-[#E2C28E]/20 border border-[#C5A059]/60 text-white font-black hover:brightness-125 transition shadow-sm shrink-0"
-              >
-                <span className="material-symbols-outlined text-xs text-[#E2C28E]">workspace_premium</span>
-                <span>{tierDisplayName}</span>
-              </button>
+                title="DOUBLE RING 멤버십 등급 관리"
+              />
             </div>
             <p className="text-xs text-[#E2C28E] font-medium">DOUBLE RING VIP</p>
             {/* 2026-09-27: 가독성 — font-mono 10px → Pretendard tabular-nums 11px, 복사 버튼 추가(CopyTextButton) */}
@@ -1050,8 +1068,9 @@ export const MyPageScreen: React.FC = () => {
               <span className="material-symbols-outlined text-lg">badge</span>
             </div>
             <div className="min-w-0">
-              <span className="text-xs font-bold text-white block">1. 파트너 프로필 정보</span>
-              <span className="text-[10px] text-slate-400">회원 기본 정보 및 추천인 코드</span>
+              {/* 2026-09-27: 문구 변경 (기존: 파트너 프로필 정보 / 회원 기본 정보 및 추천인 코드) */}
+              <span className="text-[13px] font-bold text-white block">프로필 정보</span>
+              <span className="text-[11px] text-slate-400">기본 및 추천인 코드 정보</span>
             </div>
           </div>
           <span className="material-symbols-outlined text-slate-400 text-sm shrink-0">chevron_right</span>
