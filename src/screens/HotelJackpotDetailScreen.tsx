@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { HOTELS_JACKPOT_DATA, HotelJackpotData, formatUsd, formatKrw, formatKrwByCurrency, getJackpotThumbUrl, JackpotItem } from '../data/jackpotData';
 import { SOLAIRE_JACKPOT_HISTORY } from '../data/jackpotHistoryData';
+import { ProgressiveComingSoon } from '../components/ProgressiveComingSoon';
 
 interface HotelJackpotDetailScreenProps {
   hotelId?: string;
@@ -80,6 +81,10 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
     return sortedJackpots.find(j => j.id === selectedJackpotId) || sortedJackpots[0];
   }, [selectedJackpotId, sortedJackpots]);
 
+  // 2026-09-27: 등록된 프로그래시브 게임이 없는(입점 전) 호텔은 $0 요약·빈 트리맵·빈 게임 목록 대신
+  // Coming Soon 블록(입점 문의하기 포함)을 보여준다.
+  const isComingSoon = hotel.jackpots.length === 0;
+
   return (
     <div className="flex flex-col gap-4 pb-44 pt-2 animate-in fade-in duration-200">
       {/* Back Button */}
@@ -145,7 +150,8 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
           </div>
         </div>
 
-        {/* Description & Overview */}
+        {/* Description & Overview — 2026-09-27: 입점 전 호텔(isComingSoon)은 $0 요약 박스를 숨김 */}
+        {!isComingSoon && (
         <div className="p-4 flex flex-col gap-3">
           {/* 2026-09-27 비활성화 (삭제하지 않고 주석 보존).
               사유: API 호텔 데이터의 desc가 비어 있어(mapJackpotApiHotels에서 '' 고정) 호텔명 아래에
@@ -176,8 +182,14 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
           </div>
 
         </div>
+        )}
       </div>
 
+      {/* 2026-09-27: 입점 전 호텔은 트리맵·당첨 내역·게임 목록 대신 Coming Soon 블록 */}
+      {isComingSoon ? (
+        <ProgressiveComingSoon hotelName={hotel.name} />
+      ) : (
+      <>
       {/* Hotel Internal Treemap Section */}
       <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3 shadow-xl">
         <div className="flex items-center justify-between">
@@ -481,6 +493,8 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
           })}
         </div>
       </div>
+      </>
+      )}
 
       {/*
         2026-09-08 제거 요청으로 비활성화 (삭제하지 않고 주석 보존).
