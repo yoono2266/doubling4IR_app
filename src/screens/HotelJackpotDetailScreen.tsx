@@ -8,6 +8,22 @@ interface HotelJackpotDetailScreenProps {
   onBack?: () => void;
 }
 
+// 2026-09-27: 트리맵 1~3위 타일 뒷배경 — 게임 상세 목록 좌측 썸네일과 같은 게임 이미지(jp_thumb_url)를
+// 30% 불투명도로 깔아 준다. 썸네일이 없으면 아무것도 그리지 않음(기존 배경색 유지).
+const TreemapTileBg: React.FC<{ thumbUrl?: string; alt: string }> = ({ thumbUrl, alt }) => {
+  const src = getJackpotThumbUrl(thumbUrl);
+  if (!src) return null;
+  return (
+    <img
+      src={src}
+      alt={alt}
+      aria-hidden="true"
+      className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
+      referrerPolicy="no-referrer"
+    />
+  );
+};
+
 export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> = ({ hotelId, onBack }) => {
   const { selectedHotelId, setCurrentTab, setCurrentSubScreen, startBooking, jackpotHotels, refreshJackpotHotels } = useApp();
   const targetId = hotelId || selectedHotelId || 'okada';
@@ -138,7 +154,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
 
           {/* Total Jackpot Summary Box */}
           {/* 2026-09-27: 달러(text-lg·font-mono)와 한화(text-xs·font-mono)의 크기·여백이 달라 줄이 맞지 않던 것을
-              동일 크기(화면 폭 비례, 최대 15px)·굵기 + Pretendard tabular-nums + whitespace-nowrap으로 통일 (색상만 구분) */}
+              동일 크기(화면 폭 비례, 최대 15px)·굵기 + Pretendard tabular-nums + whitespace-nowrap으로 통일 (달러 금색·한화 회색) */}
           <div className="grid grid-cols-2 gap-2 bg-[#0D1B2A] p-3 rounded-xl border border-[#C5A059]/30">
             <div className="min-w-0">
               <span className="text-[10px] text-slate-400 uppercase font-semibold block">누적 프로그래시브 총합</span>
@@ -148,7 +164,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
             </div>
             <div className="min-w-0">
               <span className="text-[10px] text-slate-400 uppercase font-semibold block">한화 환산</span>
-              <p className="mt-1 whitespace-nowrap text-[clamp(12px,3.6vw,15px)] font-extrabold leading-tight tabular-nums text-slate-200">
+              <p className="mt-1 whitespace-nowrap text-[clamp(12px,3.6vw,15px)] font-extrabold leading-tight tabular-nums text-slate-400">
                 {formatKrw(totalJackpotSum)}
               </p>
             </div>
@@ -163,7 +179,8 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
           <div className="flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[#C5A059] text-base">dashboard</span>
             <h2 className="text-sm font-bold text-white tracking-tight">
-              호텔 내부 프로그래시브 트리맵 ({hotel.jackpots.length}개 게임)
+              {/* 2026-09-27: 제목 변경 (기존: 호텔 내부 프로그래시브 트리맵) */}
+              호텔 프로그래시브 ({hotel.jackpots.length}개 게임)
             </h2>
           </div>
         </div>
@@ -183,26 +200,30 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
             <div className="flex gap-1.5">
               <button
                 onClick={() => setSelectedJackpotId(sortedJackpots[0].id)}
-                className={`flex-[1.6] min-h-[132px] rounded-lg p-2.5 flex flex-col justify-between text-left transition relative overflow-hidden group ${
+                className={`flex-[1.15] min-h-[132px] rounded-lg p-2.5 flex flex-col justify-between text-left transition relative overflow-hidden group ${
                   activeJackpot.id === sortedJackpots[0].id
                     ? 'bg-gradient-to-br from-[#223B59] to-[#122338] border-2 border-[#C5A059] shadow-lg ring-1 ring-[#C5A059]'
                     : 'bg-[#182C44] border border-[#234063] hover:border-[#C5A059]/60'
                 }`}
               >
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-[10px] font-extrabold text-[#0D1B2A] bg-[#C5A059] px-1.5 py-0.2 rounded shadow">
-                    #1 {sortedJackpots[0].badge || 'PROGRESSIVE'}
-                  </span>
-                  <span className="text-[9px] text-[#E2C28E] font-mono">{((sortedJackpots[0].amountUsd / totalJackpotSum) * 100).toFixed(1)}%</span>
-                </div>
-                <div>
-                  <h4 className="text-xs font-extrabold text-white line-clamp-1 group-hover:text-[#E2C28E] transition">
+                {/* 2026-09-27: 뱃지 "#1 PROGRESSIVE" → 게임 이름(뱃지 없이 흰색 글씨)으로 교체, 비중(%) 표시와 별도 게임 이름 줄은 주석 처리,
+                    한화 금액을 달러와 같은 크기로 키움 (font-mono → Pretendard tabular-nums) */}
+                <TreemapTileBg thumbUrl={sortedJackpots[0].thumbUrl} alt={sortedJackpots[0].name} />
+                <div className="relative z-10 flex items-center justify-between w-full min-w-0">
+                  <span className="max-w-full truncate text-[16px] min-[400px]:text-[19.5px] leading-snug font-extrabold text-white">
+                    {/* #1 {sortedJackpots[0].badge || 'PROGRESSIVE'} */}
                     {sortedJackpots[0].name}
-                  </h4>
-                  <p className="text-sm font-black text-[#E2C28E] font-mono mt-0.5">
+                  </span>
+                  {/* <span className="text-[9px] text-[#E2C28E] font-mono">{((sortedJackpots[0].amountUsd / totalJackpotSum) * 100).toFixed(1)}%</span> */}
+                </div>
+                <div className="relative z-10">
+                  {/* <h4 className="text-xs font-extrabold text-white line-clamp-1 group-hover:text-[#E2C28E] transition">
+                    {sortedJackpots[0].name}
+                  </h4> */}
+                  <p className="whitespace-nowrap text-[clamp(12px,3.4vw,14px)] font-black text-[#E2C28E] tabular-nums">
                     {formatUsd(sortedJackpots[0].amountUsd)}
                   </p>
-                  <p className="text-[9px] text-slate-300 font-mono">
+                  <p className="whitespace-nowrap text-[clamp(12px,3.4vw,14px)] font-black text-slate-400 tabular-nums mt-0.5">
                     {formatKrw(sortedJackpots[0].amountUsd)}
                   </p>
                 </div>
@@ -211,35 +232,41 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
               <div className="flex-1 flex flex-col gap-1.5 min-w-0">
                 <button
                   onClick={() => setSelectedJackpotId(sortedJackpots[1].id)}
-                  className={`flex-1 min-h-[62px] rounded-lg p-2 flex flex-col justify-between text-left transition ${
+                  className={`flex-1 min-h-[62px] rounded-lg p-2 flex flex-col justify-between gap-1 text-left transition relative overflow-hidden ${
                     activeJackpot.id === sortedJackpots[1].id
                       ? 'bg-[#223B59] border-2 border-[#C5A059]'
                       : 'bg-[#15253A] border border-[#1F334D] hover:border-[#C5A059]/50'
                   }`}
                 >
-                  <span className="text-[9px] font-bold text-[#E2C28E] bg-[#C5A059]/20 px-1 rounded w-fit">
-                    #2 {sortedJackpots[1].badge || 'PROGRESSIVE'}
+                  {/* 2026-09-27: 뱃지 "#2 PROGRESSIVE" → 게임 이름(뱃지 없이 흰색 글씨)으로 교체, 별도 게임 이름 줄은 주석 처리 */}
+                  <TreemapTileBg thumbUrl={sortedJackpots[1].thumbUrl} alt={sortedJackpots[1].name} />
+                  <span className="relative z-10 shrink-0 max-w-full truncate text-[11.5px] min-[400px]:text-[14.3px] leading-snug font-bold text-white">
+                    {/* #2 {sortedJackpots[1].badge || 'PROGRESSIVE'} */}
+                    {sortedJackpots[1].name}
                   </span>
-                  <div className="min-w-0">
-                    <h4 className="text-[11px] font-bold text-white truncate">{sortedJackpots[1].name}</h4>
-                    <p className="text-xs font-bold text-[#E2C28E] font-mono">{formatUsd(sortedJackpots[1].amountUsd)}</p>
+                  <div className="relative z-10 min-w-0">
+                    {/* <h4 className="text-[11px] font-bold text-white truncate">{sortedJackpots[1].name}</h4> */}
+                    <p className="whitespace-nowrap text-[11.5px] min-[400px]:text-[14.3px] font-bold text-[#E2C28E] tabular-nums">{formatUsd(sortedJackpots[1].amountUsd)}</p>
                   </div>
                 </button>
 
                 <button
                   onClick={() => setSelectedJackpotId(sortedJackpots[2].id)}
-                  className={`flex-1 min-h-[62px] rounded-lg p-2 flex flex-col justify-between text-left transition ${
+                  className={`flex-1 min-h-[62px] rounded-lg p-2 flex flex-col justify-between gap-1 text-left transition relative overflow-hidden ${
                     activeJackpot.id === sortedJackpots[2].id
                       ? 'bg-[#223B59] border-2 border-[#C5A059]'
                       : 'bg-[#15253A] border border-[#1F334D] hover:border-[#C5A059]/50'
                   }`}
                 >
-                  <span className="text-[9px] font-bold text-[#E2C28E] bg-[#C5A059]/20 px-1 rounded w-fit">
-                    #3 {sortedJackpots[2].badge || 'PROGRESSIVE'}
+                  {/* 2026-09-27: 뱃지 "#3 PROGRESSIVE" → 게임 이름(뱃지 없이 흰색 글씨)으로 교체, 별도 게임 이름 줄은 주석 처리 */}
+                  <TreemapTileBg thumbUrl={sortedJackpots[2].thumbUrl} alt={sortedJackpots[2].name} />
+                  <span className="relative z-10 shrink-0 max-w-full truncate text-[11.5px] min-[400px]:text-[14.3px] leading-snug font-bold text-white">
+                    {/* #3 {sortedJackpots[2].badge || 'PROGRESSIVE'} */}
+                    {sortedJackpots[2].name}
                   </span>
-                  <div className="min-w-0">
-                    <h4 className="text-[10px] font-bold text-white truncate">{sortedJackpots[2].name}</h4>
-                    <p className="text-[11px] font-bold text-[#E2C28E] font-mono">{formatUsd(sortedJackpots[2].amountUsd)}</p>
+                  <div className="relative z-10 min-w-0">
+                    {/* <h4 className="text-[10px] font-bold text-white truncate">{sortedJackpots[2].name}</h4> */}
+                    <p className="whitespace-nowrap text-[11.5px] min-[400px]:text-[14.3px] font-bold text-[#E2C28E] tabular-nums">{formatUsd(sortedJackpots[2].amountUsd)}</p>
                   </div>
                 </button>
               </div>
@@ -364,11 +391,13 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
             </div>
             <div>
               <h4 className="text-xs font-bold text-white">프로그래시브 당첨 내역</h4>
-              <p className="text-[10px] text-slate-400">역대 당첨 기록 · 게임/배팅금액/슬롯넘버/획득자 국적</p>
+              {/* 2026-09-27: 설명 문구 변경 (기존: 역대 당첨 기록 · 게임/배팅금액/슬롯넘버/획득자 국적) */}
+              <p className="text-[10px] text-slate-400">당첨 기록 / 당첨금 / 슬롯넘버 / 당첨자 국적</p>
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-[10px] font-mono font-bold text-[#E2C28E] bg-[#C5A059]/10 border border-[#C5A059]/30 px-2 py-0.5 rounded">
+            {/* 2026-09-27: N건 박스를 좌측 아이콘(w-8 h-8)과 같은 크기의 정사각형으로 변경 (기존: px-2 py-0.5 작은 뱃지, font-mono) */}
+            <span className="w-8 h-8 flex items-center justify-center text-[11px] font-bold text-[#E2C28E] bg-[#C5A059]/10 border border-[#C5A059]/30 rounded-md tabular-nums">
               {SOLAIRE_JACKPOT_HISTORY.length}건
             </span>
             <span className="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
@@ -383,7 +412,8 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
             <span className="material-symbols-outlined text-sm text-[#C5A059]">format_list_numbered</span>
             <span>게임 상세 목록 ({sortedJackpots.length})</span>
           </h3>
-          <span className="text-[11px] text-[#C5A059] font-mono">금액순 정렬</span>
+          {/* 2026-09-27: 좌측 "게임 상세 목록"과 같은 글꼴·크기로 통일, 굵기는 보통(unbold) (기존: text-[11px] font-mono) */}
+          <span className="whitespace-nowrap text-xs font-normal tracking-wider text-[#C5A059]">금액순 정렬</span>
         </div>
 
         <div className="space-y-2">
@@ -401,7 +431,10 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
                     : 'bg-[#162639] border-[#1F334D] hover:border-[#C5A059]/40'
                 }`}
               >
-                <div className="flex items-center gap-3">
+                {/* 2026-09-27: 좌측 (게임명 / Jackpot Game)과 우측 (달러 / 원화)의 줄을 맞추기 위해
+                    양쪽 1행 높이 20px(leading-5)·2행 높이 16px(leading-4)로 통일.
+                    달러·원화는 같은 크기(12px)·우측 정렬, font-mono → Pretendard tabular-nums */}
+                <div className="flex items-center gap-3 min-w-0">
                   <div className="w-16 h-10 rounded-lg overflow-hidden shrink-0 border border-[#1F334D] bg-[#0D1B2A]">
                     {getJackpotThumbUrl(jp.thumbUrl) ? (
                       <img
@@ -417,24 +450,24 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
                     )}
                   </div>
 
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <h4 className="text-xs font-bold text-white">{jp.name}</h4>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 h-5">
+                      <h4 className="truncate text-xs leading-5 font-bold text-white">{jp.name}</h4>
                       {jp.badge && (
                         <span className="text-[9px] font-bold text-[#0D1B2A] bg-[#C5A059] px-1.5 rounded">
                           {jp.badge}
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] text-slate-400">{jp.type || 'Jackpot Game'}</span>
+                    <span className="block h-4 text-[10px] leading-4 text-slate-400">{jp.type || 'Jackpot Game'}</span>
                   </div>
                 </div>
 
-                <div className="text-right shrink-0">
-                  <p className="text-xs font-extrabold text-[#E2C28E] font-mono">
+                <div className="text-right shrink-0 pl-2">
+                  <p className="h-5 whitespace-nowrap text-xs leading-5 font-extrabold text-[#E2C28E] tabular-nums">
                     {formatUsd(jp.amountUsd)}
                   </p>
-                  <p className="text-[9px] text-slate-400 font-mono">
+                  <p className="h-4 whitespace-nowrap text-xs leading-4 font-extrabold text-slate-400 tabular-nums">
                     {formatKrwByCurrency(jp.amountUsd, jp.currency)}
                   </p>
                 </div>
