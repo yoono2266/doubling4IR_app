@@ -1,4 +1,5 @@
-// 포인트 사용처(더블링 포인트 상품 교환) mock 데이터.
+// 포인트 교환소(구 포인트 사용처, DOUBLE RING 포인트 상품 교환) mock 데이터.
+// 2026-09-27: 화면 표기 문구의 서비스명 "더블링" → "DOUBLE RING" (id·key는 변경 없음)
 // 실제 서버 상품/재고 연동이 아니며, 전부 클라이언트 mock 카탈로그입니다.
 // 이미지는 프로젝트에 이미 있는 Unsplash 라이선스 이미지(jackpotData.ts, compBenefitData.ts,
 // FreeRoomScreen.tsx에서 사용 중인 URL)를 재사용합니다 — 새 서드파티 이미지 URL 추가 없음.
@@ -27,7 +28,7 @@ export const POINT_PRODUCT_CATEGORIES: PointProductCategory[] = [
   {
     id: 'hotel_voucher',
     title: '호텔 바우처',
-    subtitle: '더블링 제휴 리조트 객실 1박 이용권',
+    subtitle: 'DOUBLE RING 제휴 리조트 객실 1박 이용권',
     icon: 'hotel',
     image: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=800&auto=format&fit=crop&q=80'
   },
@@ -128,8 +129,8 @@ export const POINT_PRODUCTS: PointProduct[] = [
   {
     id: 'ot-giftcard',
     categoryId: 'other',
-    name: '더블링 기프트카드 (5,000원 상당)',
-    description: '더블링 제휴 가맹점에서 사용 가능한 5,000원 상당의 모바일 기프트카드입니다.',
+    name: 'DOUBLE RING 기프트카드 (5,000원 상당)',
+    description: 'DOUBLE RING 제휴 가맹점에서 사용 가능한 5,000원 상당의 모바일 기프트카드입니다.',
     dpCost: 500,
     validUntil: '발급일로부터 1년 이내 사용',
     image: 'https://images.unsplash.com/photo-1518895312237-a9e23508077d?w=800&auto=format&fit=crop&q=80'
@@ -137,8 +138,8 @@ export const POINT_PRODUCTS: PointProduct[] = [
   {
     id: 'ot-goods-set',
     categoryId: 'other',
-    name: '더블링 프리미엄 굿즈 세트 (텀블러+카드지갑)',
-    description: '더블링 브랜드 로고가 새겨진 프리미엄 텀블러와 카드지갑 세트입니다.',
+    name: 'DOUBLE RING 프리미엄 굿즈 세트 (텀블러+카드지갑)',
+    description: 'DOUBLE RING 브랜드 로고가 새겨진 프리미엄 텀블러와 카드지갑 세트입니다.',
     dpCost: 300,
     validUntil: '발급일로부터 1년 이내 수령',
     image: 'https://images.unsplash.com/photo-1606167668584-78701c57f13d?w=800&auto=format&fit=crop&q=80'

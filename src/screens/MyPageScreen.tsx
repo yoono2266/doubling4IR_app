@@ -492,11 +492,15 @@ export const MyPageScreen: React.FC = () => {
 
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
           <span className="material-symbols-outlined text-[#C5A059]">account_balance_wallet</span>
-          더블링 포인트 (DOUBLE RING POINT)
+          {/* 2026-09-27: 서비스명·단위 표기 통일 (기존: 더블링 포인트 (DOUBLE RING POINT)) */}
+          DOUBLE RING 포인트 (DP)
         </h2>
 
-        {/* 💡 포인트 사용처 mock 교환분(pointRedemptions)만큼 표시값에서 차감한다.
-            서버 실제 값인 memberInfo.u_dp 자체는 건드리지 않는다. */}
+        {/* 2026-09-27 비활성화 (삭제하지 않고 주석 보존).
+            사유: "사용 가능 포인트" 박스 삭제 요청. 잔액은 마이페이지 DP 카드에서, 포인트 교환소 진입은
+            마이페이지 "포인트 교환소" 버튼에서 한다.
+            (원래 주석) 포인트 사용처 mock 교환분(pointRedemptions)만큼 표시값에서 차감한다.
+            서버 실제 값인 memberInfo.u_dp 자체는 건드리지 않는다.
         <div className="bg-gradient-to-br from-[#162639] via-[#1f334d] to-[#0D1B2A] border border-[#C5A059] rounded-2xl p-5 shadow-xl flex flex-col gap-3">
           <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">사용 가능 포인트</span>
           <p className="text-2xl font-extrabold text-[#FFF0D0] gold-gradient-text font-mono">
@@ -512,20 +516,26 @@ export const MyPageScreen: React.FC = () => {
             </button>
           </div>
         </div>
+        */}
 
         <div>
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">포인트 지급 및 차감 내역</h3>
+          {/* 2026-09-27: 다른 목록 헤더와 같은 스타일 — 금색 아이콘 + 회색 제목 */}
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-1 flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-sm text-[#C5A059]">receipt_long</span>
+            <span>포인트 지급 및 차감 내역</span>
+          </h3>
           <div className="space-y-2">
             {/* 💡 로컬 mock 교환 내역(pointRedemptions)을 최신순으로 먼저 보여주고,
                 그 뒤에 실제 서버 내역(memberReward)을 이어붙인다. */}
             {pointRedemptions.map((redemption) => (
-              <div key={redemption.id} className="bg-[#162639] border border-[#1F334D] p-3 rounded-xl flex items-center justify-between text-xs">
-                <div>
-                  <p className="font-bold text-white">포인트 사용처 교환 ({redemption.productName})</p>
-                  <p className="text-[10px] text-slate-400">{redemption.redeemedAt} • {redemption.voucherCode}</p>
+              // 2026-09-27: 가독성(제목 13px·일시 11px, font-mono → tabular-nums 14px), 단위 오타 DT → DP, "사용처" → "교환소"
+              <div key={redemption.id} className="bg-[#162639] border border-[#1F334D] px-3.5 py-3 rounded-xl flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[13px] font-bold text-white truncate">포인트 교환소 교환 ({redemption.productName})</p>
+                  <p className="mt-0.5 text-[11px] text-slate-400 tabular-nums truncate">{redemption.redeemedAt} • {redemption.voucherCode}</p>
                 </div>
-                <span className="font-mono font-extrabold text-[#E2C28E]">
-                  -{redemption.dpCost.toLocaleString()} DT
+                <span className="shrink-0 whitespace-nowrap text-sm font-extrabold tabular-nums text-[#E2C28E]">
+                  -{redemption.dpCost.toLocaleString()} DP
                 </span>
               </div>
             ))}
@@ -542,15 +552,16 @@ export const MyPageScreen: React.FC = () => {
               const key = reward?.id ?? reward?.reward_index ?? idx;
 
               return (
-                <div key={key} className="bg-[#162639] border border-[#1F334D] p-3 rounded-xl flex items-center justify-between text-xs">
-                  <div>
-                    <p className="font-bold text-white">{title}</p>
-                    <p className="text-[10px] text-slate-400">{date}{txHash ? ` • ${txHash}` : ''}</p>
+                // 2026-09-27: 가독성(제목 13px·일시 11px, font-mono → tabular-nums 14px), 단위 오타 DT → DP
+                <div key={key} className="bg-[#162639] border border-[#1F334D] px-3.5 py-3 rounded-xl flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-bold text-white truncate">{title}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-400 tabular-nums truncate">{date}{txHash ? ` • ${txHash}` : ''}</p>
                   </div>
-                  <span className={`font-mono font-extrabold ${
+                  <span className={`shrink-0 whitespace-nowrap text-sm font-extrabold tabular-nums ${
                     isPositive ? 'text-emerald-400' : 'text-[#E2C28E]'
                   }`}>
-                    {isPositive ? '+' : '-'}{amount.toLocaleString()} DT
+                    {isPositive ? '+' : '-'}{amount.toLocaleString()} DP
                   </span>
                 </div>
               );
@@ -561,7 +572,7 @@ export const MyPageScreen: React.FC = () => {
     );
   }
 
-  // SUB-MENU 3-1: 포인트 사용처 (카테고리 → 목록 → 상세 → 확인 → 완료)
+  // SUB-MENU 3-1: 포인트 교환소(구 포인트 사용처) (카테고리 → 목록 → 상세 → 확인 → 완료)
   if (currentSubScreen === 'my-wallet-usage') {
     return <PointRedemptionScreen />;
   }
@@ -954,9 +965,22 @@ export const MyPageScreen: React.FC = () => {
             </button>
           </div>
 
-          <div>
-            <p className="text-xl font-black text-[#FFF0D0] font-mono leading-none text-right">
-              {(memberInfo.u_dp || 0).toLocaleString()} <span className="text-xs text-[#E2C28E] font-sans font-bold">DP</span>
+          {/* 2026-09-27: font-mono → Pretendard tabular-nums.
+              "포인트 교환소" 버튼 추가(포인트 교환소 my-wallet-usage로 이동) — 버튼 좌측, 금액 우측 정렬 */}
+          <div className="flex items-end justify-between gap-3">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentSubScreen('my-wallet-usage');
+              }}
+              className="shrink-0 h-9 px-3.5 rounded-lg gold-button-gradient text-[#0D1B2A] text-xs font-extrabold flex items-center gap-1 hover:brightness-110 active:scale-[0.97] transition"
+            >
+              <span className="material-symbols-outlined text-base">storefront</span>
+              <span>포인트 교환소</span>
+            </button>
+            <p className="text-2xl font-extrabold text-[#FFF0D0] tabular-nums leading-none text-right">
+              {(memberInfo.u_dp || 0).toLocaleString()} <span className="text-sm text-[#E2C28E] font-bold">DP</span>
             </p>
           </div>
 
