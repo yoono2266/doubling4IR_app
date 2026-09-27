@@ -183,8 +183,9 @@ export const CURRENCY_KRW_RATES: Record<string, number> = {
   '4': 1,
 };
 
+// 2026-09-27: 달러 표기를 항상 소수점 두 자리로 고정 (기존: toLocaleString() 기본값이라 $74,809,048.1 / $8,230,450처럼 자리수가 들쭉날쭉)
 export const formatUsd = (val: number): string => {
-  return `$${val.toLocaleString()}`;
+  return `$${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 const formatKrwAmount = (krw: number): string => {

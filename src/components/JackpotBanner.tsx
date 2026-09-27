@@ -11,7 +11,7 @@ export const JackpotBanner: React.FC = () => {
       id: 'jackpot-solaire',
       title: 'Solaire Resort Mega Pot',
       category: 'LIVE JACKPOT',
-      amount: '$8,230,450',
+      amount: '$8,230,450.00', // 2026-09-27: 달러 소수점 두 자리 표기 통일 (기존: '$8,230,450')
       subtitle: '솔레어 리조트 마닐라 VIP 슬롯 누적금',
       badge: 'LIVE',
       bgImage: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=1200&auto=format&fit=crop&q=80',
