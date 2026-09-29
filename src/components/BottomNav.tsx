@@ -46,16 +46,19 @@ export const BottomNav: React.FC = () => {
     // 2026-09-27: 탭 이동은 항상 최상단에서 시작 (이전 화면 스크롤 위치·게시글 복원값이 넘어오지 않도록)
     resetMainScrollTop();
 
-    // '잭팟' 탭은 잭팟 목록(JackpotMapScreen)이 아니라
-    // 실제 잭팟 데이터가 등록된 "솔레어 엔터테인먼트 시티"(jp_index=19, hotel_code=SREC) 상세 화면
-    // (HotelJackpotDetailScreen)으로 바로 진입한다. id는 mapJackpotApiHotels()가 쓰는 것과 동일하게
-    // hotel_code 기준('SREC')이어야 jackpotHotels 캐시에서 정상적으로 매칭된다.
-    if (tab === 'jackpot') {
-      setCurrentTab('jackpot');
-      setSelectedHotelId('SREC');
-      setCurrentSubScreen('hotel-jackpot-detail');
-      return;
-    }
+    // 2026-09-30: GNB '프로그래시브' 탭은 솔레어 상세가 아니라 프로그래시브 리스트(JackpotMapScreen)로 이동하도록 변경.
+    // 아래 솔레어 상세(SREC) 직행 분기는 요청에 따라 주석 처리 — 다시 상세로 직행해야 하면 주석 해제.
+    // (홈의 라이브 잭팟 배너 클릭은 기존대로 솔레어 상세로 이동)
+    // // '잭팟' 탭은 잭팟 목록(JackpotMapScreen)이 아니라
+    // // 실제 잭팟 데이터가 등록된 "솔레어 엔터테인먼트 시티"(jp_index=19, hotel_code=SREC) 상세 화면
+    // // (HotelJackpotDetailScreen)으로 바로 진입한다. id는 mapJackpotApiHotels()가 쓰는 것과 동일하게
+    // // hotel_code 기준('SREC')이어야 jackpotHotels 캐시에서 정상적으로 매칭된다.
+    // if (tab === 'jackpot') {
+    //   setCurrentTab('jackpot');
+    //   setSelectedHotelId('SREC');
+    //   setCurrentSubScreen('hotel-jackpot-detail');
+    //   return;
+    // }
 
     setCurrentTab(tab);
     setCurrentSubScreen(null);
