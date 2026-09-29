@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { HOTELS_JACKPOT_DATA, HotelJackpotData, formatUsd, formatKrw, formatKrwByCurrency, formatAmountByCurrency, formatKrwCodeByCurrency, getJackpotThumbUrl, JackpotItem } from '../data/jackpotData';
+import { SOLAIRE_EXTERIOR_IMAGES } from '../data/offerRoomData';
+import { RotatingHeroImages } from '../components/RotatingHeroImages';
 import { SOLAIRE_JACKPOT_HISTORY } from '../data/jackpotHistoryData';
 import { ProgressiveComingSoon } from '../components/ProgressiveComingSoon';
 
@@ -110,12 +112,17 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
       {/* Hotel Hero Card */}
       <div className="bg-[#162639] border border-[#1F334D] rounded-2xl overflow-hidden shadow-xl">
         <div className="relative h-44 w-full">
-          <img
-            src={hotel.image}
-            alt={hotel.name}
-            className="w-full h-full object-cover"
-            referrerPolicy="no-referrer"
-          />
+          {/* 2026-09-30: 솔레어(SREC)는 제공받은 외관 사진 2장(낮·밤)을 2초 간격으로 교차 롤링 (기존: hotel.image 1장). 다른 호텔은 기존 그대로 */}
+          {hotel.id === 'SREC' ? (
+            <RotatingHeroImages images={SOLAIRE_EXTERIOR_IMAGES} intervalMs={2000} />
+          ) : (
+            <img
+              src={hotel.image}
+              alt={hotel.name}
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-[#162639] via-[#162639]/40 to-transparent"></div>
 
           {/* Top Badges */}

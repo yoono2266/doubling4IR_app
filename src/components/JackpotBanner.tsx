@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { SOLAIRE_EXTERIOR_IMAGES } from '../data/offerRoomData';
 
 // 홈 상단 "라이브 잭팟" 배너 — 현재 잭팟 데이터는 "솔레어 리조트 앤 카지노"만 노출한다.
 export const JackpotBanner: React.FC = () => {
@@ -14,7 +15,9 @@ export const JackpotBanner: React.FC = () => {
       amount: '$8,230,450.00', // 2026-09-27: 달러 소수점 두 자리 표기 통일 (기존: '$8,230,450')
       subtitle: '솔레어 리조트 마닐라 VIP 슬롯 누적금',
       badge: 'LIVE',
-      bgImage: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=1200&auto=format&fit=crop&q=80',
+      // 2026-09-30: 배경을 솔레어 리조트 전경(낮)으로 교체
+      // (기존: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=1200&auto=format&fit=crop&q=80' 외부 스톡 슬롯머신 사진)
+      bgImage: SOLAIRE_EXTERIOR_IMAGES[0].src,
       type: 'jackpot'
     }
   ];

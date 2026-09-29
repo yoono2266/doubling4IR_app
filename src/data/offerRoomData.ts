@@ -23,14 +23,17 @@ export interface OfferHotelImage {
   alt: string;
 }
 
+// 솔레어 외관 사진 (낮·밤) — 오퍼 탭 호텔 슬라이드와 잭팟 상세(SREC) 상단 롤링 이미지에서 공용 사용
+export const SOLAIRE_EXTERIOR_IMAGES: OfferHotelImage[] = [
+  { src: `${OFFER_IMAGE_BASE}/exterior-day.jpg`, alt: '솔레어 리조트 앤 카지노 외관 (낮)' },
+  { src: `${OFFER_IMAGE_BASE}/exterior-night.jpg`, alt: '솔레어 리조트 앤 카지노 외관 (밤)' },
+];
+
 export const OFFER_HOTEL = {
   nameKo: '솔레어 리조트 앤 카지노',
   nameEn: 'Solaire Resort & Casino',
   location: '필리핀 마닐라, 엔터테인먼트 시티',
-  images: [
-    { src: `${OFFER_IMAGE_BASE}/exterior-day.jpg`, alt: '솔레어 리조트 앤 카지노 외관 (낮)' },
-    { src: `${OFFER_IMAGE_BASE}/exterior-night.jpg`, alt: '솔레어 리조트 앤 카지노 외관 (밤)' },
-  ] as OfferHotelImage[],
+  images: SOLAIRE_EXTERIOR_IMAGES,
 };
 
 // 멤버십 다이닝 카드에 쓰는 솔레어 뷔페 사진 (기존 외부 스톡 이미지 대체)
