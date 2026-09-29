@@ -69,7 +69,7 @@ export const BottomNav: React.FC = () => {
       {/* 1. Jackpot */}
       <button
         onClick={() => handleTabClick('jackpot')}
-        className={`w-full flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+        className={`w-full flex flex-col items-center justify-center py-1 px-0 rounded-xl transition-all ${
           isJackpotActive
             ? 'text-[#C5A059] font-bold scale-105'
             : 'text-slate-400 hover:text-slate-200'
@@ -78,7 +78,7 @@ export const BottomNav: React.FC = () => {
         <span className={`material-symbols-outlined text-2xl ${isJackpotActive ? 'fill-1' : ''}`}>
           casino
         </span>
-        <span className="text-[11px] mt-0.5 tracking-tight">프로그래시브</span>
+        <span className="text-[11px] mt-0.5 tracking-tight whitespace-nowrap">프로그래시브</span>
       </button>
 
       {/* 2. Poly Market */}
