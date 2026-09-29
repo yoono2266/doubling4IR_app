@@ -1,3 +1,5 @@
+import { findResortFacility } from './resortFacilities';
+
 export type RegionCode = 'ALL' | 'KR' | 'MO' | 'SG' | 'PH' | 'JP';
 
 export interface JackpotItem {
@@ -27,6 +29,8 @@ export interface HotelJackpotData {
   totalJackpotUsd: number;
   vipTables?: number;
   slots?: number;
+  // 2026-09-30: 보유 테이블 수 (서버 table_count, 없으면 resortFacilities.ts 참고값). 둘 다 없으면 '-' 표시
+  tables?: number;
 }
 
 // ==========================================
@@ -53,6 +57,10 @@ export interface JackpotHotel {
   jp_view: number;
   jp_sort: number;
   jp_thumb_url: string;
+  // 2026-09-30: 프로그래시브 리스트 "보유 슬롯 / 보유 테이블" 표시용 — BE 제공 요청 중
+  // (tools/patch/BE_API_REQUESTS.md REQ-260930-01). 필드명은 FE 제안, 서버가 아직 주지 않으면 undefined.
+  slot_count?: number | string | null;
+  table_count?: number | string | null;
 }
 
 export interface JackpotItemResponse {
@@ -78,6 +86,13 @@ export interface JackpotApiResponse {
 export const toNumber = (value: number | string): number => {
   const parsed = typeof value === 'number' ? value : Number(value.replace(/,/g, ''));
   return Number.isFinite(parsed) ? parsed : 0;
+};
+
+// 2026-09-30: 서버가 주지 않았거나(null/빈 문자열) 숫자가 아닌 값은 undefined로 둔다 (0과 구분).
+export const toOptionalNumber = (value?: number | string | null): number | undefined => {
+  if (value === undefined || value === null || value === '') return undefined;
+  const parsed = typeof value === 'number' ? value : Number(value.replace(/,/g, ''));
+  return Number.isFinite(parsed) ? parsed : undefined;
 };
 
 export const mapRegionCode = (countryCode: string): Exclude<RegionCode, 'ALL'> => {
@@ -127,6 +142,9 @@ export const mapJackpotApiHotels = (data: JackpotApiResponse): HotelJackpotData[
           thumbUrl: jackpot.jp_thumb_url,
         })),
         totalJackpotUsd: jackpots.reduce((sum, jackpot) => sum + toNumber(jackpot.jp_amount), 0),
+        // 서버 값 우선, 없으면 정적 참고 데이터(resortFacilities.ts, 호텔 한글명 매칭)
+        slots: toOptionalNumber(hotel.slot_count) ?? findResortFacility(hotel.hotel_name_ko)?.slots,
+        tables: toOptionalNumber(hotel.table_count) ?? findResortFacility(hotel.hotel_name_ko)?.tables,
       };
     });
 };

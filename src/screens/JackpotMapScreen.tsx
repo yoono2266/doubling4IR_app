@@ -9,6 +9,7 @@ import {
   mapRegionCode,
   mapJackpotApiHotels,
 } from '../data/jackpotData';
+import { findResortFacility } from '../data/resortFacilities';
 import { apiCommonClient, CommonResponse, ResultCode } from '../utils/apiClient';
 
 // /contents/main-content API 요청/응답 타입
@@ -28,6 +29,14 @@ interface Region {
 // 사유: 1위·TOP은 금액 순위가 아닌 목록 순서(jp_sort)로, 글로벌 랜드마크는 지역 합계 대비 비중 15% 이상으로
 // 자동 부여되어 실제 의미와 어긋남(금액 $0 호텔이 "1위" 등). 뱃지 정의·종류가 정리되면 이 값을 true로 바꾸고 기준을 수정.
 const SHOW_BADGES = false;
+
+// 2026-09-30: 국가 탭을 ALL·마카오·필리핀·싱가포르·일본으로 표시. 서버 국가 목록에 일본(JP)이 없으면
+// FE에서 리조트 수 0인 일본 탭을 붙인다. 이 탭은 서버에 없는 국가이므로 API를 호출하지 않고 빈 목록을 보여 준다.
+// 서버에 일본이 추가되면(country_code 'JP') 자리표시 탭 대신 서버 값이 그대로 쓰인다.
+const JAPAN_PLACEHOLDER_INDEX = -1;
+
+// 2026-09-30: 오픈 준비중 리조트 여부 (resortFacilities.ts isPreparing, 호텔 한글명 매칭)
+const isHotelPreparing = (hotel: HotelJackpotData): boolean => findResortFacility(hotel.name)?.isPreparing === true;
 
 const getDynamicBadges = (rankIndex: number, sharePercent: number): string[] => {
   const badges: string[] = [];
@@ -79,6 +88,9 @@ export const JackpotMapScreen: React.FC = () => {
               label: country.country_name_ko || country.country_name_en_short ,
               count: country.hotel_count,
             })),
+            ...(countries.some(country => mapRegionCode(country.country_code) === 'JP')
+              ? []
+              : [{ jp_index: JAPAN_PLACEHOLDER_INDEX, code: 'JP' as RegionCode, label: '일본', count: 0 }]),
           ]);
           setHotels(apiHotels);
 
@@ -95,7 +107,12 @@ export const JackpotMapScreen: React.FC = () => {
       }
     };
 
-    fetchJackpots(activeCountryIndex);
+    if (activeCountryIndex === JAPAN_PLACEHOLDER_INDEX) {
+      setHotels([]);
+      setIsLoading(false);
+    } else {
+      fetchJackpots(activeCountryIndex);
+    }
     return () => {
       isMounted = false;
     };
@@ -116,17 +133,20 @@ export const JackpotMapScreen: React.FC = () => {
   };
 
   // API jp_sort 순서를 유지합니다.
+  // 2026-09-30: 오픈한 리조트(현재 솔레어)를 맨 위로, 오픈 준비중 리조트는 아래로. 각 그룹 안에서는 API 순서 유지 (stable sort).
   const sortedHotels = useMemo(() => {
-    return [...filteredHotels];
+    return [...filteredHotels].sort((a, b) => Number(isHotelPreparing(a)) - Number(isHotelPreparing(b)));
   }, [filteredHotels]);
 
   if (isLoading) {
     return <div className="flex min-h-56 items-center justify-center text-sm text-slate-400">잭팟 정보를 불러오는 중...</div>;
   }
 
-  if (sortedHotels.length === 0) {
-    return <div className="flex min-h-56 items-center justify-center text-sm text-slate-400">표시할 잭팟 정보가 없습니다.</div>;
-  }
+  // 2026-09-30 주석 처리: 목록이 비면(예: 일본 탭 0개) 국가 탭까지 사라져 다른 국가로 돌아갈 수 없음.
+  // → 빈 목록 안내는 아래 목록 영역 안에서 표시.
+  // if (sortedHotels.length === 0) {
+  //   return <div className="flex min-h-56 items-center justify-center text-sm text-slate-400">표시할 잭팟 정보가 없습니다.</div>;
+  // }
 
   return (
     <div className="flex flex-col gap-4 pb-44 pt-2">
@@ -161,14 +181,15 @@ export const JackpotMapScreen: React.FC = () => {
       </div>
 
       {/* 1. Region Filter Tabs (ALL / KR / MO / SG / PH / JP) */}
-      <div className="flex items-center gap-1.5 p-1 bg-[#162639] rounded-xl border border-[#1F334D] overflow-x-auto no-scrollbar">
+      {/* 2026-09-30: 탭 5개(일본 추가)가 320px 폭에서도 한 화면에 들어오도록 gap-1.5 → gap-1, 버튼 min-w-[54px] → min-w-0 */}
+      <div className="flex items-center gap-1 p-1 bg-[#162639] rounded-xl border border-[#1F334D] overflow-x-auto no-scrollbar">
         {regions.map((reg) => {
           const isActive = activeCountryIndex === reg.jp_index;
           return (
             <button
               key={reg.jp_index}
               onClick={() => setActiveCountryIndex(reg.jp_index)}
-              className={`flex-1 min-w-[54px] py-2 rounded-lg text-xs font-extrabold transition-all flex flex-col items-center justify-center gap-0.5 ${
+              className={`flex-1 min-w-0 whitespace-nowrap py-2 rounded-lg text-xs font-extrabold transition-all flex flex-col items-center justify-center gap-0.5 ${
                 isActive
                   ? 'bg-[#C5A059] text-[#0D1B2A] shadow-md scale-[1.02]'
                   : 'text-slate-400 hover:text-white hover:bg-[#0D1B2A]'
@@ -204,6 +225,7 @@ export const JackpotMapScreen: React.FC = () => {
         </span>
       </div>
       */}
+      {/* 2026-09-30 주석 처리 (요청): "아시아 전체 N개 호텔 / 합계 USD / 원화 환산" 요약 박스를 화면에서 제거.
       <div className="bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3.5 py-2.5 flex flex-col gap-1.5">
         <span className="truncate text-xs font-bold text-slate-300">
           {activeCountryIndex === 0 ? `아시아 전체 ${regions[0]?.count ?? regions[0]?.count}개 호텔` : `${activeRegion} 지역 ${filteredHotels.length}개 호텔`}
@@ -218,6 +240,7 @@ export const JackpotMapScreen: React.FC = () => {
           </span>
         </div>
       </div>
+      */}
 
       {/* 2. Treemap View — 타일 크기가 잭팟 총액 비율에 따라 달라지는 모자이크.
              #1~#3 큰 타일 + 나머지 3x2 작은 타일. row-span 미사용으로 타일 겹침 없음. */}
@@ -333,7 +356,8 @@ export const JackpotMapScreen: React.FC = () => {
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <span className="material-symbols-outlined text-sm text-[#C5A059]">list_alt</span>
             <span>
-              {activeCountryIndex === 0 ? `전체 카지노 목록 (${filteredHotels.length}개)` : `${activeRegion} 카지노 목록 (${filteredHotels.length}개)`}
+              {/* 2026-09-30: "카지노 목록" → "5성 복합리조트 목록" */}
+              {activeCountryIndex === 0 ? `전체 5성 복합리조트 목록 (${filteredHotels.length}개)` : `${activeRegion} 5성 복합리조트 목록 (${filteredHotels.length}개)`}
             </span>
           </h3>
           {/* 2026-09-27: font-mono 제거 — Android 시스템 monospace에서 한글이 고정폭으로 벌어져 보임 */}
@@ -342,14 +366,30 @@ export const JackpotMapScreen: React.FC = () => {
         </div>
 
         <div className="space-y-2.5">
-          {sortedHotels.map((h, idx) => (
+          {sortedHotels.length === 0 && (
+            <div className="flex min-h-40 items-center justify-center rounded-2xl border border-[#1F334D] bg-[#162639] text-sm text-slate-400">
+              표시할 리조트 정보가 없습니다.
+            </div>
+          )}
+          {sortedHotels.map((h, idx) => {
+            // 2026-09-30: 오픈 준비중 리조트(resortFacilities.ts isPreparing)는 클릭 불가 + 반투명 "오픈 준비중" 박스 표시
+            // (카드는 흐리게 하지 않고 박스만 반투명. "잭팟 N개 · 지역" 표시를 이 박스로 대치.
+            //  이름 위치는 다른 카드와 같게 두고, 박스는 그 줄 맨 위에서 아래로 늘어나도록 겹쳐 표시.
+            //  클릭 불가를 알 수 있도록 카드 바탕·사진·이름·보유 슬롯 영역은 반투명 — "오픈 준비중" 박스는 선명하게 유지)
+            const isPreparing = isHotelPreparing(h);
+            return (
             <div
               key={h.id}
-              onClick={() => handleHotelClick(h.id)}
-              className="bg-[#162639] border border-[#1F334D] rounded-2xl p-3.5 flex items-center justify-between cursor-pointer hover:border-[#C5A059]/60 transition shadow-md group"
+              onClick={isPreparing ? undefined : () => handleHotelClick(h.id)}
+              aria-disabled={isPreparing || undefined}
+              className={`relative overflow-hidden border rounded-2xl p-3.5 flex items-center justify-between transition shadow-md group ${
+                isPreparing
+                  ? 'bg-[#162639]/50 border-[#1F334D]/60 cursor-not-allowed select-none'
+                  : 'bg-[#162639] border-[#1F334D] cursor-pointer hover:border-[#C5A059]/60'
+              }`}
             >
-              <div className="flex items-center gap-3 overflow-hidden pr-2">
-                <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-[#1F334D]">
+              <div className={`flex items-center gap-3 pr-2 ${isPreparing ? 'min-w-0' : 'overflow-hidden'}`}>
+                <div className={`relative w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-[#1F334D] ${isPreparing ? 'opacity-45 grayscale-[40%]' : ''}`}>
                   <img
                     src={h.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80'}
                     alt={h.name}
@@ -361,9 +401,9 @@ export const JackpotMapScreen: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="overflow-hidden">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <h4 className="text-xs font-bold text-white truncate group-hover:text-[#E2C28E] transition">
+                <div className={isPreparing ? 'min-w-0' : 'overflow-hidden'}>
+                  <div className={`flex items-center gap-1.5 flex-wrap ${isPreparing ? 'opacity-60' : ''}`}>
+                    <h4 className={`text-xs font-bold text-white truncate transition ${isPreparing ? '' : 'group-hover:text-[#E2C28E]'}`}>
                       {h.name}
                     </h4>
                     {SHOW_BADGES && h.badge && (
@@ -381,10 +421,23 @@ export const JackpotMapScreen: React.FC = () => {
                     ))}
                   </div>
                   <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">{h.desc}</p>
-                  <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
-                    <span className="text-[#C5A059] font-semibold">잭팟 {h.jackpots.length}개</span>
-                    <span>•</span>
-                    <span>{h.regionLabel}</span>
+                  <div className="relative flex items-center gap-2 mt-1 text-[10px] text-slate-400">
+                    {isPreparing ? (
+                      <>
+                        {/* 줄 높이를 다른 카드와 같게 유지하는 보이지 않는 자리표시 → 이름 위치(윗 여백)가 솔레어 등 다른 카드와 동일 */}
+                        <span className="invisible font-semibold" aria-hidden="true">잭팟 {h.jackpots.length}개</span>
+                        {/* 2026-09-30: 박스도 반투명(opacity-60) — 카드 전체와 함께 비활성 상태로 보이도록 */}
+                        <span className="absolute left-0 top-0 rounded-lg border border-[#C5A059]/60 bg-[#0D1B2A]/45 px-3 py-1 text-xs font-extrabold tracking-[0.15em] text-[#E2C28E]/90 whitespace-nowrap opacity-60">
+                          오픈 준비중
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-[#C5A059] font-semibold">잭팟 {h.jackpots.length}개</span>
+                        <span>•</span>
+                        <span>{h.regionLabel}</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -392,12 +445,23 @@ export const JackpotMapScreen: React.FC = () => {
               {/* 2026-09-27: 달러(12px)·원화(10px) font-mono → 호텔 상세 게임 목록과 같은 규칙
                   (둘 다 12px·같은 굵기·우측 정렬, 원화 회색, Pretendard tabular-nums),
                   "상세보기" 9px → 좌측 "잭팟 N개 · 지역"과 같은 10px */}
-              <div className="text-right shrink-0">
+              <div className={`text-right shrink-0 ${isPreparing ? 'opacity-45' : ''}`}>
+                {/* 2026-09-30 주석 처리 (요청): 누적 잭팟 USD·원화 환산 → "보유 슬롯 / 보유 테이블"로 교체.
                 <span className="block whitespace-nowrap text-xs leading-5 font-extrabold text-[#E2C28E] tabular-nums">
                   {formatUsd(h.totalJackpotUsd)}
                 </span>
                 <span className="block whitespace-nowrap text-xs leading-4 font-extrabold text-slate-400 tabular-nums">
                   {formatKrw(h.totalJackpotUsd)}
+                </span>
+                */}
+                {/* 서버 slot_count·table_count (BE 제공 요청 중, REQ-260930-01). 값이 없으면 '-' 표시 */}
+                <span className="block whitespace-nowrap text-xs leading-5 font-extrabold text-[#E2C28E] tabular-nums">
+                  <span className="mr-1 text-[10px] font-bold text-slate-400">보유 슬롯</span>
+                  {h.slots !== undefined ? h.slots.toLocaleString('en-US') : '-'}
+                </span>
+                <span className="block whitespace-nowrap text-xs leading-4 font-extrabold text-slate-300 tabular-nums">
+                  <span className="mr-1 text-[10px] font-bold text-slate-400">보유 테이블</span>
+                  {h.tables !== undefined ? h.tables.toLocaleString('en-US') : '-'}
                 </span>
                 <span className="text-[10px] text-[#C5A059] font-semibold flex items-center justify-end gap-0.5 mt-1">
                   <span>상세보기</span>
@@ -405,7 +469,8 @@ export const JackpotMapScreen: React.FC = () => {
                 </span>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
       )}
