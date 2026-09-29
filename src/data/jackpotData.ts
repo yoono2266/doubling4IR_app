@@ -227,6 +227,27 @@ export const formatKrwByCurrency = (amount: number, currency?: string): string =
   return formatKrwAmount(amount * rate);
 };
 
+// 2026-09-30: jp_currency 코드 → 통화 표기 (1=USD, 2=HKD, 3=PHP, 4=KRW). 알 수 없는 코드는 USD로 간주.
+export const CURRENCY_CODES: Record<string, string> = {
+  '1': 'USD',
+  '2': 'HKD',
+  '3': 'PHP',
+  '4': 'KRW',
+};
+
+// 2026-09-30: 원본 통화 코드 + 정수(소수점 버림)로 표시. 예) PHP 88,550,163
+// (호텔 잭팟 상세 화면용 — 기존 formatUsd는 '$'·소수점 2자리라 페소 금액이 달러처럼 보였음)
+export const formatAmountByCurrency = (amount: number, currency?: string): string => {
+  const code = (currency && CURRENCY_CODES[currency]) || 'USD';
+  return `${code} ${Math.floor(amount).toLocaleString('en-US')}`;
+};
+
+// 2026-09-30: 통화별 배율(CURRENCY_KRW_RATES)로 원화 환산 후 "KRW 정수"로 표시 (억·만원 한글 표기 없음). 예) KRW 2,213,754,098
+export const formatKrwCodeByCurrency = (amount: number, currency?: string): string => {
+  const rate = (currency && CURRENCY_KRW_RATES[currency]) || KRW_RATE;
+  return `KRW ${Math.floor(amount * rate).toLocaleString('en-US')}`;
+};
+
 // 18 Hotels Data
 export const HOTELS_JACKPOT_DATA: HotelJackpotData[] = [
   // --- KR (3) ---

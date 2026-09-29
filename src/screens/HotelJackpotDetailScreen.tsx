@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { HOTELS_JACKPOT_DATA, HotelJackpotData, formatUsd, formatKrw, formatKrwByCurrency, getJackpotThumbUrl, JackpotItem } from '../data/jackpotData';
+import { HOTELS_JACKPOT_DATA, HotelJackpotData, formatUsd, formatKrw, formatKrwByCurrency, formatAmountByCurrency, formatKrwCodeByCurrency, getJackpotThumbUrl, JackpotItem } from '../data/jackpotData';
 import { SOLAIRE_JACKPOT_HISTORY } from '../data/jackpotHistoryData';
 import { ProgressiveComingSoon } from '../components/ProgressiveComingSoon';
 
@@ -65,6 +65,11 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
       setCurrentSubScreen(null);
     }
   };
+
+  // 2026-09-30: 금액 표기를 '$'·소수점 → 원본 통화 코드(PHP 등)·정수로, 한화는 "약 N억 N만원" → "KRW 정수"로 변경.
+  // 총합은 호텔 잭팟들의 통화(첫 게임 기준 — 솔레어는 21개 모두 PHP)로 표시하고 KRW는 통화별 배율로 환산.
+  // (기존 총합·큰 타일은 달러 배율(×1,350)로 환산해 페소 금액의 원화가 약 54배 크게 표시되던 문제도 함께 해소)
+  const hotelCurrency = hotel.jackpots[0]?.currency;
 
   const totalJackpotSum = useMemo(() => {
     return hotel.jackpots.reduce((sum, item) => sum + item.amountUsd, 0);
@@ -166,17 +171,18 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
           {/* Total Jackpot Summary Box */}
           {/* 2026-09-27: 달러(text-lg·font-mono)와 한화(text-xs·font-mono)의 크기·여백이 달라 줄이 맞지 않던 것을
               동일 크기(화면 폭 비례, 최대 15px)·굵기 + Pretendard tabular-nums + whitespace-nowrap으로 통일 (달러 금색·한화 회색) */}
-          <div className="grid grid-cols-2 gap-2 bg-[#0D1B2A] p-3 rounded-xl border border-[#C5A059]/30">
+          {/* 2026-09-30: "PHP·KRW 정수" 표기로 글자 수가 늘어 380px 미만에서는 두 금액을 위아래로 쌓음 (기존: 항상 grid-cols-2) */}
+          <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-2 bg-[#0D1B2A] p-3 rounded-xl border border-[#C5A059]/30">
             <div className="min-w-0">
               <span className="text-[10px] text-slate-400 uppercase font-semibold block">누적 프로그래시브 총합</span>
               <p className="mt-1 whitespace-nowrap text-[clamp(12px,3.6vw,15px)] font-extrabold leading-tight tabular-nums text-[#E2C28E]">
-                {formatUsd(totalJackpotSum)}
+                {formatAmountByCurrency(totalJackpotSum, hotelCurrency)}
               </p>
             </div>
             <div className="min-w-0">
-              <span className="text-[10px] text-slate-400 uppercase font-semibold block">한화 환산</span>
+              <span className="text-[10px] text-slate-400 uppercase font-semibold block">KRW 환산</span>
               <p className="mt-1 whitespace-nowrap text-[clamp(12px,3.6vw,15px)] font-extrabold leading-tight tabular-nums text-slate-400">
-                {formatKrw(totalJackpotSum)}
+                {formatKrwCodeByCurrency(totalJackpotSum, hotelCurrency)}
               </p>
             </div>
           </div>
@@ -237,11 +243,12 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
                   {/* <h4 className="text-xs font-extrabold text-white line-clamp-1 group-hover:text-[#E2C28E] transition">
                     {sortedJackpots[0].name}
                   </h4> */}
-                  <p className="whitespace-nowrap text-[clamp(12px,3.4vw,14px)] font-black text-[#E2C28E] tabular-nums">
-                    {formatUsd(sortedJackpots[0].amountUsd)}
+                  {/* 2026-09-30: 통화 코드·정수 표기로 길어져 320px에서 넘치던 것 — 최소 글자 크기 12px → 10px (clamp(12px,3.4vw,14px) → clamp(10px,3.3vw,14px)) */}
+                  <p className="whitespace-nowrap text-[clamp(10px,3.3vw,14px)] font-black text-[#E2C28E] tabular-nums">
+                    {formatAmountByCurrency(sortedJackpots[0].amountUsd, sortedJackpots[0].currency)}
                   </p>
-                  <p className="whitespace-nowrap text-[clamp(12px,3.4vw,14px)] font-black text-slate-400 tabular-nums mt-0.5">
-                    {formatKrw(sortedJackpots[0].amountUsd)}
+                  <p className="whitespace-nowrap text-[clamp(10px,3.3vw,14px)] font-black text-slate-400 tabular-nums mt-0.5">
+                    {formatKrwCodeByCurrency(sortedJackpots[0].amountUsd, sortedJackpots[0].currency)}
                   </p>
                 </div>
               </button>
@@ -263,7 +270,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
                   </span>
                   <div className="relative z-10 min-w-0">
                     {/* <h4 className="text-[11px] font-bold text-white truncate">{sortedJackpots[1].name}</h4> */}
-                    <p className="whitespace-nowrap text-[11.5px] min-[400px]:text-[14.3px] font-bold text-[#E2C28E] tabular-nums">{formatUsd(sortedJackpots[1].amountUsd)}</p>
+                    <p className="whitespace-nowrap text-[clamp(9px,3vw,11.5px)] min-[400px]:text-[14.3px] font-bold text-[#E2C28E] tabular-nums">{formatAmountByCurrency(sortedJackpots[1].amountUsd, sortedJackpots[1].currency)}</p>
                   </div>
                 </button>
 
@@ -283,7 +290,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
                   </span>
                   <div className="relative z-10 min-w-0">
                     {/* <h4 className="text-[10px] font-bold text-white truncate">{sortedJackpots[2].name}</h4> */}
-                    <p className="whitespace-nowrap text-[11.5px] min-[400px]:text-[14.3px] font-bold text-[#E2C28E] tabular-nums">{formatUsd(sortedJackpots[2].amountUsd)}</p>
+                    <p className="whitespace-nowrap text-[clamp(9px,3vw,11.5px)] min-[400px]:text-[14.3px] font-bold text-[#E2C28E] tabular-nums">{formatAmountByCurrency(sortedJackpots[2].amountUsd, sortedJackpots[2].currency)}</p>
                   </div>
                 </button>
               </div>
@@ -359,10 +366,10 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
               <div>
                 <h4 className="text-sm font-bold text-white">{sortedJackpots[0].name}</h4>
                 <p className="text-base font-extrabold text-[#E2C28E] font-mono mt-0.5">
-                  {formatUsd(sortedJackpots[0].amountUsd)}
+                  {formatAmountByCurrency(sortedJackpots[0].amountUsd, sortedJackpots[0].currency)}
                 </p>
                 <p className="text-[10px] text-slate-300 font-mono">
-                  {formatKrw(sortedJackpots[0].amountUsd)}
+                  {formatKrwCodeByCurrency(sortedJackpots[0].amountUsd, sortedJackpots[0].currency)}
                 </p>
               </div>
             </button>
@@ -389,7 +396,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
                 <div className="mt-2">
                   <h4 className="text-xs font-bold text-white truncate">{jp.name}</h4>
                   <p className="text-xs font-extrabold text-[#E2C28E] font-mono mt-0.5">
-                    {formatUsd(jp.amountUsd)}
+                    {formatAmountByCurrency(jp.amountUsd, jp.currency)}
                   </p>
                 </div>
               </button>
@@ -409,7 +416,8 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
             <div>
               <h4 className="text-xs font-bold text-white">프로그래시브 당첨 내역</h4>
               {/* 2026-09-27: 설명 문구 변경 (기존: 역대 당첨 기록 · 게임/배팅금액/슬롯넘버/획득자 국적) */}
-              <p className="text-[10px] text-slate-400">당첨 기록 / 당첨금 / 슬롯넘버 / 당첨자 국적</p>
+              {/* 2026-09-30: 당첨 내역 화면 표시 항목(일시·게임 이름·당첨금)에 맞춰 변경 (기존: 당첨 기록 / 당첨금 / 슬롯넘버 / 당첨자 국적) */}
+              <p className="text-[10px] text-slate-400">당첨 일시 / 게임 이름 / 당첨금</p>
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
@@ -482,10 +490,10 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
 
                 <div className="text-right shrink-0 pl-2">
                   <p className="h-5 whitespace-nowrap text-xs leading-5 font-extrabold text-[#E2C28E] tabular-nums">
-                    {formatUsd(jp.amountUsd)}
+                    {formatAmountByCurrency(jp.amountUsd, jp.currency)}
                   </p>
                   <p className="h-4 whitespace-nowrap text-xs leading-4 font-extrabold text-slate-400 tabular-nums">
-                    {formatKrwByCurrency(jp.amountUsd, jp.currency)}
+                    {formatKrwCodeByCurrency(jp.amountUsd, jp.currency)}
                   </p>
                 </div>
               </div>
