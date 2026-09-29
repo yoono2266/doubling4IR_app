@@ -1,0 +1,117 @@
+From 391056f714267f4cc2c3e28d3db0a6dfbeb64daa Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Sun, 27 Sep 2026 18:31:40 +0900
+Subject: [PATCH 10/18] =?UTF-8?q?chore-hide-badges:=20=ED=94=84=EB=A1=9C?=
+ =?UTF-8?q?=EA=B7=B8=EB=9E=98=EC=8B=9C=EB=B8=8C=20=ED=99=94=EB=A9=B4=20?=
+ =?UTF-8?q?=EB=B1=83=EC=A7=80=20=EC=A0=84=EC=B2=B4=20=EC=9E=84=EC=8B=9C=20?=
+ =?UTF-8?q?=EB=B9=84=ED=99=9C=EC=84=B1=ED=99=94?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+[사유]
+- 자동 뱃지 기준이 실제 의미와 어긋남
+  - "1위"·"TOP": 금액 순위가 아니라 목록 순서(API jp_sort)로 부여 → $0 호텔(베네시안 마카오)이 "1위"
+  - "글로벌 랜드마크": 현재 탭 합계 대비 비중 15% 이상이면 부여 → 금액 있는 호텔이 1곳뿐이라 100%로 부여
+- 뱃지 정의·종류는 추후 별도 정리 후 재적용 예정
+
+[변경] 코드는 삭제하지 않고 파일별 SHOW_BADGES = false 스위치로 비활성화
+- src/screens/JackpotMapScreen.tsx
+  - getDynamicBadges(): SHOW_BADGES가 false면 빈 배열 반환 (목록·트리맵의 1위/TOP/글로벌 랜드마크)
+  - 호텔 데이터 뱃지(h.badge) 숨김
+- src/screens/HotelJackpotDetailScreen.tsx
+  - 호텔 이미지 위 뱃지, 게임 목록 이름 옆 뱃지 숨김
+  - 게임 3~5개 호텔용 트리맵의 뱃지 문구(MEGA 등) 숨김 (순위 표시 #1·#2는 유지)
+
+[재적용 방법] SHOW_BADGES를 true로 바꾸고 기준 로직 수정
+[유지] 호텔 이미지 좌상단 지역 표시(MO/PH/SG)는 뱃지가 아닌 지역 구분이라 그대로 둠
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/screens/HotelJackpotDetailScreen.tsx | 13 +++++++++----
+ src/screens/JackpotMapScreen.tsx         |  8 +++++++-
+ 2 files changed, 16 insertions(+), 5 deletions(-)
+
+diff --git a/src/screens/HotelJackpotDetailScreen.tsx b/src/screens/HotelJackpotDetailScreen.tsx
+index 7ffd282..0dfba5e 100644
+--- a/src/screens/HotelJackpotDetailScreen.tsx
++++ b/src/screens/HotelJackpotDetailScreen.tsx
+@@ -8,6 +8,11 @@ interface HotelJackpotDetailScreenProps {
+   onBack?: () => void;
+ }
+ 
++// 2026-09-27 뱃지 전체 비활성화 (코드는 보존).
++// 사유: 1위·TOP은 금액 순위가 아닌 목록 순서(jp_sort)로, 글로벌 랜드마크는 지역 합계 대비 비중 15% 이상으로
++// 자동 부여되어 실제 의미와 어긋남(금액 $0 호텔이 "1위" 등). 뱃지 정의·종류가 정리되면 이 값을 true로 바꾸고 기준을 수정.
++const SHOW_BADGES = false;
++
+ // 2026-09-27: 트리맵 1~3위 타일 뒷배경 — 게임 상세 목록 좌측 썸네일과 같은 게임 이미지(jp_thumb_url)를
+ // 30% 불투명도로 깔아 준다. 썸네일이 없으면 아무것도 그리지 않음(기존 배경색 유지).
+ const TreemapTileBg: React.FC<{ thumbUrl?: string; alt: string }> = ({ thumbUrl, alt }) => {
+@@ -106,7 +111,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
+           {/* Top Badges */}
+           <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+             <div className="flex items-center gap-1.5">
+-              {hotel.badge && (
++              {SHOW_BADGES && hotel.badge && (
+                 <span className="bg-[#C5A059] text-[#0D1B2A] font-extrabold text-[10px] px-2.5 py-0.5 rounded-full shadow">
+                   {/* 2026-09-15: 이 화면 한정으로 "TOP 잭팟" 배지 문구만 "TOP"으로 축약 표시.
+                       공용 데이터(jackpotData.ts)의 원본 badge 값은 그대로 유지 — JackpotMapScreen 등
+@@ -333,7 +338,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
+             >
+               <div className="flex items-center justify-between w-full mb-1">
+                 <span className="text-[10px] font-extrabold text-[#0D1B2A] bg-[#C5A059] px-2 py-0.5 rounded shadow">
+-                  #1 {sortedJackpots[0].badge || 'MEGA'}
++                  #1 {SHOW_BADGES ? (sortedJackpots[0].badge || 'MEGA') : ''}
+                 </span>
+                 <span className="text-xs text-[#E2C28E] font-mono font-bold">
+                   {((sortedJackpots[0].amountUsd / totalJackpotSum) * 100).toFixed(1)}%
+@@ -363,7 +368,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
+               >
+                 <div className="flex items-center justify-between">
+                   <span className="text-[9px] font-bold text-slate-300 bg-[#0D1B2A] px-1.5 py-0.5 rounded">
+-                    #{idx + 2} {jp.badge || ''}
++                    #{idx + 2} {SHOW_BADGES ? (jp.badge || '') : ''}
+                   </span>
+                   <span className="text-[9px] text-slate-400 font-mono">
+                     {((jp.amountUsd / totalJackpotSum) * 100).toFixed(0)}%
+@@ -453,7 +458,7 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
+                   <div className="min-w-0">
+                     <div className="flex items-center gap-1.5 h-5">
+                       <h4 className="truncate text-xs leading-5 font-bold text-white">{jp.name}</h4>
+-                      {jp.badge && (
++                      {SHOW_BADGES && jp.badge && (
+                         <span className="text-[9px] font-bold text-[#0D1B2A] bg-[#C5A059] px-1.5 rounded">
+                           {jp.badge}
+                         </span>
+diff --git a/src/screens/JackpotMapScreen.tsx b/src/screens/JackpotMapScreen.tsx
+index 409663c..88ea646 100644
+--- a/src/screens/JackpotMapScreen.tsx
++++ b/src/screens/JackpotMapScreen.tsx
+@@ -24,8 +24,14 @@ interface Region {
+ }
+ 
+ // 순위·비중에 따라 자동 부여되는 동적 뱃지
++// 2026-09-27 뱃지 전체 비활성화 (코드는 보존).
++// 사유: 1위·TOP은 금액 순위가 아닌 목록 순서(jp_sort)로, 글로벌 랜드마크는 지역 합계 대비 비중 15% 이상으로
++// 자동 부여되어 실제 의미와 어긋남(금액 $0 호텔이 "1위" 등). 뱃지 정의·종류가 정리되면 이 값을 true로 바꾸고 기준을 수정.
++const SHOW_BADGES = false;
++
+ const getDynamicBadges = (rankIndex: number, sharePercent: number): string[] => {
+   const badges: string[] = [];
++  if (!SHOW_BADGES) return badges;
+   if (rankIndex === 0) badges.push('1위');
+   else if (rankIndex <= 2) badges.push('TOP');
+   if (sharePercent >= 15) badges.push('글로벌 랜드마크');
+@@ -360,7 +366,7 @@ export const JackpotMapScreen: React.FC = () => {
+                     <h4 className="text-xs font-bold text-white truncate group-hover:text-[#E2C28E] transition">
+                       {h.name}
+                     </h4>
+-                    {h.badge && (
++                    {SHOW_BADGES && h.badge && (
+                       <span className="text-[8px] font-extrabold text-[#0D1B2A] bg-[#C5A059] px-1.5 py-0.2 rounded shrink-0">
+                         {h.badge}
+                       </span>
+-- 
+2.55.0.windows.3
+

@@ -1,0 +1,64 @@
+From f3e76f68c5834df47f0b4eb6b8fbf34da759eba5 Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Sun, 27 Sep 2026 18:31:38 +0900
+Subject: [PATCH 06/18] =?UTF-8?q?fix-usd-two-decimals:=20=EB=8B=AC?=
+ =?UTF-8?q?=EB=9F=AC=20=EA=B8=88=EC=95=A1=20=ED=91=9C=EA=B8=B0=20=EC=86=8C?=
+ =?UTF-8?q?=EC=88=98=EC=A0=90=20=EB=91=90=20=EC=9E=90=EB=A6=AC=20=EA=B3=A0?=
+ =?UTF-8?q?=EC=A0=95?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+[문제]
+- formatUsd()가 toLocaleString() 기본값을 그대로 써서 금액마다 소수점 자리수가 달랐음
+  (예: $74,809,048.1 / $8,230,450 / $669,697,759.46)
+
+[변경]
+- src/data/jackpotData.ts
+  - formatUsd(): toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })로
+    항상 소수점 두 자리 표기 (예: $8,230,450.00)
+  - 이 함수를 쓰는 프로그래시브 리스트·호텔 상세·당첨 내역 화면에 일괄 적용
+- src/components/JackpotBanner.tsx
+  - 홈 "라이브 프로그래시브" 배너의 하드코딩 금액 '$8,230,450' → '$8,230,450.00' (mock 문자열)
+
+[검증]
+- 홈·호텔 상세·리스트·당첨 내역 화면의 달러 표기 전수 확인: 소수 두 자리 아닌 값 0건
+- 412px / 360px 폭에서 금액 넘침 0건
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/components/JackpotBanner.tsx | 2 +-
+ src/data/jackpotData.ts          | 3 ++-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/src/components/JackpotBanner.tsx b/src/components/JackpotBanner.tsx
+index 943092c..b3a694a 100644
+--- a/src/components/JackpotBanner.tsx
++++ b/src/components/JackpotBanner.tsx
+@@ -11,7 +11,7 @@ export const JackpotBanner: React.FC = () => {
+       id: 'jackpot-solaire',
+       title: 'Solaire Resort Mega Pot',
+       category: 'LIVE JACKPOT',
+-      amount: '$8,230,450',
++      amount: '$8,230,450.00', // 2026-09-27: 달러 소수점 두 자리 표기 통일 (기존: '$8,230,450')
+       subtitle: '솔레어 리조트 마닐라 VIP 슬롯 누적금',
+       badge: 'LIVE',
+       bgImage: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=1200&auto=format&fit=crop&q=80',
+diff --git a/src/data/jackpotData.ts b/src/data/jackpotData.ts
+index a827ada..5743e83 100644
+--- a/src/data/jackpotData.ts
++++ b/src/data/jackpotData.ts
+@@ -183,8 +183,9 @@ export const CURRENCY_KRW_RATES: Record<string, number> = {
+   '4': 1,
+ };
+ 
++// 2026-09-27: 달러 표기를 항상 소수점 두 자리로 고정 (기존: toLocaleString() 기본값이라 $74,809,048.1 / $8,230,450처럼 자리수가 들쭉날쭉)
+ export const formatUsd = (val: number): string => {
+-  return `$${val.toLocaleString()}`;
++  return `$${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+ };
+ 
+ const formatKrwAmount = (krw: number): string => {
+-- 
+2.55.0.windows.3
+

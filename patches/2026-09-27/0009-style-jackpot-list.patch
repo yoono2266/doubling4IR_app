@@ -1,0 +1,76 @@
+From 3eea3d1056b3e1cf80ba48f7a7af7ca2a237e11e Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Sun, 27 Sep 2026 18:31:39 +0900
+Subject: [PATCH 09/18] =?UTF-8?q?style-jackpot-list:=20=ED=94=84=EB=A1=9C?=
+ =?UTF-8?q?=EA=B7=B8=EB=9E=98=EC=8B=9C=EB=B8=8C=20=EB=A6=AC=EC=8A=A4?=
+ =?UTF-8?q?=ED=8A=B8=20=EC=9A=94=EC=95=BD=20=ED=95=9C=ED=99=94=20=ED=9A=8C?=
+ =?UTF-8?q?=EC=83=89=20=EB=B0=8F=20=EC=B9=B4=EC=A7=80=EB=85=B8=20=EB=AA=A9?=
+ =?UTF-8?q?=EB=A1=9D=20=EA=B8=80=EA=BC=B4=20=ED=86=B5=EC=9D=BC?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+[요약 박스]
+- 원화 환산 금액 색상 흰색 → 회색 (달러 금색·한화 회색 통일)
+
+[전체 카지노 목록]
+- "누적 잭팟 순" 라벨: 11px semibold → 좌측 제목과 같은 12px, 보통 굵기 (호텔 상세 "금액순 정렬"과 동일 규칙)
+- 달러 금액: font-mono → Pretendard tabular-nums (12px)
+- 원화 금액: 10px font-mono → 달러와 같은 12px, 회색, 우측 정렬
+- "상세보기": 9px → 좌측 "잭팟 N개 · 지역"과 같은 10px
+
+[검증] 목록 내 모든 글자 Pretendard 단일 글꼴(174개), 412px/360px 금액 넘침 0건
+  (360px에서는 금액이 가장 큰 "솔레어 엔터테인먼트 시티" 이름만 말줄임)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/screens/JackpotMapScreen.tsx | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/src/screens/JackpotMapScreen.tsx b/src/screens/JackpotMapScreen.tsx
+index ba01104..409663c 100644
+--- a/src/screens/JackpotMapScreen.tsx
++++ b/src/screens/JackpotMapScreen.tsx
+@@ -207,7 +207,7 @@ export const JackpotMapScreen: React.FC = () => {
+             <span className="mr-1 text-[10px] font-bold text-slate-400">합계</span>
+             {formatUsd(totalRegionJackpot)}
+           </span>
+-          <span className="whitespace-nowrap text-right text-[clamp(12px,3.6vw,15px)] font-extrabold text-slate-200 tabular-nums">
++          <span className="whitespace-nowrap text-right text-[clamp(12px,3.6vw,15px)] font-extrabold text-slate-400 tabular-nums">
+             {formatKrw(totalRegionJackpot)}
+           </span>
+         </div>
+@@ -331,7 +331,8 @@ export const JackpotMapScreen: React.FC = () => {
+             </span>
+           </h3>
+           {/* 2026-09-27: font-mono 제거 — Android 시스템 monospace에서 한글이 고정폭으로 벌어져 보임 */}
+-          <span className="whitespace-nowrap text-[11px] font-semibold text-[#C5A059]">누적 잭팟 순</span>
++          {/* 2026-09-27: 호텔 상세 "금액순 정렬"과 같은 스타일로 통일 (기존: text-[11px] font-semibold) */}
++          <span className="whitespace-nowrap text-xs font-normal tracking-wider text-[#C5A059]">누적 잭팟 순</span>
+         </div>
+ 
+         <div className="space-y-2.5">
+@@ -382,14 +383,17 @@ export const JackpotMapScreen: React.FC = () => {
+                 </div>
+               </div>
+ 
++              {/* 2026-09-27: 달러(12px)·원화(10px) font-mono → 호텔 상세 게임 목록과 같은 규칙
++                  (둘 다 12px·같은 굵기·우측 정렬, 원화 회색, Pretendard tabular-nums),
++                  "상세보기" 9px → 좌측 "잭팟 N개 · 지역"과 같은 10px */}
+               <div className="text-right shrink-0">
+-                <span className="text-xs font-black text-[#E2C28E] font-mono block">
++                <span className="block whitespace-nowrap text-xs leading-5 font-extrabold text-[#E2C28E] tabular-nums">
+                   {formatUsd(h.totalJackpotUsd)}
+                 </span>
+-                <span className="text-[10px] text-slate-400 font-mono block">
++                <span className="block whitespace-nowrap text-xs leading-4 font-extrabold text-slate-400 tabular-nums">
+                   {formatKrw(h.totalJackpotUsd)}
+                 </span>
+-                <span className="text-[9px] text-[#C5A059] font-semibold flex items-center justify-end gap-0.5 mt-0.5">
++                <span className="text-[10px] text-[#C5A059] font-semibold flex items-center justify-end gap-0.5 mt-1">
+                   <span>상세보기</span>
+                   <span className="material-symbols-outlined text-[11px]">arrow_forward</span>
+                 </span>
+-- 
+2.55.0.windows.3
+

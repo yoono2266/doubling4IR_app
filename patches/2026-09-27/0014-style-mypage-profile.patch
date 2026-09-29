@@ -1,0 +1,196 @@
+From 4302c8d5d1b8a47d1b3159ae8cc8aab4fe3a1555 Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Sun, 27 Sep 2026 21:26:10 +0900
+Subject: [PATCH 14/18] =?UTF-8?q?style-mypage-profile:=20=ED=94=84?=
+ =?UTF-8?q?=EB=A1=9C=ED=95=84=20=EC=A0=95=EB=B3=B4=20=ED=99=94=EB=A9=B4=20?=
+ =?UTF-8?q?=EC=A0=95=EB=A6=AC=20=EB=B0=8F=20=EA=B3=B5=EC=9A=A9=20=EB=A9=A4?=
+ =?UTF-8?q?=EB=B2=84=EC=8B=AD=20=EB=B1=83=EC=A7=80=20=EB=8F=84=EC=9E=85?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+[신규 공용 컴포넌트 components/MembershipBadge.tsx]
+- 금색 그라디언트 + workspace_premium 아이콘 등급 뱃지, size md(11px)/lg(13px)
+- onClick이 있으면 버튼, 없으면 표시용 span
+
+[프로필 정보 화면 my-profile]
+- 제목 "파트너 프로필 정보" → "프로필 정보"
+- 닉네임 우측에 멤버십 뱃지(lg), 닉네임 16 → 20px
+- "{등급} VIP Member" 줄 주석 처리(삭제 요청)
+- 소속 회사 "-" 줄 주석 처리(서버 회원 정보에 값이 없어 항상 "-"만 표시되던 데모 페르소나 칸)
+- 멤버십 등급 행: "{등급} VIP" 텍스트 → 멤버십 뱃지
+- 추천인 코드: font-mono → 13px tabular-nums, 복사 버튼(CopyTextButton) 추가
+
+[마이페이지 메인]
+- 닉네임 옆 인라인 등급 버튼 → 공용 MembershipBadge(클릭 시 멤버십 등급 관리), 툴팁 "DOUBLE RING 멤버십 등급 관리"
+- 메뉴 문구 "파트너 프로필 정보 / 회원 기본 정보 및 추천인 코드" → "프로필 정보 / 기본 및 추천인 코드 정보"
+
+검증: Playwright 412px 렌더링 확인
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/components/MembershipBadge.tsx | 47 +++++++++++++++++++++++++++
+ src/screens/MyPageScreen.tsx       | 51 ++++++++++++++++++++----------
+ 2 files changed, 82 insertions(+), 16 deletions(-)
+ create mode 100644 src/components/MembershipBadge.tsx
+
+diff --git a/src/components/MembershipBadge.tsx b/src/components/MembershipBadge.tsx
+new file mode 100644
+index 0000000..ba6c3c3
+--- /dev/null
++++ b/src/components/MembershipBadge.tsx
+@@ -0,0 +1,47 @@
++import React from 'react';
++
++// 2026-09-27: 멤버십 등급 뱃지 (마이페이지 메인 닉네임 옆, 프로필 정보 닉네임 옆·멤버십 등급 행 공용).
++// onClick을 주면 버튼(예: 멤버십 등급 관리로 이동), 없으면 단순 표시용 span으로 렌더링한다.
++// size: 'md'(기본, 11px) / 'lg'(13px, 프로필 정보 화면 닉네임 옆)
++
++interface MembershipBadgeProps {
++  tierName: string;
++  onClick?: () => void;
++  title?: string;
++  size?: 'md' | 'lg';
++}
++
++const BASE_CLASS =
++  'inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-[#C5A059]/30 to-[#E2C28E]/20 border border-[#C5A059]/60 text-white font-black shrink-0';
++const SIZE_CLASS = {
++  md: 'text-[11px] px-2 py-0.5',
++  lg: 'text-[13px] px-2.5 py-1',
++};
++const ICON_CLASS = {
++  md: 'text-xs',
++  lg: 'text-sm',
++};
++
++export const MembershipBadge: React.FC<MembershipBadgeProps> = ({ tierName, onClick, title, size = 'md' }) => {
++  const BADGE_CLASS = `${BASE_CLASS} ${SIZE_CLASS[size]}`;
++  const content = (
++    <>
++      <span className={`material-symbols-outlined ${ICON_CLASS[size]} text-[#E2C28E]`}>workspace_premium</span>
++      <span>{tierName}</span>
++    </>
++  );
++
++  if (onClick) {
++    return (
++      <button type="button" onClick={onClick} title={title} className={`${BADGE_CLASS} hover:brightness-125 transition`}>
++        {content}
++      </button>
++    );
++  }
++
++  return (
++    <span title={title} className={BADGE_CLASS}>
++      {content}
++    </span>
++  );
++};
+diff --git a/src/screens/MyPageScreen.tsx b/src/screens/MyPageScreen.tsx
+index bf91a8d..7618b1a 100644
+--- a/src/screens/MyPageScreen.tsx
++++ b/src/screens/MyPageScreen.tsx
+@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
+ import { apiCommonClient, ApiError, ResultCode } from '../utils/apiClient';
+ import { StreakTracker } from '../components/StreakTracker';
+ import { CopyTextButton } from '../components/CopyTextButton';
++import { MembershipBadge } from '../components/MembershipBadge';
+ import { MembershipDashboardScreen } from './MembershipDashboardScreen';
+ import { PolyPortfolioHistoryScreen } from './PolyPortfolioHistoryScreen';
+ import { CompBenefitSelectionScreen } from './CompBenefitSelectionScreen';
+@@ -247,7 +248,8 @@ export const MyPageScreen: React.FC = () => {
+ 
+         <h2 className="text-lg font-bold text-white flex items-center gap-2">
+           <span className="material-symbols-outlined text-[#C5A059]">badge</span>
+-          파트너 프로필 정보
++          {/* 2026-09-27: 제목 변경 (기존: 파트너 프로필 정보) */}
++          프로필 정보
+         </h2>
+ 
+         <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-5 flex flex-col gap-4 shadow-md">
+@@ -286,10 +288,20 @@ export const MyPageScreen: React.FC = () => {
+             </div>
+ 
+             <div className="min-w-0">
++              {/* 2026-09-27: 닉네임 우측에 멤버십 뱃지 추가, "{등급} VIP Member" 줄은 삭제 요청으로 주석 처리
+               <h3 className="text-base font-bold text-white">{userName} 님</h3>
+               <p className="text-xs text-[#E2C28E] font-medium">{tierDisplayName} VIP Member</p>
++              */}
++              {/* 2026-09-27: "-" 줄 삭제로 생긴 높이만큼 닉네임 16px → 20px, 뱃지 md → lg로 키움 */}
++              <div className="flex items-center gap-2 min-w-0">
++                <h3 className="text-xl font-bold text-white truncate">{userName} 님</h3>
++                <MembershipBadge tierName={tierDisplayName} size="lg" />
++              </div>
++              {/* 2026-09-27 비활성화 (삭제하지 않고 주석 보존).
++                  사유: 초기 데모 페르소나용 소속 회사(company) 칸으로, 서버 회원 정보에 값이 없어 항상 "-"만 표시됨.
+               <p className="text-xs text-slate-400">{myProfile?.memberInfo?.company || '-'}</p>
+-              <div className="flex items-center gap-2 mt-1.5">
++              */}
++              <div className="flex items-center gap-2 mt-2">
+                 <button
+                   type="button"
+                   onClick={() => avatarInputRef.current?.click()}
+@@ -318,13 +330,22 @@ export const MyPageScreen: React.FC = () => {
+               <span className="font-bold text-white">마카오</span>
+             </div>
+             */}
+-            <div className="flex justify-between py-1 border-b border-[#1F334D]/60">
++            {/* 2026-09-27: 멤버십 등급 값 "{등급} VIP" 텍스트 → 멤버십 뱃지, 추천인 코드에 복사 버튼 추가,
++                font-mono → Pretendard tabular-nums, 행 높이를 맞추기 위해 items-center */}
++            <div className="flex items-center justify-between py-1.5 border-b border-[#1F334D]/60">
+               <span className="text-slate-400">멤버십 등급</span>
+-              <span className="font-bold text-[#E2C28E]">{tierDisplayName} VIP</span>
++              <MembershipBadge tierName={tierDisplayName} />
+             </div>
+-            <div className="flex justify-between py-1 border-b border-[#1F334D]/60">
++            <div className="flex items-center justify-between py-1.5 border-b border-[#1F334D]/60">
+               <span className="text-slate-400">추천인 코드</span>
+-              <span className="font-mono font-bold text-[#C5A059]">{rewardUserCode()}</span>
++              <div className="flex items-center gap-1.5">
++                <span className="text-[13px] font-bold text-[#E2C28E] tabular-nums">{rewardUserCode()}</span>
++                <CopyTextButton
++                  text={rewardUserCode()}
++                  successMessage="추천인 코드가 복사되었습니다."
++                  ariaLabel="추천인 코드 복사"
++                />
++              </div>
+             </div>
+           </div>
+         </div>
+@@ -893,15 +914,12 @@ export const MyPageScreen: React.FC = () => {
+           <div className="min-w-0">
+             <div className="flex items-center gap-2">
+               <h2 className="text-lg font-bold text-white">{memberInfo?.u_name || '게스트'}</h2>
+-              {/* ETERNITY 등급 뱃지 — 클릭 시 멤버십 등급 관리로 이동 */}
+-              <button
++              {/* 등급 뱃지 — 클릭 시 멤버십 등급 관리로 이동. 2026-09-27: 프로필 정보 화면과 같은 공용 MembershipBadge 사용 */}
++              <MembershipBadge
++                tierName={tierDisplayName}
+                 onClick={() => setCurrentSubScreen('my-membership')}
+-                title="더블링 멤버십 등급 관리"
+-                className="flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#C5A059]/30 to-[#E2C28E]/20 border border-[#C5A059]/60 text-white font-black hover:brightness-125 transition shadow-sm shrink-0"
+-              >
+-                <span className="material-symbols-outlined text-xs text-[#E2C28E]">workspace_premium</span>
+-                <span>{tierDisplayName}</span>
+-              </button>
++                title="DOUBLE RING 멤버십 등급 관리"
++              />
+             </div>
+             <p className="text-xs text-[#E2C28E] font-medium">DOUBLE RING VIP</p>
+             {/* 2026-09-27: 가독성 — font-mono 10px → Pretendard tabular-nums 11px, 복사 버튼 추가(CopyTextButton) */}
+@@ -1050,8 +1068,9 @@ export const MyPageScreen: React.FC = () => {
+               <span className="material-symbols-outlined text-lg">badge</span>
+             </div>
+             <div className="min-w-0">
+-              <span className="text-xs font-bold text-white block">1. 파트너 프로필 정보</span>
+-              <span className="text-[10px] text-slate-400">회원 기본 정보 및 추천인 코드</span>
++              {/* 2026-09-27: 문구 변경 (기존: 파트너 프로필 정보 / 회원 기본 정보 및 추천인 코드) */}
++              <span className="text-[13px] font-bold text-white block">프로필 정보</span>
++              <span className="text-[11px] text-slate-400">기본 및 추천인 코드 정보</span>
+             </div>
+           </div>
+           <span className="material-symbols-outlined text-slate-400 text-sm shrink-0">chevron_right</span>
+-- 
+2.55.0.windows.3
+

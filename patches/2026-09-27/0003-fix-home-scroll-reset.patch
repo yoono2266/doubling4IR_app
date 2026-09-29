@@ -1,0 +1,89 @@
+From eeb7da3b0852b10c1b8e65d0527f42a589b53224 Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Sun, 27 Sep 2026 16:22:29 +0900
+Subject: [PATCH 03/18] =?UTF-8?q?fix-home-scroll-reset:=20=ED=83=AD=20?=
+ =?UTF-8?q?=EC=9D=B4=EB=8F=99=20=EC=8B=9C=20=ED=99=88=20=EC=8A=A4=ED=81=AC?=
+ =?UTF-8?q?=EB=A1=A4=20=EC=9C=84=EC=B9=98=20=EC=98=A4=EB=B3=B5=EC=9B=90=20?=
+ =?UTF-8?q?=EC=88=98=EC=A0=95?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- scrollMemory: 게시글 상세 진입 시 저장한 스크롤 위치를 목록 복귀 시 1회만 복원하고,
+  복원 대기 상태가 아니면 최상단으로 이동 (저장값이 남아 다른 탭을 다녀오면 홈이 중간으로 튀던 문제)
+- StrictMode 이중 effect 실행에도 복원이 유지되도록 대기 해제를 다음 태스크로 지연
+- BottomNav: 탭 이동 시 resetMainScrollTop()으로 대기 복원 취소 및 최상단 이동
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/components/BottomNav.tsx |  4 ++++
+ src/utils/scrollMemory.ts    | 25 +++++++++++++++++++++++--
+ 2 files changed, 27 insertions(+), 2 deletions(-)
+
+diff --git a/src/components/BottomNav.tsx b/src/components/BottomNav.tsx
+index a13064d..4443de3 100644
+--- a/src/components/BottomNav.tsx
++++ b/src/components/BottomNav.tsx
+@@ -1,5 +1,6 @@
+ import React, { useRef, useEffect } from 'react';
+ import { useApp } from '../context/AppContext';
++import { resetMainScrollTop } from '../utils/scrollMemory';
+ 
+ export const BottomNav: React.FC = () => {
+   const { currentTab, currentSubScreen, setCurrentTab, setCurrentSubScreen, setSelectedHotelId, requireLogin } = useApp();
+@@ -42,6 +43,9 @@ export const BottomNav: React.FC = () => {
+   const handleTabClick = (tab: 'jackpot' | 'poly' | 'home' | 'freeroom' | 'my') => {
+     if (tab === 'my' && !requireLogin()) return;
+ 
++    // 2026-09-27: 탭 이동은 항상 최상단에서 시작 (이전 화면 스크롤 위치·게시글 복원값이 넘어오지 않도록)
++    resetMainScrollTop();
++
+     // '잭팟' 탭은 잭팟 목록(JackpotMapScreen)이 아니라
+     // 실제 잭팟 데이터가 등록된 "솔레어 엔터테인먼트 시티"(jp_index=19, hotel_code=SREC) 상세 화면
+     // (HotelJackpotDetailScreen)으로 바로 진입한다. id는 mapJackpotApiHotels()가 쓰는 것과 동일하게
+diff --git a/src/utils/scrollMemory.ts b/src/utils/scrollMemory.ts
+index 1ac6e47..52f01bf 100644
+--- a/src/utils/scrollMemory.ts
++++ b/src/utils/scrollMemory.ts
+@@ -2,15 +2,36 @@
+ // 앵커 스크롤 등으로 스크롤 위치가 바뀌어버려 목록으로 돌아왔을 때 이전 위치가 유지되지 않는다.
+ // 목록 화면(HomeScreen 등)에서 상세 화면으로 진입하기 직전 스크롤 위치를 저장해두고,
+ // 목록으로 복귀했을 때 복원하기 위한 유틸.
++//
++// 2026-09-27: 저장값이 한 번 복원된 뒤에도 남아 있어, 이후 다른 탭(프로그래시브 등)을 다녀와
++// 홈이 다시 마운트될 때마다 예전 게시글 진입 위치로 튀는 문제 수정.
++// → 저장값은 "복원 대기" 상태일 때 1회만 복원하고, 대기 중이 아니면 최상단으로 이동한다.
+ 
+ let savedScrollTop = 0;
++let hasPendingRestore = false;
+ 
+ export const saveMainScrollTop = () => {
+   const main = document.querySelector('main');
+-  if (main) savedScrollTop = main.scrollTop;
++  if (main) {
++    savedScrollTop = main.scrollTop;
++    hasPendingRestore = true;
++  }
+ };
+ 
+ export const restoreMainScrollTop = () => {
+   const main = document.querySelector('main');
+-  if (main) main.scrollTop = savedScrollTop;
++  if (main) main.scrollTop = hasPendingRestore ? savedScrollTop : 0;
++  // 개발 모드 React.StrictMode는 마운트 effect를 연달아 두 번 실행하므로, 같은 마운트 안의
++  // 두 번째 호출도 저장값을 복원하도록 대기 해제를 다음 태스크로 미룬다.
++  setTimeout(() => {
++    hasPendingRestore = false;
++  }, 0);
++};
++
++// 하단 탭 이동처럼 새로 진입하는 경우: 대기 중인 복원을 취소하고 최상단으로 이동
++export const resetMainScrollTop = () => {
++  hasPendingRestore = false;
++  savedScrollTop = 0;
++  const main = document.querySelector('main');
++  if (main) main.scrollTop = 0;
+ };
+-- 
+2.55.0.windows.3
+

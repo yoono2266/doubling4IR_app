@@ -1,0 +1,685 @@
+From ec21a845c481047c650b844bda9c7652d85a7267 Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Sun, 27 Sep 2026 21:26:09 +0900
+Subject: [PATCH 13/18] =?UTF-8?q?feat-point-exchange:=20=ED=8F=AC=EC=9D=B8?=
+ =?UTF-8?q?=ED=8A=B8=20=EA=B5=90=ED=99=98=EC=86=8C=20=EC=A7=84=EC=9E=85=20?=
+ =?UTF-8?q?=EB=B2=84=ED=8A=BC=C2=B7=ED=83=9C=EA=B7=B8=ED=98=95=20=EB=AA=A9?=
+ =?UTF-8?q?=EB=A1=9D=C2=B7=EC=83=81=EC=84=B8=20=ED=99=94=EB=A9=B4=20?=
+ =?UTF-8?q?=EA=B0=9C=ED=8E=B8?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+※ 포인트 교환은 전부 mock(AppContext.redeemPointProduct) — 실제 결제·재고 연동 아님
+
+[마이페이지 DP 카드]
+- [포인트 교환소] 금색 버튼 추가(좌측) → my-wallet-usage, 금액은 우측 24px tabular-nums
+
+[DOUBLE RING 포인트 화면 my-wallet]
+- 제목 "더블링 포인트 (DOUBLE RING POINT)" → "DOUBLE RING 포인트 (DP)"
+- "사용 가능 포인트" 박스 주석 처리(삭제 요청, 사유 주석 포함)
+- 내역 헤더에 금색 아이콘, 행 제목 13px·일시 11px·금액 14px tabular-nums
+- 단위 오타 "DT" → "DP", "포인트 사용처 교환" → "포인트 교환소 교환"
+
+[포인트 교환소 PointRedemptionScreen]
+- 명칭 "포인트 사용처" → "포인트 교환소"
+- 구성 간소화: 카테고리 카드 단계 삭제 → 첫 화면에서 태그(전체·바우처·식음료권·기타, 개수 자동)로
+  상품 목록 바로 필터링. 흐름: 태그+목록 → 상세 → 확인 모달 → 완료
+- 제목과 보유 포인트를 한 줄로(기존 "사용 가능 포인트" 박스 삭제)
+- 상품 목록: 1열 리스트(이미지·분류·상품명 2줄·금색 DP)
+- 상품 상세: 이미지 좌측 상단 분류 뱃지, 이미지 하단 그라디언트 위 교환권 이름(호텔 프로그래시브 상세와 동일 구성),
+  정보 박스에 보유 포인트·교환 후 잔여(부족 시 부족 포인트, 앰버) 추가, 레드 경고 문구·드롭 섀도우 제거,
+  교환 버튼 48px
+- 확인 모달: 글로우 제거, font-mono 제거, 교환 후 잔여 안내, "사용하기" → "교환하기"
+- 뒤로가기 라벨 정리(마이페이지로 / 포인트 교환소로)
+- 기존 카테고리·목록·상세 JSX 및 조사 처리 함수(withRoParticle)는 사유와 함께 주석 보존
+
+[상세에서 기기·브라우저 뒤로가기 → 교환소 목록]
+- 신규 훅 hooks/useInnerStepBack.ts: 서브화면 내부 단계에 history 엔트리 1칸을 추가하고,
+  그 popstate를 useAppHistory보다 먼저 받아 onBack 호출 (window 리스너는 등록 순서대로 호출되므로
+  모듈 로드 시점에 1회 등록). useAppHistory.ts(BE 로직)는 수정하지 않음
+- 알려진 한계: 상세가 열린 상태로 다른 서브화면으로 바로 이동하면 history 엔트리 1칸이 남음
+
+[데이터 pointRedemptionData.ts]
+- 화면 표기 서비스명 "더블링" → "DOUBLE RING" (id·key 변경 없음)
+
+검증: Playwright 412px — 태그 필터(전체 12·식음료권 4), 상세 ↔ 목록 기기 뒤로가기, 필터 유지, 가로 넘침 없음
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/data/pointRedemptionData.ts       |  13 +-
+ src/hooks/useInnerStepBack.ts         |  82 +++++++++
+ src/screens/MyPageScreen.tsx          |  64 +++++--
+ src/screens/PointRedemptionScreen.tsx | 251 ++++++++++++++++++++++----
+ 4 files changed, 347 insertions(+), 63 deletions(-)
+ create mode 100644 src/hooks/useInnerStepBack.ts
+
+diff --git a/src/data/pointRedemptionData.ts b/src/data/pointRedemptionData.ts
+index 4ba828d..3985b02 100644
+--- a/src/data/pointRedemptionData.ts
++++ b/src/data/pointRedemptionData.ts
+@@ -1,4 +1,5 @@
+-// 포인트 사용처(더블링 포인트 상품 교환) mock 데이터.
++// 포인트 교환소(구 포인트 사용처, DOUBLE RING 포인트 상품 교환) mock 데이터.
++// 2026-09-27: 화면 표기 문구의 서비스명 "더블링" → "DOUBLE RING" (id·key는 변경 없음)
+ // 실제 서버 상품/재고 연동이 아니며, 전부 클라이언트 mock 카탈로그입니다.
+ // 이미지는 프로젝트에 이미 있는 Unsplash 라이선스 이미지(jackpotData.ts, compBenefitData.ts,
+ // FreeRoomScreen.tsx에서 사용 중인 URL)를 재사용합니다 — 새 서드파티 이미지 URL 추가 없음.
+@@ -27,7 +28,7 @@ export const POINT_PRODUCT_CATEGORIES: PointProductCategory[] = [
+   {
+     id: 'hotel_voucher',
+     title: '호텔 바우처',
+-    subtitle: '더블링 제휴 리조트 객실 1박 이용권',
++    subtitle: 'DOUBLE RING 제휴 리조트 객실 1박 이용권',
+     icon: 'hotel',
+     image: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=800&auto=format&fit=crop&q=80'
+   },
+@@ -128,8 +129,8 @@ export const POINT_PRODUCTS: PointProduct[] = [
+   {
+     id: 'ot-giftcard',
+     categoryId: 'other',
+-    name: '더블링 기프트카드 (5,000원 상당)',
+-    description: '더블링 제휴 가맹점에서 사용 가능한 5,000원 상당의 모바일 기프트카드입니다.',
++    name: 'DOUBLE RING 기프트카드 (5,000원 상당)',
++    description: 'DOUBLE RING 제휴 가맹점에서 사용 가능한 5,000원 상당의 모바일 기프트카드입니다.',
+     dpCost: 500,
+     validUntil: '발급일로부터 1년 이내 사용',
+     image: 'https://images.unsplash.com/photo-1518895312237-a9e23508077d?w=800&auto=format&fit=crop&q=80'
+@@ -137,8 +138,8 @@ export const POINT_PRODUCTS: PointProduct[] = [
+   {
+     id: 'ot-goods-set',
+     categoryId: 'other',
+-    name: '더블링 프리미엄 굿즈 세트 (텀블러+카드지갑)',
+-    description: '더블링 브랜드 로고가 새겨진 프리미엄 텀블러와 카드지갑 세트입니다.',
++    name: 'DOUBLE RING 프리미엄 굿즈 세트 (텀블러+카드지갑)',
++    description: 'DOUBLE RING 브랜드 로고가 새겨진 프리미엄 텀블러와 카드지갑 세트입니다.',
+     dpCost: 300,
+     validUntil: '발급일로부터 1년 이내 수령',
+     image: 'https://images.unsplash.com/photo-1606167668584-78701c57f13d?w=800&auto=format&fit=crop&q=80'
+diff --git a/src/hooks/useInnerStepBack.ts b/src/hooks/useInnerStepBack.ts
+new file mode 100644
+index 0000000..306ebd1
+--- /dev/null
++++ b/src/hooks/useInnerStepBack.ts
+@@ -0,0 +1,82 @@
++import { useEffect, useRef } from 'react';
++
++// 2026-09-27: 한 서브화면 "안"의 단계(예: 포인트 교환소 목록 → 상품 상세)를 기기·브라우저 뒤로가기와 연결한다.
++// useAppHistory는 currentSubScreen 단위로만 history를 쌓기 때문에, 화면 내부 단계에서 뒤로가기를 누르면
++// 이전 서브화면(마이페이지)으로 나가 버린다. 이 훅은 active 동안 history 엔트리 1칸을 추가로 쌓고,
++// 그 엔트리의 popstate를 useAppHistory보다 먼저 받아 전달을 막은 뒤 onBack을 호출한다.
++// (useAppHistory.ts는 BE 로직이라 수정하지 않고 별도 훅으로 분리)
++//
++// window 대상 이벤트는 capture 여부와 관계없이 "등록 순서"대로 호출되므로, 리스너를 모듈 로드 시점
++// (App 마운트 → useAppHistory 등록보다 앞)에 1회 등록한다.
++//
++// - active가 true가 되면 pushState 1회
++// - 뒤로가기 → onBack() 호출 (엔트리 소모)
++// - 화면 안 버튼으로 active가 false가 되면(엔트리가 남아 있음) history.back()으로 되감고 그 popstate는 무시
++// - active 상태로 화면 자체가 닫히면(다른 서브화면 이동) 엔트리 1칸이 남는다. 이 경우 되감기는
++//   useAppHistory의 pushState와 순서가 꼬일 수 있어 하지 않는다 (이후 뒤로가기 1회가 빈 이동으로 소모될 수 있음).
++
++const INNER_STATE = { __doublingInnerStep: true };
++
++interface InnerStepState {
++  pushed: boolean;
++  onBack: (() => void) | null;
++}
++
++const inner: InnerStepState = { pushed: false, onBack: null };
++let ignoreCount = 0;
++
++const onPopState = (e: PopStateEvent) => {
++  if (ignoreCount > 0) {
++    ignoreCount -= 1;
++    e.stopImmediatePropagation();
++    return;
++  }
++  if (!inner.pushed || !inner.onBack) return;
++  inner.pushed = false;
++  e.stopImmediatePropagation();
++  inner.onBack();
++};
++
++if (typeof window !== 'undefined') {
++  // HMR로 모듈이 다시 평가되어도 리스너가 중복되지 않도록 이전 것을 교체
++  const w = window as unknown as { __doublingInnerStepPop?: (e: PopStateEvent) => void };
++  if (w.__doublingInnerStepPop) window.removeEventListener('popstate', w.__doublingInnerStepPop);
++  w.__doublingInnerStepPop = onPopState;
++  window.addEventListener('popstate', onPopState);
++}
++
++export function useInnerStepBack(active: boolean, onBack: () => void) {
++  const onBackRef = useRef(onBack);
++  onBackRef.current = onBack;
++
++  // 언마운트 여부 — 아래 active 이펙트보다 먼저 선언해야 언마운트 시 cleanup이 먼저 실행된다
++  const mountedRef = useRef(true);
++  useEffect(() => {
++    mountedRef.current = true;
++    return () => {
++      mountedRef.current = false;
++    };
++  }, []);
++
++  useEffect(() => {
++    if (!active) return;
++    inner.onBack = () => onBackRef.current();
++    if (!inner.pushed) {
++      window.history.pushState(INNER_STATE, '');
++      inner.pushed = true;
++    }
++    return () => {
++      inner.onBack = null;
++      if (inner.pushed) {
++        inner.pushed = false;
++        // 화면 안 버튼으로 단계가 닫힌 경우 → 남은 엔트리 되감기.
++        // 화면 자체가 닫히는(언마운트) 경우는 위 주석대로 되감지 않는다.
++        if (mountedRef.current) {
++          ignoreCount += 1;
++          window.history.back();
++        }
++      }
++    };
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++  }, [active]);
++}
+diff --git a/src/screens/MyPageScreen.tsx b/src/screens/MyPageScreen.tsx
+index f01922b..bf91a8d 100644
+--- a/src/screens/MyPageScreen.tsx
++++ b/src/screens/MyPageScreen.tsx
+@@ -492,11 +492,15 @@ export const MyPageScreen: React.FC = () => {
+ 
+         <h2 className="text-lg font-bold text-white flex items-center gap-2">
+           <span className="material-symbols-outlined text-[#C5A059]">account_balance_wallet</span>
+-          더블링 포인트 (DOUBLE RING POINT)
++          {/* 2026-09-27: 서비스명·단위 표기 통일 (기존: 더블링 포인트 (DOUBLE RING POINT)) */}
++          DOUBLE RING 포인트 (DP)
+         </h2>
+ 
+-        {/* 💡 포인트 사용처 mock 교환분(pointRedemptions)만큼 표시값에서 차감한다.
+-            서버 실제 값인 memberInfo.u_dp 자체는 건드리지 않는다. */}
++        {/* 2026-09-27 비활성화 (삭제하지 않고 주석 보존).
++            사유: "사용 가능 포인트" 박스 삭제 요청. 잔액은 마이페이지 DP 카드에서, 포인트 교환소 진입은
++            마이페이지 "포인트 교환소" 버튼에서 한다.
++            (원래 주석) 포인트 사용처 mock 교환분(pointRedemptions)만큼 표시값에서 차감한다.
++            서버 실제 값인 memberInfo.u_dp 자체는 건드리지 않는다.
+         <div className="bg-gradient-to-br from-[#162639] via-[#1f334d] to-[#0D1B2A] border border-[#C5A059] rounded-2xl p-5 shadow-xl flex flex-col gap-3">
+           <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">사용 가능 포인트</span>
+           <p className="text-2xl font-extrabold text-[#FFF0D0] gold-gradient-text font-mono">
+@@ -512,20 +516,26 @@ export const MyPageScreen: React.FC = () => {
+             </button>
+           </div>
+         </div>
++        */}
+ 
+         <div>
+-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">포인트 지급 및 차감 내역</h3>
++          {/* 2026-09-27: 다른 목록 헤더와 같은 스타일 — 금색 아이콘 + 회색 제목 */}
++          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-1 flex items-center gap-1.5">
++            <span className="material-symbols-outlined text-sm text-[#C5A059]">receipt_long</span>
++            <span>포인트 지급 및 차감 내역</span>
++          </h3>
+           <div className="space-y-2">
+             {/* 💡 로컬 mock 교환 내역(pointRedemptions)을 최신순으로 먼저 보여주고,
+                 그 뒤에 실제 서버 내역(memberReward)을 이어붙인다. */}
+             {pointRedemptions.map((redemption) => (
+-              <div key={redemption.id} className="bg-[#162639] border border-[#1F334D] p-3 rounded-xl flex items-center justify-between text-xs">
+-                <div>
+-                  <p className="font-bold text-white">포인트 사용처 교환 ({redemption.productName})</p>
+-                  <p className="text-[10px] text-slate-400">{redemption.redeemedAt} • {redemption.voucherCode}</p>
++              // 2026-09-27: 가독성(제목 13px·일시 11px, font-mono → tabular-nums 14px), 단위 오타 DT → DP, "사용처" → "교환소"
++              <div key={redemption.id} className="bg-[#162639] border border-[#1F334D] px-3.5 py-3 rounded-xl flex items-center justify-between gap-3">
++                <div className="min-w-0">
++                  <p className="text-[13px] font-bold text-white truncate">포인트 교환소 교환 ({redemption.productName})</p>
++                  <p className="mt-0.5 text-[11px] text-slate-400 tabular-nums truncate">{redemption.redeemedAt} • {redemption.voucherCode}</p>
+                 </div>
+-                <span className="font-mono font-extrabold text-[#E2C28E]">
+-                  -{redemption.dpCost.toLocaleString()} DT
++                <span className="shrink-0 whitespace-nowrap text-sm font-extrabold tabular-nums text-[#E2C28E]">
++                  -{redemption.dpCost.toLocaleString()} DP
+                 </span>
+               </div>
+             ))}
+@@ -542,15 +552,16 @@ export const MyPageScreen: React.FC = () => {
+               const key = reward?.id ?? reward?.reward_index ?? idx;
+ 
+               return (
+-                <div key={key} className="bg-[#162639] border border-[#1F334D] p-3 rounded-xl flex items-center justify-between text-xs">
+-                  <div>
+-                    <p className="font-bold text-white">{title}</p>
+-                    <p className="text-[10px] text-slate-400">{date}{txHash ? ` • ${txHash}` : ''}</p>
++                // 2026-09-27: 가독성(제목 13px·일시 11px, font-mono → tabular-nums 14px), 단위 오타 DT → DP
++                <div key={key} className="bg-[#162639] border border-[#1F334D] px-3.5 py-3 rounded-xl flex items-center justify-between gap-3">
++                  <div className="min-w-0">
++                    <p className="text-[13px] font-bold text-white truncate">{title}</p>
++                    <p className="mt-0.5 text-[11px] text-slate-400 tabular-nums truncate">{date}{txHash ? ` • ${txHash}` : ''}</p>
+                   </div>
+-                  <span className={`font-mono font-extrabold ${
++                  <span className={`shrink-0 whitespace-nowrap text-sm font-extrabold tabular-nums ${
+                     isPositive ? 'text-emerald-400' : 'text-[#E2C28E]'
+                   }`}>
+-                    {isPositive ? '+' : '-'}{amount.toLocaleString()} DT
++                    {isPositive ? '+' : '-'}{amount.toLocaleString()} DP
+                   </span>
+                 </div>
+               );
+@@ -561,7 +572,7 @@ export const MyPageScreen: React.FC = () => {
+     );
+   }
+ 
+-  // SUB-MENU 3-1: 포인트 사용처 (카테고리 → 목록 → 상세 → 확인 → 완료)
++  // SUB-MENU 3-1: 포인트 교환소(구 포인트 사용처) (카테고리 → 목록 → 상세 → 확인 → 완료)
+   if (currentSubScreen === 'my-wallet-usage') {
+     return <PointRedemptionScreen />;
+   }
+@@ -954,9 +965,22 @@ export const MyPageScreen: React.FC = () => {
+             </button>
+           </div>
+ 
+-          <div>
+-            <p className="text-xl font-black text-[#FFF0D0] font-mono leading-none text-right">
+-              {(memberInfo.u_dp || 0).toLocaleString()} <span className="text-xs text-[#E2C28E] font-sans font-bold">DP</span>
++          {/* 2026-09-27: font-mono → Pretendard tabular-nums.
++              "포인트 교환소" 버튼 추가(포인트 교환소 my-wallet-usage로 이동) — 버튼 좌측, 금액 우측 정렬 */}
++          <div className="flex items-end justify-between gap-3">
++            <button
++              type="button"
++              onClick={(e) => {
++                e.stopPropagation();
++                setCurrentSubScreen('my-wallet-usage');
++              }}
++              className="shrink-0 h-9 px-3.5 rounded-lg gold-button-gradient text-[#0D1B2A] text-xs font-extrabold flex items-center gap-1 hover:brightness-110 active:scale-[0.97] transition"
++            >
++              <span className="material-symbols-outlined text-base">storefront</span>
++              <span>포인트 교환소</span>
++            </button>
++            <p className="text-2xl font-extrabold text-[#FFF0D0] tabular-nums leading-none text-right">
++              {(memberInfo.u_dp || 0).toLocaleString()} <span className="text-sm text-[#E2C28E] font-bold">DP</span>
+             </p>
+           </div>
+ 
+diff --git a/src/screens/PointRedemptionScreen.tsx b/src/screens/PointRedemptionScreen.tsx
+index 6dd563b..fdaa58a 100644
+--- a/src/screens/PointRedemptionScreen.tsx
++++ b/src/screens/PointRedemptionScreen.tsx
+@@ -1,17 +1,33 @@
+ import React, { useState } from 'react';
+ import { useApp } from '../context/AppContext';
++import { useInnerStepBack } from '../hooks/useInnerStepBack';
+ import {
+   POINT_PRODUCT_CATEGORIES,
++  POINT_PRODUCTS,
+   getPointProductsByCategory,
+   PointProduct,
+   PointProductCategoryId
+ } from '../data/pointRedemptionData';
+ 
+-// 포인트 사용처 화면. "더블링 포인트" 화면(MyPageScreen의 my-wallet)에서 "포인트 사용처"
+-// 버튼으로 진입한다. 카테고리 → 상품 목록 → 상품 상세 → 사용 확인 모달 → 완료 순서로 진행되며,
++// 포인트 교환소(구 포인트 사용처) 화면. 2026-09-27부터 마이페이지 DP 카드의 "포인트 교환소" 버튼으로
++// 진입한다(기존: "더블링 포인트" 화면 my-wallet의 "포인트 사용처" 버튼, 해당 박스는 주석 처리됨). 카테고리 → 상품 목록 → 상품 상세 → 사용 확인 모달 → 완료 순서로 진행되며,
+ // 전부 mock(AppContext.redeemPointProduct, 실제 결제/재고 연동 아님)이다.
+-type Step = 'category' | 'list' | 'detail' | 'complete';
++// 2026-09-27: 구성 간소화 — 카테고리 카드 단계를 없애고, 첫 화면에서 태그(전체·바우처·식음료권·기타)로
++// 상품 목록을 바로 필터링한다. 흐름: 태그+상품 목록 → 상품 상세 → 사용 확인 모달 → 완료.
++// (기존 Step: 'category' | 'list' | 'detail' | 'complete')
++type Step = 'list' | 'detail' | 'complete';
++type FilterId = 'all' | PointProductCategoryId;
+ 
++// 태그 표기 (데이터의 카테고리 title보다 짧게)
++const FILTER_TAGS: { id: FilterId; label: string }[] = [
++  { id: 'all', label: '전체' },
++  { id: 'hotel_voucher', label: '바우처' },
++  { id: 'dining_voucher', label: '식음료권' },
++  { id: 'other', label: '기타' },
++];
++
++/* 2026-09-27 비활성화 (삭제하지 않고 주석 보존).
++   사유: 카테고리 단계가 없어져 "호텔 바우처로 돌아가기" 같은 조사 처리 라벨이 더 이상 필요 없음.
+ // 받침 유무에 따라 "으로"/"로" 조사를 붙인다 (예: "호텔 바우처" → "로", "기타 상품" → "으로").
+ const withRoParticle = (word: string): string => {
+   const lastChar = word.trim().slice(-1);
+@@ -19,12 +35,13 @@ const withRoParticle = (word: string): string => {
+   const hasBatchim = code >= 0xac00 && code <= 0xd7a3 && (code - 0xac00) % 28 !== 0;
+   return `${word}${hasBatchim ? '으로' : '로'}`;
+ };
++*/
+ 
+ export const PointRedemptionScreen: React.FC = () => {
+   const { setCurrentSubScreen, myProfile, pointRedemptions, redeemPointProduct } = useApp();
+ 
+-  const [step, setStep] = useState<Step>('category');
+-  const [selectedCategoryId, setSelectedCategoryId] = useState<PointProductCategoryId | null>(null);
++  const [step, setStep] = useState<Step>('list');
++  const [filterId, setFilterId] = useState<FilterId>('all');
+   const [selectedProduct, setSelectedProduct] = useState<PointProduct | null>(null);
+   const [showConfirmModal, setShowConfirmModal] = useState(false);
+   const [completedVoucherCode, setCompletedVoucherCode] = useState('');
+@@ -32,14 +49,14 @@ export const PointRedemptionScreen: React.FC = () => {
+   const totalRedeemedDp = pointRedemptions.reduce((sum, r) => sum + r.dpCost, 0);
+   const availableDp = Math.max(0, (myProfile?.memberInfo?.u_dp || 0) - totalRedeemedDp);
+ 
+-  const selectedCategory = POINT_PRODUCT_CATEGORIES.find((c) => c.id === selectedCategoryId) || null;
++  const countOf = (id: FilterId) => (id === 'all' ? POINT_PRODUCTS.length : getPointProductsByCategory(id).length);
++  const visibleProducts = filterId === 'all' ? POINT_PRODUCTS : getPointProductsByCategory(filterId);
++  const categoryOf = (id: PointProductCategoryId) => POINT_PRODUCT_CATEGORIES.find((c) => c.id === id);
+ 
+   const handleBack = () => {
+-    if (step === 'category') {
+-      setCurrentSubScreen('my-wallet');
+-    } else if (step === 'list') {
+-      setStep('category');
+-      setSelectedCategoryId(null);
++    if (step === 'list') {
++      // 2026-09-27: 진입점이 마이페이지로 바뀌어 첫 단계 뒤로가기는 마이페이지로 (기존: my-wallet)
++      setCurrentSubScreen(null);
+     } else if (step === 'detail') {
+       setStep('list');
+       setSelectedProduct(null);
+@@ -48,6 +65,13 @@ export const PointRedemptionScreen: React.FC = () => {
+     }
+   };
+ 
++  // 2026-09-27: 상품 상세에서 기기·브라우저 뒤로가기 → 마이페이지가 아니라 교환소 목록으로 (기존: 마이페이지로 나감)
++  useInnerStepBack(step === 'detail', () => {
++    setShowConfirmModal(false);
++    setStep('list');
++    setSelectedProduct(null);
++  });
++
+   const handleConfirmRedeem = () => {
+     if (!selectedProduct) return;
+     const result = redeemPointProduct({
+@@ -66,10 +90,9 @@ export const PointRedemptionScreen: React.FC = () => {
+   };
+ 
+   const backLabel =
+-    step === 'category' ? '더블링 포인트로 돌아가기' :
+-    step === 'list' ? '포인트 사용처로 돌아가기' :
+-    step === 'detail' ? `${withRoParticle(selectedCategory?.title || '상품 목록')} 돌아가기` :
+-    '더블링 포인트로 돌아가기';
++    step === 'list' ? '마이페이지로 돌아가기' :
++    step === 'detail' ? '포인트 교환소로 돌아가기' :
++    'DOUBLE RING 포인트로 돌아가기';
+ 
+   return (
+     <div className="flex flex-col gap-4 pb-44 pt-2">
+@@ -81,16 +104,84 @@ export const PointRedemptionScreen: React.FC = () => {
+         <span>{backLabel}</span>
+       </button>
+ 
+-      {/* STEP 1: 카테고리 목록 */}
++      {/* 2026-09-27: 제목과 보유 포인트를 한 줄로 (기존: 제목 아래 "사용 가능 포인트" 박스) */}
++      {step === 'list' && (
++        <>
++          <div className="flex items-center justify-between gap-3">
++            <h2 className="text-lg font-bold text-white flex items-center gap-2 min-w-0">
++              <span className="material-symbols-outlined text-[#C5A059]">storefront</span>
++              포인트 교환소
++            </h2>
++            <span className="shrink-0 text-lg font-extrabold text-[#FFF0D0] tabular-nums leading-none">
++              {availableDp.toLocaleString()} <span className="text-[#E2C28E] text-xs font-bold">DP</span>
++            </span>
++          </div>
++
++          {/* 태그 필터: 전체(n) · 바우처(n) · 식음료권(n) · 기타(n) */}
++          <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-1 px-1">
++            {FILTER_TAGS.map((tag) => {
++              const isActive = filterId === tag.id;
++              return (
++                <button
++                  key={tag.id}
++                  type="button"
++                  onClick={() => setFilterId(tag.id)}
++                  aria-pressed={isActive}
++                  className={`shrink-0 h-8 px-3 rounded-lg border text-xs font-bold whitespace-nowrap tabular-nums transition ${
++                    isActive
++                      ? 'bg-[#C5A059] border-[#C5A059] text-[#0D1B2A]'
++                      : 'bg-[#162639] border-[#1F334D] text-slate-300 hover:border-[#C5A059]/50'
++                  }`}
++                >
++                  {tag.label} ({countOf(tag.id)})
++                </button>
++              );
++            })}
++          </div>
++
++          {/* 상품 리스트 */}
++          <div className="flex flex-col gap-2">
++            {visibleProducts.map((product) => (
++              <button
++                key={product.id}
++                type="button"
++                onClick={() => {
++                  setSelectedProduct(product);
++                  setStep('detail');
++                }}
++                className="w-full text-left bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 rounded-xl p-2 pr-3 flex items-center gap-3 transition active:scale-[0.99]"
++              >
++                <img src={product.image} alt={product.name} className="w-16 h-16 rounded-lg object-cover shrink-0" />
++                <div className="flex-1 min-w-0">
++                  <span className="text-[11px] text-slate-400 flex items-center gap-1">
++                    <span className="material-symbols-outlined text-sm text-[#C5A059]">{categoryOf(product.categoryId)?.icon}</span>
++                    {categoryOf(product.categoryId)?.title}
++                  </span>
++                  <h4 className="mt-0.5 text-[13px] font-bold text-white leading-snug line-clamp-2 break-keep">{product.name}</h4>
++                </div>
++                <span className="shrink-0 text-sm font-extrabold text-[#E2C28E] tabular-nums">
++                  {product.dpCost.toLocaleString()} <span className="text-[11px] font-bold">DP</span>
++                </span>
++              </button>
++            ))}
++          </div>
++        </>
++      )}
++
++      {/* [기존 STEP 1 카테고리 카드 · STEP 2 카테고리별 상품 그리드 — 2026-09-27 비활성화 (삭제하지 않고 주석 보존).
++          사유: 페이지 구성 간소화 요청으로 태그 필터 + 단일 상품 리스트로 대체.
++      // STEP 1: 카테고리 목록
+       {step === 'category' && (
+         <>
++          // 2026-09-27: 제목 "포인트 사용처" → "포인트 교환소"
+           <h2 className="text-lg font-bold text-white flex items-center gap-2">
+             <span className="material-symbols-outlined text-[#C5A059]">storefront</span>
+-            포인트 사용처
++            포인트 교환소
+           </h2>
+-          <div className="bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-4 py-2.5 flex items-center justify-between text-xs">
+-            <span className="text-slate-400 font-semibold">사용 가능 포인트</span>
+-            <span className="font-mono font-black text-[#FFF0D0]">{availableDp.toLocaleString()} <span className="text-[#E2C28E] text-[10px] font-sans font-bold">DP</span></span>
++          // 2026-09-27: 가독성 — 라벨 12px → 13px, 금액 font-mono 12px → Pretendard tabular-nums 18px
++          <div className="bg-[#0D1B2A] border border-[#C5A059]/30 rounded-xl px-4 py-3 flex items-center justify-between">
++            <span className="text-[13px] text-slate-300 font-semibold">사용 가능 포인트</span>
++            <span className="text-lg font-extrabold text-[#FFF0D0] tabular-nums leading-none">{availableDp.toLocaleString()} <span className="text-[#E2C28E] text-xs font-bold">DP</span></span>
+           </div>
+ 
+           <div className="flex flex-col gap-3">
+@@ -103,13 +194,14 @@ export const PointRedemptionScreen: React.FC = () => {
+                 }}
+                 className="bg-[#162639] border border-[#1F334D] hover:border-[#C5A059]/50 rounded-2xl overflow-hidden cursor-pointer transition flex items-center gap-3 shadow-md"
+               >
+-                <img src={category.image} alt={category.title} className="w-20 h-20 object-cover shrink-0" />
++                // 2026-09-27: 가독성 — 이미지 80 → 88px, 제목 14 → 15px, 설명 11 → 12px(두 줄까지)
++                <img src={category.image} alt={category.title} className="w-[88px] h-[88px] object-cover shrink-0" />
+                 <div className="flex-1 min-w-0 py-2 pr-2">
+-                  <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+-                    <span className="material-symbols-outlined text-[#C5A059] text-base">{category.icon}</span>
++                  <h3 className="text-[15px] font-bold text-white flex items-center gap-1.5">
++                    <span className="material-symbols-outlined text-[#C5A059] text-lg">{category.icon}</span>
+                     {category.title}
+                   </h3>
+-                  <p className="text-[11px] text-slate-400 mt-0.5">{category.subtitle}</p>
++                  <p className="text-xs text-slate-400 mt-1 leading-snug line-clamp-2 break-keep">{category.subtitle}</p>
+                 </div>
+                 <span className="material-symbols-outlined text-slate-400 text-sm shrink-0 mr-3">chevron_right</span>
+               </div>
+@@ -118,7 +210,7 @@ export const PointRedemptionScreen: React.FC = () => {
+         </>
+       )}
+ 
+-      {/* STEP 2: 상품 목록 */}
++      // STEP 2: 상품 목록
+       {step === 'list' && selectedCategory && (
+         <>
+           <h2 className="text-lg font-bold text-white flex items-center gap-2">
+@@ -146,7 +238,84 @@ export const PointRedemptionScreen: React.FC = () => {
+         </>
+       )}
+ 
+-      {/* STEP 3: 상품 상세 */}
++      */}
++
++      {/* STEP 3: 상품 상세
++          2026-09-27 UI/UX 정리: 분류 표시 추가, 제목 16 → 17px·설명 12 → 13px, font-mono → Pretendard tabular-nums,
++          보유 포인트를 정보 박스 안으로 합치고 "교환 후 잔여"(부족 시 "부족 포인트") 행 추가,
++          레드 경고 문구 제거(금지 패턴), 드롭 섀도우 제거, 교환 버튼 높이 48px·14px */}
++      {step === 'detail' && selectedProduct && (() => {
++        const category = categoryOf(selectedProduct.categoryId);
++        const isShort = availableDp < selectedProduct.dpCost;
++        const remainDp = availableDp - selectedProduct.dpCost;
++        return (
++          <div className="bg-[#162639] border border-[#1F334D] rounded-2xl overflow-hidden flex flex-col">
++            {/* 2026-09-27: 호텔 프로그래시브 상세 히어로와 같은 구성 — 이미지 하단 그라디언트 위에 교환권 이름,
++                분류는 이미지 좌측 상단 뱃지 (기존: 이미지 아래 본문에 분류·이름 표시).
++                이름 ↔ 설명 간격 24px → 12px (이름 bottom-3 → bottom-1.5, 본문 pt-3 → pt-1.5) */}
++            <div className="relative h-48 w-full">
++              <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-full object-cover" />
++              <div className="absolute inset-0 bg-gradient-to-t from-[#162639] via-[#162639]/40 to-transparent"></div>
++              {category && (
++                <span className="absolute top-3 left-3 h-6 px-2 rounded-md bg-[#0D1B2A]/80 backdrop-blur-sm border border-[#C5A059]/50 text-[#E2C28E] text-[11px] font-bold flex items-center gap-1">
++                  <span className="material-symbols-outlined text-sm">{category.icon}</span>
++                  {category.title}
++                </span>
++              )}
++              <h2 className="absolute bottom-1.5 left-4 right-4 text-xl font-black text-white tracking-tight leading-snug drop-shadow-md break-keep">
++                {selectedProduct.name}
++              </h2>
++            </div>
++            <div className="p-4 pt-1.5 flex flex-col gap-4">
++              <p className="text-[13px] text-slate-300 leading-relaxed break-keep">{selectedProduct.description}</p>
++
++              <div className="bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3.5 py-3 flex flex-col gap-2.5 tabular-nums">
++                <div className="flex items-center justify-between gap-3">
++                  <span className="text-xs text-slate-400">필요 포인트</span>
++                  <span className="text-base font-extrabold text-[#E2C28E]">
++                    {selectedProduct.dpCost.toLocaleString()} <span className="text-xs font-bold">DP</span>
++                  </span>
++                </div>
++                <div className="flex items-center justify-between gap-3">
++                  <span className="text-xs text-slate-400">보유 포인트</span>
++                  <span className="text-[13px] font-bold text-white">{availableDp.toLocaleString()} DP</span>
++                </div>
++                <div className="flex items-center justify-between gap-3">
++                  <span className="text-xs text-slate-400">{isShort ? '부족 포인트' : '교환 후 잔여'}</span>
++                  <span className={`text-[13px] font-bold ${isShort ? 'text-amber-300' : 'text-white'}`}>
++                    {Math.abs(remainDp).toLocaleString()} DP
++                  </span>
++                </div>
++                <div className="flex items-start justify-between gap-3 pt-2.5 border-t border-[#1F334D]">
++                  <span className="shrink-0 text-xs text-slate-400">유효기간</span>
++                  <span className="text-[13px] text-slate-200 text-right break-keep">{selectedProduct.validUntil}</span>
++                </div>
++              </div>
++
++              {isShort ? (
++                <button
++                  type="button"
++                  disabled
++                  className="w-full h-12 rounded-xl bg-[#0D1B2A] border border-[#1F334D] text-slate-500 font-bold text-sm cursor-not-allowed"
++                >
++                  포인트가 부족합니다
++                </button>
++              ) : (
++                <button
++                  type="button"
++                  onClick={() => setShowConfirmModal(true)}
++                  className="w-full h-12 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-sm tabular-nums hover:brightness-110 active:scale-[0.98] transition"
++                >
++                  {selectedProduct.dpCost.toLocaleString()} DP로 교환하기
++                </button>
++              )}
++            </div>
++          </div>
++        );
++      })()}
++
++      {/* [기존 STEP 3 상품 상세 JSX — 2026-09-27 위 레이아웃으로 대체 (삭제하지 않고 주석 보존)]
++      {step === 'detail' && selectedProduct && (
+       {step === 'detail' && selectedProduct && (
+         <>
+           <div className="bg-[#162639] border border-[#1F334D] rounded-2xl overflow-hidden shadow-xl flex flex-col">
+@@ -196,31 +365,39 @@ export const PointRedemptionScreen: React.FC = () => {
+         </>
+       )}
+ 
++      */}
++
+       {/* STEP 4 (모달): 사용 확인 */}
+       {showConfirmModal && selectedProduct && (
+         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+-          <div className="bg-gradient-to-b from-[#1E2E44] via-[#162639] to-[#0D1B2A] border-2 border-[#C5A059] rounded-3xl p-6 w-full max-w-sm flex flex-col items-center gap-4 text-center shadow-[0_0_40px_rgba(197,160,89,0.4)] animate-in zoom-in-95">
++          <div className="bg-gradient-to-b from-[#1E2E44] via-[#162639] to-[#0D1B2A] border-2 border-[#C5A059] rounded-3xl p-6 w-full max-w-sm flex flex-col items-center gap-4 text-center animate-in zoom-in-95">
++            {/* 2026-09-27: 글로우 섀도우 제거, font-mono → tabular-nums, 교환 후 잔여 포인트 안내, 버튼 문구 "사용하기" → "교환하기" */}
+             <div className="w-14 h-14 rounded-full bg-[#C5A059]/20 border-2 border-[#C5A059] flex items-center justify-center text-[#C5A059]">
+               <span className="material-symbols-outlined text-2xl">redeem</span>
+             </div>
+             <div>
+-              <h3 className="text-sm font-black text-white leading-snug">{selectedProduct.name}</h3>
+-              <p className="text-xs text-slate-300 mt-1">
+-                <span className="font-mono font-black text-[#E2C28E]">{selectedProduct.dpCost.toLocaleString()} DP</span>를 사용하시겠습니까?
++              <h3 className="text-[15px] font-bold text-white leading-snug break-keep">{selectedProduct.name}</h3>
++              <p className="text-[13px] text-slate-300 mt-1.5 tabular-nums">
++                <span className="font-extrabold text-[#E2C28E]">{selectedProduct.dpCost.toLocaleString()} DP</span>를 사용해 교환하시겠습니까?
++              </p>
++              <p className="text-xs text-slate-400 mt-1 tabular-nums">
++                교환 후 잔여 {(availableDp - selectedProduct.dpCost).toLocaleString()} DP
+               </p>
+             </div>
+             <div className="w-full flex gap-2">
+               <button
+                 onClick={() => setShowConfirmModal(false)}
+-                className="w-1/3 py-3 rounded-xl bg-[#162639] border border-[#1F334D] text-slate-300 font-bold text-xs hover:bg-[#1F334D] transition"
++                type="button"
++                className="w-1/3 h-12 rounded-xl bg-[#162639] border border-[#1F334D] text-slate-300 font-bold text-sm hover:bg-[#1F334D] transition"
+               >
+                 취소
+               </button>
+               <button
++                type="button"
+                 onClick={handleConfirmRedeem}
+-                className="w-2/3 py-3 rounded-xl gold-button-gradient text-[#0D1B2A] font-black text-xs shadow-lg hover:brightness-110 active:scale-98 transition"
++                className="w-2/3 h-12 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-sm hover:brightness-110 active:scale-[0.98] transition"
+               >
+-                사용하기
++                교환하기
+               </button>
+             </div>
+           </div>
+@@ -244,19 +421,19 @@ export const PointRedemptionScreen: React.FC = () => {
+           </div>
+ 
+           <p className="text-[11px] text-slate-400 leading-relaxed">
+-            사용한 포인트는 "더블링 포인트 &gt; 포인트 지급 및 차감 내역"에서 확인할 수 있습니다.
++            사용한 포인트는 "DOUBLE RING 포인트 &gt; 포인트 지급 및 차감 내역"에서 확인할 수 있습니다.
+           </p>
+ 
+           <button
+             onClick={() => {
+-              setStep('category');
+-              setSelectedCategoryId(null);
++              setStep('list');
++              setFilterId('all');
+               setSelectedProduct(null);
+               setCurrentSubScreen('my-wallet');
+             }}
+             className="w-full py-3 rounded-xl gold-button-gradient text-[#0D1B2A] font-black text-xs shadow-lg hover:brightness-110 active:scale-98 transition"
+           >
+-            더블링 포인트로 돌아가기
++            DOUBLE RING 포인트로 돌아가기
+           </button>
+         </div>
+       )}
+-- 
+2.55.0.windows.3
+

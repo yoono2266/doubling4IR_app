@@ -1,0 +1,72 @@
+From 23065bf412c5c963d08067467d2ebaa565d9f231 Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Sun, 27 Sep 2026 16:22:29 +0900
+Subject: [PATCH 02/18] =?UTF-8?q?fix-jackpot-summary-mobile:=20=ED=94=84?=
+ =?UTF-8?q?=EB=A1=9C=EA=B7=B8=EB=9E=98=EC=8B=9C=EB=B8=8C=20=EC=9A=94?=
+ =?UTF-8?q?=EC=95=BD=20=EB=B0=94=20=EB=AA=A8=EB=B0=94=EC=9D=BC=20=EC=A4=84?=
+ =?UTF-8?q?=EB=B0=94=EA=BF=88=20=EC=88=98=EC=A0=95?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- 요약 바를 왼쪽 라벨 / 오른쪽 금액 2단(USD 위·원화 아래) 구조로 변경, whitespace-nowrap 적용
+- 금액의 font-mono를 Pretendard tabular-nums로 교체 (Android 시스템 monospace가 폭이 넓어
+  약 412px 모바일에서 두 줄로 깨지던 원인)
+- "누적 잭팟 순" 라벨 font-mono 제거 (한글 고정폭 벌어짐)
+- 기존 요약 바 코드는 사유 주석과 함께 보존
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/screens/JackpotMapScreen.tsx | 22 +++++++++++++++++++++-
+ 1 file changed, 21 insertions(+), 1 deletion(-)
+
+diff --git a/src/screens/JackpotMapScreen.tsx b/src/screens/JackpotMapScreen.tsx
+index c8feac9..732bf1d 100644
+--- a/src/screens/JackpotMapScreen.tsx
++++ b/src/screens/JackpotMapScreen.tsx
+@@ -177,6 +177,10 @@ export const JackpotMapScreen: React.FC = () => {
+       </div>
+ 
+       {/* Region Summary Bar */}
++      {/* 2026-09-27 레이아웃 교체 (기존 코드는 주석 보존).
++          사유: 한 줄에 라벨·USD 합계·원화 환산을 모두 넣는 구조라 폭 여유가 거의 없었고, font-mono가
++          Android에서 폭 넓은 시스템 monospace로 대체되어 모바일(약 412px)에서 각 항목이 두 줄로 깨짐.
++          → 왼쪽 라벨 / 오른쪽 금액 2단(USD 위·원화 아래) + whitespace-nowrap + Pretendard tabular-nums로 변경.
+       <div className="bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3.5 py-2.5 flex items-center justify-between">
+         <div className="flex items-center gap-2">
+           <span className="text-xs font-bold text-slate-300">
+@@ -190,6 +194,21 @@ export const JackpotMapScreen: React.FC = () => {
+           {formatKrw(totalRegionJackpot)}
+         </span>
+       </div>
++      */}
++      <div className="bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3.5 py-2.5 flex items-center justify-between gap-3">
++        <span className="min-w-0 truncate text-xs font-bold text-slate-300">
++          {activeCountryIndex === 0 ? `아시아 전체 ${regions[0]?.count ?? regions[0]?.count}개 호텔` : `${activeRegion} 지역 ${filteredHotels.length}개 호텔`}
++        </span>
++        <div className="shrink-0 flex flex-col items-end">
++          <span className="whitespace-nowrap text-sm font-extrabold text-[#C5A059] tabular-nums">
++            <span className="mr-1 text-[10px] font-bold text-slate-400">합계</span>
++            {formatUsd(totalRegionJackpot)}
++          </span>
++          <span className="whitespace-nowrap text-[10px] text-slate-400 tabular-nums">
++            {formatKrw(totalRegionJackpot)}
++          </span>
++        </div>
++      </div>
+ 
+       {/* 2. Treemap View — 타일 크기가 잭팟 총액 비율에 따라 달라지는 모자이크.
+              #1~#3 큰 타일 + 나머지 3x2 작은 타일. row-span 미사용으로 타일 겹침 없음. */}
+@@ -308,7 +327,8 @@ export const JackpotMapScreen: React.FC = () => {
+               {activeCountryIndex === 0 ? `전체 카지노 목록 (${filteredHotels.length}개)` : `${activeRegion} 카지노 목록 (${filteredHotels.length}개)`}
+             </span>
+           </h3>
+-          <span className="text-[11px] text-[#C5A059] font-mono">누적 잭팟 순</span>
++          {/* 2026-09-27: font-mono 제거 — Android 시스템 monospace에서 한글이 고정폭으로 벌어져 보임 */}
++          <span className="whitespace-nowrap text-[11px] font-semibold text-[#C5A059]">누적 잭팟 순</span>
+         </div>
+ 
+         <div className="space-y-2.5">
+-- 
+2.55.0.windows.3
+

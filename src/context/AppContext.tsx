@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Device } from '@capacitor/device';
 import { apiCommonClient, setErrorToastHandler, setSessionExpiredHandler, ResultCode, CommonResponse } from '../utils/apiClient'; // 💡 apiCommonClient 임포트 추가
@@ -247,6 +247,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     memberReward: {}
   });
 
+  // 💡 updatePushToken(아래)은 App.tsx가 useEffect(..., [])로 마운트 시 1회만 등록하는 FCM
+  // 'registration' 리스너 콜백 안에서 호출된다. 그 리스너 콜백은 등록 시점(마운트 시점, 로그인 전)의
+  // myProfile을 그대로 캡처(stale closure)한 채 앱이 종료될 때까지 그 인스턴스로 고정되어 있어서,
+  // 이후 로그인이 완료되어 myProfile이 실제로 갱신되어도 이 클로저는 여전히 마운트 시점의 빈 값을 본다
+  // — 즉 "이미 로그인되어 있으면 즉시 서버에 반영" 로직이 사실상 항상 스킵되는 버그였다.
+  // ref는 재렌더링과 무관하게 항상 최신 값을 담고 있으므로, 어떤 클로저에서 읽어도 최신값이 보장된다.
+  const myProfileRef = useRef(myProfile);
+  useEffect(() => {
+    myProfileRef.current = myProfile;
+  }, [myProfile]);
+
   // 💡 [핵심] setMyProfile 핸들러 구현
   // 💡 setMyProfile 구현 부분 수정
   // 배열을 { ...arr } 로 복사하면 {0: ..., 1: ...} 형태의 일반 객체가 되어 배열성이 사라지므로,
@@ -274,6 +285,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // utoken은 App.tsx의 PushNotifications 'registration' 리스너가 발급받아 저장해 둔 마지막
   // FCM 토큰을 재사용한다 — 아직 발급 전(웹 환경 등)이면 utoken 없이 호출한다.
   const syncDeviceAndToken = async (uidx: number, overrideToken?: string): Promise<void> => {
+    // 💡 Device.getId()는 웹 환경(브라우저/개발서버/doubling.wildwynn.com 웹배포)에서는
+    // 실제 기기 ID가 없어 localStorage에 저장된 임의의 UUID를 대신 반환한다.
+    // 네이티브 앱(Android/iOS)이 아니면 아예 동기화를 건너뛰어 가짜 UUID가 서버로 전송되지 않게 한다.
+    if (!Capacitor.isNativePlatform()) {
+      return;
+    }
     try {
       const platform = Capacitor.getPlatform();
       const { identifier: deviceid } = await Device.getId();
@@ -281,11 +298,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       // 서버 스키마가 deviceid/utoken을 Optional[str] = Field(...)로 선언하고 있어(값은 null 허용,
       // 키 자체는 필수) undefined로 보내 키가 통째로 빠지면 422가 난다 — 반드시 null로 명시한다.
-      await apiCommonClient.post<CommonResponse, { mem_index: number; platform: string; deviceid: string | null; utoken: string | null }>(
+      const response = await apiCommonClient.post<CommonResponse, { mem_index: number; platform: string; deviceid: string | null; utoken: string | null }>(
         '/members/uupdate',
         { mem_index: Number(uidx), platform, deviceid: deviceid ?? null, utoken: utoken || null },
         { suppressErrorToast: true }
       );
+      console.log('[push] 디바이스/토큰 동기화(uupdate) 완료:', { uidx, platform, deviceid, hasToken: !!utoken, result: response?.result });
     } catch (error) {
       console.error('디바이스/토큰 동기화(uupdate) 실패:', error);
     }
@@ -300,9 +318,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch {
       // ignore
     }
-    const uidx = myProfile?.memberInfo?.uidx;
+    // myProfile을 직접 읽으면 App.tsx의 stale closure에서 항상 마운트 시점 값(빈 값)을 보게 되므로,
+    // 위 myProfileRef를 통해 최신 값을 읽는다.
+    const uidx = myProfileRef.current?.memberInfo?.uidx;
     if (uidx) {
+      console.log('[push] 새 FCM 토큰 즉시 동기화 시도 (uidx:', uidx, ')');
       syncDeviceAndToken(uidx, token);
+    } else {
+      console.log('[push] 아직 로그인 정보 없음 — 이번 토큰은 저장만 하고 다음 앱 실행 시 동기화됨');
     }
   };
 

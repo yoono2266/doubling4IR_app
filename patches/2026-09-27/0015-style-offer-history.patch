@@ -1,0 +1,254 @@
+From 0c6f6a9a860cb6e830c13556ac0306c455e5c7b7 Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Sun, 27 Sep 2026 21:26:10 +0900
+Subject: [PATCH 15/18] =?UTF-8?q?style-offer-history:=20=EC=98=A4=ED=8D=BC?=
+ =?UTF-8?q?=20=EC=8B=A0=EC=B2=AD=20=EB=82=B4=EC=97=AD=20=EC=B9=B4=EB=93=9C?=
+ =?UTF-8?q?=20=EB=B6=84=EB=A6=AC=C2=B7=EA=B0=80=EB=8F=85=EC=84=B1=20?=
+ =?UTF-8?q?=EC=A0=95=EB=A6=AC=20=EB=B0=8F=20=EC=98=A4=ED=8D=BC=20=ED=83=AD?=
+ =?UTF-8?q?=20=EC=97=B0=EA=B2=B0?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+※ 신청 내역 데이터는 기존 AppContext reservations mock(실예약·결제 연동 아님)
+
+[신규 컴포넌트 components/OfferReservationCard.tsx]
+- MyPageScreen 인라인 카드 JSX를 분리 (기존 JSX는 MyPageScreen에 주석 보존)
+- 유형 칩(보라·주황·금색) → 금색 한 가지, 혜택 문구 색도 금색 통일
+- 상태 칩 "상태:" 접두어·깜빡임 제거, 색상: 확정·승인완료 초록 / 심사중·대기 앰버 / 취소 회색(기존 파랑)
+- 라벨 끝 콜론 제거, 값 13px, 호텔명 15px, font-mono → tabular-nums, 카드 그림자 제거
+- 선택 옵션: 말줄임(…) → 전체 표시(단어 단위 줄바꿈)
+
+[오퍼 신청 내역 화면 my-reservations]
+- 헤더 텍스트 링크 "+ 추가 혜택 신청 →" → [+ 추가 혜택 신청] 아웃라인 버튼
+- 신청 내역 0건일 때 빈 상태 안내 + [오퍼 혜택 신청하기] 버튼
+- 두 버튼 연결: comp-benefits 서브화면 → GNB 오퍼 탭(freeroom), BottomNav와 같이 스크롤 최상단에서 시작
+
+검증: Playwright 412px·360px — 카드 3건, 가로 넘침 없음, 버튼 → 오퍼 탭 활성, 기기 뒤로가기 → 신청 내역 복귀
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/components/OfferReservationCard.tsx | 124 ++++++++++++++++++++++++
+ src/screens/MyPageScreen.tsx            |  41 +++++++-
+ 2 files changed, 161 insertions(+), 4 deletions(-)
+ create mode 100644 src/components/OfferReservationCard.tsx
+
+diff --git a/src/components/OfferReservationCard.tsx b/src/components/OfferReservationCard.tsx
+new file mode 100644
+index 0000000..051177a
+--- /dev/null
++++ b/src/components/OfferReservationCard.tsx
+@@ -0,0 +1,124 @@
++import React from 'react';
++import { Reservation } from '../types';
++
++// 2026-09-27: 마이페이지 "오퍼 신청 내역"의 신청 카드 1장 (MyPageScreen 인라인 JSX에서 분리).
++// 데이터는 AppContext reservations(mock, 실예약·결제 연동 아님)를 그대로 표시한다.
++// 가독성 정리: 유형 칩 색상을 금색 한 가지로 통일, 상태 칩 "상태:" 접두어 제거·깜빡임 제거,
++// 라벨 끝 콜론 제거, 값 13px, font-mono → Pretendard tabular-nums, 선택 옵션은 말줄임 대신 전체 표시.
++
++const TYPE_META: Record<string, { icon: string; label: string }> = {
++  freeplay_suite: { icon: 'king_bed', label: '오퍼 스위트' },
++  gaming_room: { icon: 'casino', label: '멤버십 게이밍룸' },
++  dining: { icon: 'restaurant', label: '멤버십 다이닝' },
++};
++
++const STATUS_CLASS: Record<Reservation['status'], string> = {
++  확정: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
++  승인완료: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30',
++  심사중: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
++  대기: 'text-amber-300 bg-amber-500/10 border-amber-500/30',
++  취소: 'text-slate-400 bg-slate-500/10 border-slate-500/30',
++};
++
++const Row: React.FC<{ label: string; children: React.ReactNode; alignTop?: boolean }> = ({ label, children, alignTop }) => (
++  <div className={`flex justify-between gap-4 ${alignTop ? 'items-start' : 'items-center'}`}>
++    <span className="shrink-0 text-xs text-slate-400">{label}</span>
++    <span className="min-w-0 text-right text-[13px] text-white">{children}</span>
++  </div>
++);
++
++interface OfferReservationCardProps {
++  reservation: Reservation;
++}
++
++export const OfferReservationCard: React.FC<OfferReservationCardProps> = ({ reservation: res }) => {
++  const bType = res.benefitType || 'freeplay_suite';
++  const type = TYPE_META[bType] || TYPE_META.freeplay_suite;
++  const hasOptions = !!res.optionsList && res.optionsList.length > 0;
++
++  return (
++    <div className="bg-[#162639] border border-[#C5A059]/40 rounded-2xl p-4 flex flex-col gap-3">
++      {/* 상단: 유형·상태 칩 + 신청 번호 */}
++      <div className="flex items-center justify-between gap-2">
++        <div className="flex items-center gap-1.5 flex-wrap">
++          <span className="h-6 px-2 rounded-md text-[11px] font-bold text-[#E2C28E] bg-[#C5A059]/10 border border-[#C5A059]/40 flex items-center gap-1">
++            <span className="material-symbols-outlined text-sm">{type.icon}</span>
++            {type.label}
++          </span>
++          <span className={`h-6 px-2 rounded-md text-[11px] font-bold border flex items-center ${STATUS_CLASS[res.status] || STATUS_CLASS['대기']}`}>
++            {res.status}
++          </span>
++        </div>
++        <span className="shrink-0 text-[11px] text-slate-500 tabular-nums">{res.id}</span>
++      </div>
++
++      {/* 호텔·상품명 */}
++      <div className="min-w-0">
++        <h3 className="text-[15px] font-bold text-white leading-snug">{res.hotelName}</h3>
++        <p className="mt-0.5 text-[13px] text-slate-300 leading-snug">{res.roomType}</p>
++      </div>
++
++      {/* 상세 */}
++      <div className="bg-[#0D1B2A] p-3.5 rounded-xl border border-[#1F334D] flex flex-col gap-2.5 tabular-nums">
++        {bType === 'freeplay_suite' && (
++          <>
++            <Row label="체크인 ~ 체크아웃">
++              <span className="font-bold">{res.checkIn} ~ {res.checkOut}</span>
++            </Row>
++            <Row label="투숙 정보">{res.nights || 2}박 / {res.guests}인</Row>
++            <div className="pt-2.5 border-t border-[#1F334D]">
++              <Row label="디포짓 코인">
++                <span className="text-sm font-extrabold text-[#E2C28E]">
++                  {(res.totalCoins ?? res.totalDp ?? 0).toLocaleString()} 코인
++                </span>
++              </Row>
++            </div>
++          </>
++        )}
++
++        {bType === 'gaming_room' && (
++          <>
++            <Row label="이용 일자">
++              <span className="font-bold">{res.checkIn}</span>
++            </Row>
++            <Row label="이용 인원">성인 {res.guests}인</Row>
++            {hasOptions && (
++              <Row label="선택 옵션" alignTop>
++                <span className="text-slate-200 leading-snug break-keep">{res.optionsList!.join(', ')}</span>
++              </Row>
++            )}
++            <div className="pt-2.5 border-t border-[#1F334D]">
++              <Row label="비용 혜택">
++                <span className="font-bold text-[#E2C28E]">VIP 살롱 전액 무상 의전</span>
++              </Row>
++            </div>
++          </>
++        )}
++
++        {bType === 'dining' && (
++          <>
++            <Row label="이용 일자">
++              <span className="font-bold">{res.checkIn}</span>
++            </Row>
++            {res.timeSlot && (
++              <Row label="이용 시간대">
++                <span className="font-bold">{res.timeSlot}</span>
++              </Row>
++            )}
++            <Row label="예약 인원">성인 {res.guests}인</Row>
++            {hasOptions && (
++              <Row label="선택 옵션" alignTop>
++                <span className="text-slate-200 leading-snug break-keep">{res.optionsList!.join(', ')}</span>
++              </Row>
++            )}
++            <div className="pt-2.5 border-t border-[#1F334D]">
++              <Row label="바우처 지원">
++                <span className="font-bold text-[#E2C28E]">VIP 다이닝 바우처 전액 지원</span>
++              </Row>
++            </div>
++          </>
++        )}
++      </div>
++    </div>
++  );
++};
+diff --git a/src/screens/MyPageScreen.tsx b/src/screens/MyPageScreen.tsx
+index 7618b1a..5023e95 100644
+--- a/src/screens/MyPageScreen.tsx
++++ b/src/screens/MyPageScreen.tsx
+@@ -1,9 +1,11 @@
+ import React, { useEffect, useState, useCallback, useRef } from 'react';
+ import { useApp } from '../context/AppContext';
++import { resetMainScrollTop } from '../utils/scrollMemory';
+ import { apiCommonClient, ApiError, ResultCode } from '../utils/apiClient';
+ import { StreakTracker } from '../components/StreakTracker';
+ import { CopyTextButton } from '../components/CopyTextButton';
+ import { MembershipBadge } from '../components/MembershipBadge';
++import { OfferReservationCard } from '../components/OfferReservationCard';
+ import { MembershipDashboardScreen } from './MembershipDashboardScreen';
+ import { PolyPortfolioHistoryScreen } from './PolyPortfolioHistoryScreen';
+ import { CompBenefitSelectionScreen } from './CompBenefitSelectionScreen';
+@@ -74,10 +76,19 @@ export const MyPageScreen: React.FC = () => {
+     setHasActiveTrip,
+     currentSubScreen,
+     setCurrentSubScreen,
++    setCurrentTab,
+     setIsLoggedIn,
+     showToast
+   } = useApp();
+ 
++  // 2026-09-27: 오퍼 신청 내역의 "추가 혜택 신청"·"오퍼 혜택 신청하기" → GNB 오퍼 탭으로 이동
++  // (기존: comp-benefits 서브화면). BottomNav의 탭 이동과 같게 스크롤 최상단에서 시작.
++  const goToOfferTab = () => {
++    resetMainScrollTop();
++    setCurrentTab('freeroom');
++    setCurrentSubScreen(null);
++  };
++
+   const [isLoading, setIsLoading] = useState<boolean>(false);
+ 
+   // 💡 API 서버에서 회원 데이터 조회 및 myProfile 상태 저장 함수
+@@ -370,16 +381,37 @@ export const MyPageScreen: React.FC = () => {
+             <span className="material-symbols-outlined text-[#C5A059]">calendar_month</span>
+             오퍼 신청 내역 ({reservations?.length || 0}건)
+           </h2>
++          {/* 2026-09-27: 텍스트 링크 "+ 추가 혜택 신청 →" → 마이페이지 "상세 내역"과 같은 아웃라인 버튼.
++              연결: comp-benefits → GNB 오퍼 탭 */}
+           <button
+-            onClick={() => setCurrentSubScreen('comp-benefits')}
+-            className="text-[11px] font-bold text-[#E2C28E] hover:underline flex items-center gap-0.5"
++            type="button"
++            onClick={goToOfferTab}
++            className="shrink-0 h-8 pl-2 pr-3 rounded-lg border border-[#C5A059]/50 bg-[#C5A059]/10 text-[#E2C28E] text-xs font-bold flex items-center gap-1 hover:bg-[#C5A059]/20 active:scale-[0.97] transition"
+           >
+-            <span>+ 추가 혜택 신청</span>
+-            <span className="material-symbols-outlined text-xs">arrow_forward</span>
++            <span className="material-symbols-outlined text-base">add</span>
++            <span>추가 혜택 신청</span>
+           </button>
+         </div>
+ 
+         <div className="space-y-3">
++          {/* 2026-09-27: 카드 UI를 OfferReservationCard 컴포넌트로 분리하고 가독성 정리 (기존 인라인 JSX는 아래 주석에 보존).
++              신청 내역이 없을 때 빈 상태 + 신청 버튼 추가 */}
++          {(reservations || []).length === 0 ? (
++            <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-6 flex flex-col items-center gap-3 text-center">
++              <span className="material-symbols-outlined text-3xl text-[#C5A059]">calendar_month</span>
++              <p className="text-[13px] text-slate-300 break-keep">아직 신청한 오퍼가 없습니다.</p>
++              <button
++                type="button"
++                onClick={goToOfferTab}
++                className="h-10 px-4 rounded-xl gold-button-gradient text-[#0D1B2A] text-[13px] font-extrabold hover:brightness-110 active:scale-[0.98] transition"
++              >
++                오퍼 혜택 신청하기
++              </button>
++            </div>
++          ) : (
++            (reservations || []).map((res) => <OfferReservationCard key={res.id} reservation={res} />)
++          )}
++          {/* [기존 인라인 카드 JSX — 2026-09-27 OfferReservationCard로 대체]
+           {(reservations || []).map((res) => {
+             const bType = res.benefitType || 'freeplay_suite';
+             return (
+@@ -494,6 +526,7 @@ export const MyPageScreen: React.FC = () => {
+               </div>
+             );
+           })}
++          */}
+         </div>
+       </div>
+     );
+-- 
+2.55.0.windows.3
+

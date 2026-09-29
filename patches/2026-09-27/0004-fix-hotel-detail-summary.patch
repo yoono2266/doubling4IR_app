@@ -1,0 +1,61 @@
+From 4d6311135bc46b171400956bc2aa1b8642e44b95 Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Sun, 27 Sep 2026 17:20:18 +0900
+Subject: [PATCH 04/18] =?UTF-8?q?fix-hotel-detail-summary:=20=ED=98=B8?=
+ =?UTF-8?q?=ED=85=94=20=EC=83=81=EC=84=B8=20=EA=B8=88=EC=95=A1=20=ED=81=AC?=
+ =?UTF-8?q?=EA=B8=B0=20=ED=86=B5=EC=9D=BC=20=EB=B0=8F=20=EB=B9=88=20?=
+ =?UTF-8?q?=EC=84=A4=EB=AA=85=20=EB=B0=95=EC=8A=A4=20=EC=88=A8=EA=B9=80?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- 누적 프로그래시브 총합(달러)·한화 환산 금액의 크기·굵기·여백을 동일하게 통일
+  (font-mono 제거 → Pretendard tabular-nums, 화면 폭 비례 최대 15px, whitespace-nowrap)
+- API 호텔 데이터 desc가 비어 표시되던 빈 설명 박스를 사유 주석과 함께 주석 처리
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/screens/HotelJackpotDetailScreen.tsx | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/src/screens/HotelJackpotDetailScreen.tsx b/src/screens/HotelJackpotDetailScreen.tsx
+index bfcc45e..ece6845 100644
+--- a/src/screens/HotelJackpotDetailScreen.tsx
++++ b/src/screens/HotelJackpotDetailScreen.tsx
+@@ -126,23 +126,29 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
+ 
+         {/* Description & Overview */}
+         <div className="p-4 flex flex-col gap-3">
++          {/* 2026-09-27 비활성화 (삭제하지 않고 주석 보존).
++              사유: API 호텔 데이터의 desc가 비어 있어(mapJackpotApiHotels에서 '' 고정) 호텔명 아래에
++              빈 박스만 표시됨. 불필요하다는 요청으로 숨김.
+           <div className="bg-[#0D1B2A] border border-[#1F334D] rounded-xl p-3">
+             <p className="text-xs text-slate-200 leading-relaxed">
+               {hotel.desc}
+             </p>
+           </div>
++          */}
+ 
+           {/* Total Jackpot Summary Box */}
++          {/* 2026-09-27: 달러(text-lg·font-mono)와 한화(text-xs·font-mono)의 크기·여백이 달라 줄이 맞지 않던 것을
++              동일 크기(화면 폭 비례, 최대 15px)·굵기 + Pretendard tabular-nums + whitespace-nowrap으로 통일 (색상만 구분) */}
+           <div className="grid grid-cols-2 gap-2 bg-[#0D1B2A] p-3 rounded-xl border border-[#C5A059]/30">
+-            <div>
++            <div className="min-w-0">
+               <span className="text-[10px] text-slate-400 uppercase font-semibold block">누적 프로그래시브 총합</span>
+-              <p className="text-lg font-black text-[#E2C28E] font-mono tracking-tight mt-0.5">
++              <p className="mt-1 whitespace-nowrap text-[clamp(12px,3.6vw,15px)] font-extrabold leading-tight tabular-nums text-[#E2C28E]">
+                 {formatUsd(totalJackpotSum)}
+               </p>
+             </div>
+-            <div>
++            <div className="min-w-0">
+               <span className="text-[10px] text-slate-400 uppercase font-semibold block">한화 환산</span>
+-              <p className="text-xs font-bold text-slate-200 mt-1 font-mono">
++              <p className="mt-1 whitespace-nowrap text-[clamp(12px,3.6vw,15px)] font-extrabold leading-tight tabular-nums text-slate-200">
+                 {formatKrw(totalJackpotSum)}
+               </p>
+             </div>
+-- 
+2.55.0.windows.3
+

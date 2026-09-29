@@ -170,7 +170,29 @@ export const PostDetailScreen: React.FC = () => {
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
             {commentsLoading ? '불러오는 중...' : `댓글 (${comments.length})`}
           </h3>
-
+              <form onSubmit={handleAddComment} className="flex flex-col gap-1 pt-1">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="댓글을 입력하세요..."
+                value={commentInput}
+                onChange={(e) => setCommentInput(e.target.value.slice(0, COMMENT_MAX_LENGTH))}
+                maxLength={COMMENT_MAX_LENGTH}
+                disabled={isSubmittingComment}
+                className="flex-1 bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3 py-2 text-white text-xs focus:border-[#C5A059] focus:outline-none disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={isSubmittingComment}
+                className="px-3 py-2 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shrink-0 disabled:opacity-50"
+              >
+                등록
+              </button>
+            </div>
+            <span className="text-[10px] text-slate-500 text-right font-mono pr-1">
+              {commentInput.length}/{COMMENT_MAX_LENGTH}
+            </span>
+          </form>
           <div className="space-y-2">
             {comments.map((comment) => {
               const authorName = comment.u_name || comment.mem_name || `회원 ${comment.mem_index}`;
@@ -218,29 +240,7 @@ export const PostDetailScreen: React.FC = () => {
             )}
           </div>
 
-          <form onSubmit={handleAddComment} className="flex flex-col gap-1 pt-1">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="댓글을 입력하세요..."
-                value={commentInput}
-                onChange={(e) => setCommentInput(e.target.value.slice(0, COMMENT_MAX_LENGTH))}
-                maxLength={COMMENT_MAX_LENGTH}
-                disabled={isSubmittingComment}
-                className="flex-1 bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3 py-2 text-white text-xs focus:border-[#C5A059] focus:outline-none disabled:opacity-50"
-              />
-              <button
-                type="submit"
-                disabled={isSubmittingComment}
-                className="px-3 py-2 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-xs shrink-0 disabled:opacity-50"
-              >
-                등록
-              </button>
-            </div>
-            <span className="text-[10px] text-slate-500 text-right font-mono pr-1">
-              {commentInput.length}/{COMMENT_MAX_LENGTH}
-            </span>
-          </form>
+          
         </div>
 
       </div>

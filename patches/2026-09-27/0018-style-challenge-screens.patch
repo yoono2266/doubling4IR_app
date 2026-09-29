@@ -1,0 +1,1527 @@
+From 69fad18d735f3a56341499fc898ca8c58bee058e Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Sun, 27 Sep 2026 21:26:11 +0900
+Subject: [PATCH 18/18] =?UTF-8?q?style-challenge-screens:=20=EC=98=88?=
+ =?UTF-8?q?=EC=B8=A1=20=EC=B1=8C=EB=A6=B0=EC=A7=80=20=EB=AA=A9=EB=A1=9D?=
+ =?UTF-8?q?=C2=B7=EC=83=81=EC=84=B8=C2=B7=EB=A6=AC=EB=8D=94=EB=B3=B4?=
+ =?UTF-8?q?=EB=93=9C=20=EC=A0=95=EB=A6=AC=20=EB=B0=8F=20=ED=88=AC=ED=91=9C?=
+ =?UTF-8?q?=20=EB=AA=A8=EB=8B=AC=20=EA=B3=B5=EC=9A=A9=ED=99=94?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+※ 투표 API(/members/plm-memberpick) 호출·mock 반영(castPolyVote) 로직은 변경 없음.
+  리더보드 순위·개인 지표(34%)는 기존 mock 그대로
+
+[신규 공용 컴포넌트]
+- components/PolyVoteModals.tsx: 목록·상세에 복제돼 있던 "DP 사용 확인"·"투표 완료" 모달을 통합
+  (DP_PRESETS·calcExpectedPayout도 이동)
+  · ✕ 문자 → 32px 닫기 버튼, 콜론 제거, font-mono 제거, 프리셋 버튼 h-12·"1K" → "1,000"
+  · 선택 항목 YES/NO 칩, 재투표 시 "기존 투표 반환" 행
+  · 확정 버튼 처리 중 중복 탭 방지("처리 중…")
+  · 완료 모달 "현재 보유 잔액": mock user.walletDp(헤더와 불일치) → 확인 모달과 같은 계산의 "예상 잔여 포인트"
+- components/PolyVoteControls.tsx: 여론 막대 + YES/NO 버튼 통합, 막대에 "YES n% · NO n%" 수치 라벨 추가,
+  내가 투표한 쪽은 채움 + 체크 아이콘, 드롭 섀도우 제거
+
+[챌린지 목록 PolyMarketScreen]
+- [리더보드] 버튼 h-8 아웃라인
+- 카테고리 탭 알약 → h-8 사각 태그 + 개수, "전체 마켓" → "전체"
+- 서버에서 4개 외 카테고리(예: 스포츠)가 오면 탭 추가, 0건 카테고리 탭은 숨김
+- 카드 제목 15px·설명 13px, 설명이 제목과 같은 문장이면 숨김, 0건 빈 상태 안내
+
+[챌린지 상세 PolyMarketDetailScreen]
+- 뒤로가기 문구 "예측 챌린지 목록으로", "보유 DP:" 알약 → 사각 칩
+- 제목 18px, 내 투표 행(YES/NO 칩), 설명 중복 숨김
+- 탭 "판정 기준 (Rules)"·"마켓 분석 및 뉴스 (Context)" → "판정 기준"·"분석 · 뉴스", 이모지 제거
+- 의견 목록 13px, 두 줄 말줄임 → 전체 표시, 삭제 버튼 28px, 입력창 h-10, 빈 입력 시 등록 비활성
+
+[리더보드 PolyLeaderboardScreen]
+- 시즌 헤더 정리("2026년 8월 시즌" 칩), 개인 지표 카드에서 34% 중복 표시 제거
+- 카테고리 알약 → h-8 사각 태그, 정렬 라벨 금색 "정답률순"
+- 순위 행 글로우·링 제거(내 행은 금색 테두리), 닉네임 13px, 8~10px 글자 → 11~13px
+
+- 세 화면의 기존 JSX는 각 파일 하단에 주석으로 보존(내부 주석 구분자는 "/ *", "* /"로 무력화)
+
+검증: Playwright 412px·360px — 목록·상세·리더보드·확인 모달 렌더링, 가로 넘침 없음, font-mono 0개
+      (실제 DP가 차감되므로 투표 확정·완료 모달은 실행하지 않음)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/components/PolyVoteControls.tsx    |  65 ++++++
+ src/components/PolyVoteModals.tsx      | 254 ++++++++++++++++++++++
+ src/screens/PolyLeaderboardScreen.tsx  | 167 +++++++++++++-
+ src/screens/PolyMarketDetailScreen.tsx | 290 +++++++++++++++++++++----
+ src/screens/PolyMarketScreen.tsx       | 232 ++++++++++----------
+ 5 files changed, 843 insertions(+), 165 deletions(-)
+ create mode 100644 src/components/PolyVoteControls.tsx
+ create mode 100644 src/components/PolyVoteModals.tsx
+
+diff --git a/src/components/PolyVoteControls.tsx b/src/components/PolyVoteControls.tsx
+new file mode 100644
+index 0000000..8e2d27a
+--- /dev/null
++++ b/src/components/PolyVoteControls.tsx
+@@ -0,0 +1,65 @@
++import React from 'react';
++
++// 2026-09-27: 예측 챌린지 목록 카드·상세 화면에 복제돼 있던 여론 막대 + YES/NO 버튼을 공용 컴포넌트로 분리.
++// - 막대만 있고 수치가 없던 여론 비율에 "YES 62% · NO 38%" 라벨 추가
++// - 버튼 높이 44px(size="lg" 48px), 글자 13~14px, 드롭 섀도우 제거, 내가 투표한 쪽은 채움 + 체크 아이콘
++
++interface PolyOddsBarProps {
++  yesValue: number;
++  noValue: number;
++}
++
++export const PolyOddsBar: React.FC<PolyOddsBarProps> = ({ yesValue, noValue }) => (
++  <div className="flex flex-col gap-1.5">
++    <div className="flex items-center justify-between text-xs font-bold tabular-nums">
++      <span className="text-emerald-300">YES {yesValue}%</span>
++      <span className="text-rose-300">NO {noValue}%</span>
++    </div>
++    <div className="w-full bg-[#0D1B2A] h-2 rounded-full overflow-hidden flex border border-[#1F334D]">
++      <div className="bg-emerald-500 h-full transition-all duration-300" style={{ width: `${yesValue}%` }} />
++      <div className="bg-rose-500 h-full transition-all duration-300" style={{ width: `${noValue}%` }} />
++    </div>
++  </div>
++);
++
++interface PolyVoteButtonsProps {
++  myChoice?: string;
++  onVote: (choice: 'YES' | 'NO', e: React.MouseEvent) => void;
++  size?: 'md' | 'lg';
++}
++
++export const PolyVoteButtons: React.FC<PolyVoteButtonsProps> = ({ myChoice, onVote, size = 'md' }) => {
++  const height = size === 'lg' ? 'h-12 text-sm' : 'h-11 text-[13px]';
++  const base = `${height} px-3 rounded-xl border font-extrabold transition flex items-center justify-center gap-1.5 active:scale-[0.98]`;
++
++  return (
++    <div className="grid grid-cols-2 gap-2.5">
++      <button
++        type="button"
++        onClick={(e) => onVote('YES', e)}
++        aria-pressed={myChoice === 'YES'}
++        className={`${base} ${
++          myChoice === 'YES'
++            ? 'bg-emerald-500 text-[#0D1B2A] border-emerald-400'
++            : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20'
++        }`}
++      >
++        <span className="material-symbols-outlined text-base">{myChoice === 'YES' ? 'check_circle' : 'thumb_up'}</span>
++        <span>YES</span>
++      </button>
++      <button
++        type="button"
++        onClick={(e) => onVote('NO', e)}
++        aria-pressed={myChoice === 'NO'}
++        className={`${base} ${
++          myChoice === 'NO'
++            ? 'bg-rose-500 text-white border-rose-400'
++            : 'bg-rose-500/10 border-rose-500/40 text-rose-300 hover:bg-rose-500/20'
++        }`}
++      >
++        <span className="material-symbols-outlined text-base">{myChoice === 'NO' ? 'check_circle' : 'thumb_down'}</span>
++        <span>NO</span>
++      </button>
++    </div>
++  );
++};
+diff --git a/src/components/PolyVoteModals.tsx b/src/components/PolyVoteModals.tsx
+new file mode 100644
+index 0000000..3e699db
+--- /dev/null
++++ b/src/components/PolyVoteModals.tsx
+@@ -0,0 +1,254 @@
++import React, { useState } from 'react';
++
++// 2026-09-27: 예측 챌린지 목록(PolyMarketScreen)·상세(PolyMarketDetailScreen)에 똑같이 복제돼 있던
++// "DP 사용 확인" / "투표 완료" 모달을 공용 컴포넌트로 분리하고 UI/UX 정리.
++// - ✕ 문자 → 32px 닫기 아이콘 버튼, 라벨 콜론 제거, font-mono → Pretendard tabular-nums, 글자 9~12px → 11~14px
++// - 선택 항목(YES/NO)은 칩으로, 프리셋 버튼 높이 48px, 확정 버튼 처리 중 중복 탭 방지(처리 중… 표시)
++// - 드롭 섀도우·글로우·깜빡임 제거
++// - 완료 모달 "현재 보유 잔액": 기존 mock user.walletDp(헤더 DP와 불일치) → 확인 모달에서 계산한 예상 잔여 포인트
++// 투표 API 호출·mock 반영 로직은 각 화면(handleConfirmVote)에 그대로 있다.
++
++export const DP_PRESETS = [100, 500, 1000, 5000];
++
++export const calcExpectedPayout = (amount: number, oddsStr: string): number => {
++  const percent = parseFloat(oddsStr.replace(/[^0-9.]/g, '')) || 50;
++  const decimal = percent / 100;
++  if (decimal <= 0) return amount;
++  return Math.round(amount / decimal);
++};
++
++const Row: React.FC<{ label: string; children: React.ReactNode; className?: string }> = ({ label, children, className = '' }) => (
++  <div className={`flex items-center justify-between gap-3 ${className}`}>
++    <span className="shrink-0 text-xs text-slate-400">{label}</span>
++    <span className="min-w-0 text-right text-[13px] text-white">{children}</span>
++  </div>
++);
++
++export const ChoiceChip: React.FC<{ choice: string; odds?: string }> = ({ choice, odds }) => (
++  <span
++    className={`h-6 px-2 rounded-md text-xs font-bold border inline-flex items-center gap-1 tabular-nums ${
++      choice === 'YES'
++        ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30'
++        : 'text-rose-300 bg-rose-500/10 border-rose-500/30'
++    }`}
++  >
++    {choice}
++    {odds && <span className="font-medium opacity-80">{odds}</span>}
++  </span>
++);
++
++interface PolyVoteConfirmModalProps {
++  category: string;
++  title: string;
++  choice: string;
++  odds: string;
++  isRevote: boolean;
++  prevAmount?: number;
++  walletDp: number;
++  selectedAmount: number;
++  onSelectAmount: (amount: number) => void;
++  onCancel: () => void;
++  onConfirm: () => Promise<void> | void;
++}
++
++export const PolyVoteConfirmModal: React.FC<PolyVoteConfirmModalProps> = ({
++  category,
++  title,
++  choice,
++  odds,
++  isRevote,
++  prevAmount,
++  walletDp,
++  selectedAmount,
++  onSelectAmount,
++  onCancel,
++  onConfirm,
++}) => {
++  const [isSubmitting, setIsSubmitting] = useState(false);
++  const refund = isRevote ? prevAmount || 100 : 0;
++  const maxAvailableDp = walletDp + refund;
++  const projectedBalance = walletDp + refund - selectedAmount;
++  const isOver = selectedAmount > maxAvailableDp;
++
++  const handleConfirm = async () => {
++    if (isSubmitting || isOver) return;
++    setIsSubmitting(true);
++    try {
++      await onConfirm();
++    } finally {
++      setIsSubmitting(false);
++    }
++  };
++
++  return (
++    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
++      <div className="bg-[#162639] border border-[#C5A059]/60 rounded-2xl p-5 w-full max-w-sm flex flex-col gap-4 animate-in fade-in zoom-in-95">
++        {/* Header */}
++        <div className="flex items-center justify-between gap-2">
++          <h3 className="text-[15px] font-bold text-white flex items-center gap-1.5">
++            <span className="material-symbols-outlined text-[#C5A059]">how_to_vote</span>
++            {isRevote ? '투표 포지션 변경' : 'DP 사용 확인'}
++          </h3>
++          <button
++            type="button"
++            onClick={onCancel}
++            aria-label="닫기"
++            className="w-8 h-8 -mr-1.5 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#1F334D]/60 transition"
++          >
++            <span className="material-symbols-outlined text-xl">close</span>
++          </button>
++        </div>
++
++        {/* Market Info & Selection */}
++        <div className="flex flex-col gap-1.5">
++          <span className="text-xs font-bold text-[#C5A059]">{category}</span>
++          <p className="text-sm font-bold text-white leading-snug line-clamp-2 break-keep">{title}</p>
++          <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
++            선택
++            <ChoiceChip choice={choice} odds={odds} />
++          </div>
++        </div>
++
++        {/* Preset Options (100 / 500 / 1,000 / 5,000 DP) */}
++        <div className="flex flex-col gap-2">
++          <div className="flex justify-between items-center text-xs tabular-nums">
++            <span className="text-slate-300 font-bold">사용할 DP</span>
++            <span className="text-slate-400">보유 {walletDp.toLocaleString()} DP</span>
++          </div>
++          <div className="grid grid-cols-4 gap-1.5 tabular-nums">
++            {DP_PRESETS.map((preset) => {
++              const isDisabled = preset > maxAvailableDp;
++              const isSelected = selectedAmount === preset;
++
++              return (
++                <button
++                  key={preset}
++                  type="button"
++                  disabled={isDisabled}
++                  aria-pressed={isSelected}
++                  onClick={() => onSelectAmount(preset)}
++                  className={`h-12 rounded-xl text-sm font-bold transition border flex flex-col items-center justify-center leading-tight ${
++                    isSelected
++                      ? 'bg-[#C5A059] text-[#0D1B2A] border-[#C5A059] font-extrabold'
++                      : isDisabled
++                      ? 'bg-[#0D1B2A]/40 text-slate-600 border-[#1F334D]/40 cursor-not-allowed'
++                      : 'bg-[#0D1B2A] text-slate-200 border-[#1F334D] hover:border-[#C5A059]/60'
++                  }`}
++                >
++                  <span>{preset.toLocaleString()}</span>
++                  <span className="text-[10px] font-bold opacity-80">DP</span>
++                </button>
++              );
++            })}
++          </div>
++        </div>
++
++        {/* Live Cost Summary */}
++        <div className="bg-[#0D1B2A] p-3.5 rounded-xl border border-[#1F334D] flex flex-col gap-2.5 tabular-nums">
++          <Row label="사용 포인트">
++            <span className="text-base font-extrabold text-[#E2C28E]">{selectedAmount.toLocaleString()} DP</span>
++          </Row>
++          {isRevote && (
++            <Row label="기존 투표 반환">
++              <span className="font-bold">+{refund.toLocaleString()} DP</span>
++            </Row>
++          )}
++          <Row label="사용 후 잔여 포인트" className="pt-2.5 border-t border-[#1F334D]">
++            <span className={`font-bold ${projectedBalance >= 0 ? 'text-white' : 'text-amber-300'}`}>
++              {projectedBalance.toLocaleString()} DP
++            </span>
++          </Row>
++        </div>
++
++        {/* Action Buttons */}
++        <div className="grid grid-cols-[1fr_2fr] gap-2">
++          <button
++            type="button"
++            onClick={onCancel}
++            className="h-12 rounded-xl bg-[#0D1B2A] border border-[#1F334D] text-slate-300 font-bold text-sm hover:bg-[#1E2E44] transition"
++          >
++            취소
++          </button>
++          <button
++            type="button"
++            disabled={isOver || isSubmitting}
++            onClick={handleConfirm}
++            className="h-12 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-sm hover:brightness-110 active:scale-[0.98] transition disabled:opacity-50 disabled:cursor-not-allowed"
++          >
++            {isSubmitting ? '처리 중…' : isRevote ? '포지션 변경 확정' : '포인트 사용 확정'}
++          </button>
++        </div>
++      </div>
++    </div>
++  );
++};
++
++export interface PolyVoteResult {
++  title: string;
++  choice: string;
++  odds: string;
++  amount: number;
++  expectedPayout: number;
++  isRevote: boolean;
++  participationRewardDp?: number;
++  balanceAfter: number;
++}
++
++export const PolyVoteResultModal: React.FC<{ result: PolyVoteResult; onClose: () => void }> = ({ result, onClose }) => (
++  <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
++    <div className="bg-[#162639] border border-[#C5A059]/60 rounded-2xl p-5 w-full max-w-sm flex flex-col items-center gap-4 text-center animate-in zoom-in-95">
++      <div className="w-14 h-14 rounded-full bg-emerald-500/15 border-2 border-emerald-500/70 flex items-center justify-center text-emerald-300">
++        <span className="material-symbols-outlined text-3xl">check</span>
++      </div>
++
++      <div>
++        <h3 className="text-base font-bold text-white">
++          {result.isRevote ? '투표 변경 완료' : '예측 챌린지 참여 완료'}
++        </h3>
++        <p className="text-[13px] text-slate-300 mt-1 break-keep tabular-nums">
++          {result.isRevote
++            ? `${result.choice} · ${result.amount.toLocaleString()} DP로 변경되었습니다.`
++            : `${result.amount.toLocaleString()} DP가 사용되어 투표가 등록되었습니다.`}
++        </p>
++      </div>
++
++      {/* Instant Participation Reward */}
++      {!!result.participationRewardDp && (
++        <div className="w-full bg-[#C5A059]/10 border border-[#C5A059]/40 rounded-xl px-3.5 py-3 flex items-center justify-between gap-3 text-left">
++          <div className="flex items-center gap-2 min-w-0">
++            <span className="material-symbols-outlined text-[#E2C28E] text-xl">card_giftcard</span>
++            <div className="min-w-0">
++              <span className="font-bold text-white text-[13px] block">참여 즉시 보상 지급</span>
++              <span className="text-[11px] text-slate-400">정산과 관계없이 바로 적립됩니다</span>
++            </div>
++          </div>
++          <span className="shrink-0 text-sm font-extrabold text-[#E2C28E] tabular-nums">+{result.participationRewardDp} DP</span>
++        </div>
++      )}
++
++      <div className="w-full bg-[#0D1B2A] p-3.5 rounded-xl border border-[#1F334D] text-left flex flex-col gap-2.5 tabular-nums">
++        <p className="text-[13px] font-bold text-white leading-snug line-clamp-2 break-keep">{result.title}</p>
++        <Row label="선택" className="pt-2.5 border-t border-[#1F334D]">
++          <ChoiceChip choice={result.choice} odds={result.odds} />
++        </Row>
++        <Row label="투표 금액">
++          <span className="font-bold">{result.amount.toLocaleString()} DP</span>
++        </Row>
++        <Row label="적중 시 예상 획득">
++          <span className="font-bold text-[#E2C28E]">약 {result.expectedPayout.toLocaleString()} DP</span>
++        </Row>
++        <Row label="예상 잔여 포인트" className="pt-2.5 border-t border-[#1F334D]">
++          <span className="font-bold">{result.balanceAfter.toLocaleString()} DP</span>
++        </Row>
++      </div>
++
++      <button
++        type="button"
++        onClick={onClose}
++        className="w-full h-12 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-sm hover:brightness-110 active:scale-[0.98] transition"
++      >
++        확인
++      </button>
++    </div>
++  </div>
++);
+diff --git a/src/screens/PolyLeaderboardScreen.tsx b/src/screens/PolyLeaderboardScreen.tsx
+index 13e0e16..8fc3e3c 100644
+--- a/src/screens/PolyLeaderboardScreen.tsx
++++ b/src/screens/PolyLeaderboardScreen.tsx
+@@ -146,6 +146,9 @@ export const PolyLeaderboardScreen: React.FC = () => {
+       .map((entry, idx) => ({ ...entry, rank: idx + 1 }));
+   }, [scope]);
+ 
++  // 2026-09-27 UI/UX 정리: 시즌 헤더·개인 지표 카드 정리(같은 34%가 두 번 보이던 중복 제거),
++  // 카테고리 알약 → h-8 사각 태그, 정렬 라벨을 다른 목록과 같은 금색 표기, 순위 행 글로우·링 제거,
++  // font-mono → Pretendard tabular-nums, 8~10px 글자 → 11~13px. 순위·지표 데이터는 기존 mock 그대로.
+   return (
+     <div className="flex flex-col gap-4 pb-44 pt-2">
+       {/* Back Button */}
+@@ -158,6 +161,149 @@ export const PolyLeaderboardScreen: React.FC = () => {
+       </button>
+ 
+       {/* Top Title & Season Header */}
++      <div className="flex flex-col gap-2.5">
++        <div className="flex items-center justify-between gap-3">
++          <h2 className="text-lg font-bold text-white flex items-center gap-2">
++            <span className="material-symbols-outlined text-[#C5A059]">leaderboard</span>
++            이번 시즌 리더보드
++          </h2>
++          <span className="shrink-0 h-6 px-2 rounded-md text-[11px] font-bold text-slate-300 bg-[#162639] border border-[#1F334D] inline-flex items-center tabular-nums">
++            2026년 8월 시즌
++          </span>
++        </div>
++
++        {/* Clear Notice: Monthly Reset / No Lifetime Records */}
++        <p className="flex items-start gap-1.5 text-xs text-slate-400 leading-relaxed break-keep px-1">
++          <span className="material-symbols-outlined text-sm text-slate-500 shrink-0">info</span>
++          매월 초기화되는 이번 달 정답률 순위입니다. 역대 기록은 제공하지 않습니다.
++        </p>
++      </div>
++
++      {/* Individual Stat Card (Completely separate from competition ranking) — 수치는 mock(34%) */}
++      <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex items-center justify-between gap-4">
++        <div className="min-w-0">
++          <div className="flex items-center gap-1.5 flex-wrap">
++            <span className="material-symbols-outlined text-base text-[#C5A059]">psychology</span>
++            <span className="text-[13px] font-bold text-white">남다른 시각 적중률</span>
++            <span className="h-5 px-1.5 rounded text-[11px] text-slate-400 bg-[#0D1B2A] border border-[#1F334D] inline-flex items-center">
++              비경쟁 참고용
++            </span>
++          </div>
++          <p className="mt-1 text-xs text-slate-400 leading-relaxed break-keep">
++            소수의견에 투표해 적중한 비율입니다. 순위에는 반영되지 않습니다.
++          </p>
++        </div>
++        <span className="shrink-0 text-2xl font-extrabold text-[#E2C28E] tabular-nums leading-none">
++          34<span className="text-sm font-bold">%</span>
++        </span>
++      </div>
++
++      {/* Category Scope Tabs: 전체 / 사회 / 연예 / 정치 / 인물 */}
++      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar -mx-1 px-1">
++        {SCOPES.map((sc) => {
++          const isActive = scope === sc;
++          return (
++            <button
++              key={sc}
++              type="button"
++              onClick={() => setScope(sc)}
++              aria-pressed={isActive}
++              className={`shrink-0 h-8 px-3 rounded-lg border text-xs font-bold whitespace-nowrap transition ${
++                isActive
++                  ? 'bg-[#C5A059] border-[#C5A059] text-[#0D1B2A]'
++                  : 'bg-[#162639] border-[#1F334D] text-slate-300 hover:border-[#C5A059]/50'
++              }`}
++            >
++              {sc}
++            </button>
++          );
++        })}
++      </div>
++
++      {/* Ranking List Header */}
++      <div className="flex items-center justify-between px-1">
++        <h3 className="text-xs font-bold text-slate-400 tracking-wider flex items-center gap-1.5 tabular-nums">
++          <span className="material-symbols-outlined text-sm text-[#C5A059]">format_list_numbered</span>
++          {scope} 정답률 TOP {ranked.length}
++        </h3>
++        <span className="text-xs font-normal tracking-wider text-[#C5A059]">정답률순</span>
++      </div>
++
++      {/* Ranking List */}
++      <div className="flex flex-col gap-2">
++        {ranked.map(({ user, stat, rank }) => {
++          const isMe = user.isCurrentUser;
++          const initial = user.nickname.substring(0, 1).toUpperCase();
++
++          return (
++            <div
++              key={user.nickname}
++              className={`rounded-xl px-3.5 py-3 flex items-center justify-between gap-3 border tabular-nums ${
++                isMe ? 'bg-[#C5A059]/10 border-[#C5A059]' : 'bg-[#162639] border-[#1F334D]'
++              }`}
++            >
++              {/* Left: Pure Numeric Rank (No badges/trophies) + User Avatar + Nickname */}
++              <div className="flex items-center gap-3 min-w-0">
++                <span
++                  className={`w-6 text-center text-base font-extrabold ${
++                    isMe ? 'text-[#E2C28E]' : rank <= 3 ? 'text-white' : 'text-slate-500'
++                  }`}
++                >
++                  {rank}
++                </span>
++
++                {/* User Initial Avatar (Strictly no badges or tier icons) */}
++                <div
++                  className={`w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold border shrink-0 ${
++                    isMe ? 'bg-[#C5A059]/20 text-[#E2C28E] border-[#C5A059]/60' : 'bg-[#0D1B2A] text-slate-300 border-[#1F334D]'
++                  }`}
++                >
++                  {initial}
++                </div>
++
++                <div className="flex flex-col min-w-0">
++                  <div className="flex items-center gap-1.5 min-w-0">
++                    <span className={`text-[13px] font-bold truncate ${isMe ? 'text-[#E2C28E]' : 'text-slate-100'}`}>
++                      {user.nickname}
++                    </span>
++                    {isMe && (
++                      <span className="shrink-0 h-5 px-1.5 rounded text-[11px] font-bold bg-[#C5A059] text-[#0D1B2A] inline-flex items-center">
++                        나
++                      </span>
++                    )}
++                  </div>
++                  <span className="text-[11px] text-slate-400">참여 {stat.totalVotes}건</span>
++                </div>
++              </div>
++
++              {/* Right: Accuracy Rate (%) + 누적 수익 DP(보조 표시, 정렬 기준 아님) */}
++              <div className="text-right flex flex-col items-end shrink-0">
++                <span className={`text-lg font-extrabold leading-none ${isMe ? 'text-[#E2C28E]' : 'text-white'}`}>
++                  {stat.accuracyRate}
++                  <span className="text-xs font-bold text-slate-400">%</span>
++                </span>
++                <span className={`mt-1 text-[11px] font-bold ${stat.profitDp >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
++                  {stat.profitDp >= 0 ? '+' : ''}
++                  {stat.profitDp.toLocaleString()} DP
++                </span>
++              </div>
++            </div>
++          );
++        })}
++      </div>
++
++      {/* [기존 화면 JSX — 2026-09-27 위 레이아웃으로 대체, 삭제하지 않고 주석 보존.
++          주석 안에 넣기 위해 내부 주석 구분자는 "/ *", "* /"로 바꿔 둠]
++      {/ * Back Button * /}
++      <button
++        onClick={() => setCurrentSubScreen(null)}
++        className="text-xs text-slate-400 hover:text-white flex items-center gap-1 w-fit transition"
++      >
++        <span className="material-symbols-outlined text-sm">arrow_back</span>
++        <span>예측 챌린지 목록으로</span>
++      </button>
++
++      {/ * Top Title & Season Header * /}
+       <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-2.5 shadow-lg relative overflow-hidden">
+         <div className="flex items-center justify-between">
+           <div className="flex items-center gap-2">
+@@ -174,7 +320,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
+           </span>
+         </div>
+ 
+-        {/* Clear Notice: Monthly Reset / No Lifetime Records */}
++        {/ * Clear Notice: Monthly Reset / No Lifetime Records * /}
+         <div className="bg-[#0D1B2A]/90 border border-[#1F334D] rounded-xl px-3 py-2 flex items-start gap-2 text-[11px] text-slate-400 leading-relaxed">
+           <span className="material-symbols-outlined text-xs text-slate-400 shrink-0 mt-0.5">info</span>
+           <span>
+@@ -183,7 +329,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
+         </div>
+       </div>
+ 
+-      {/* Individual Stat Card (Completely separate from competition ranking) */}
++      {/ * Individual Stat Card (Completely separate from competition ranking) * /}
+       <div className="bg-[#121E2C] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3 shadow-md">
+         <div className="flex items-center justify-between border-b border-[#1F334D] pb-3">
+           <div className="flex items-center gap-2">
+@@ -212,7 +358,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
+         </div>
+       </div>
+ 
+-      {/* Category Scope Tabs: 전체 / 사회 / 연예 / 정치 / 인물 */}
++      {/ * Category Scope Tabs: 전체 / 사회 / 연예 / 정치 / 인물 * /}
+       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+         {SCOPES.map((s) => (
+           <button
+@@ -229,7 +375,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
+         ))}
+       </div>
+ 
+-      {/* Ranking List Header */}
++      {/ * Ranking List Header * /}
+       <div className="flex items-center justify-between px-1">
+         <span className="text-xs font-bold text-slate-300">
+           {scope} 정답률 랭킹 TOP {ranked.length}
+@@ -237,7 +383,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
+         <span className="text-[10px] text-slate-400">정렬: 정답률 (%)</span>
+       </div>
+ 
+-      {/* Ranking List Table */}
++      {/ * Ranking List Table * /}
+       <div className="flex flex-col gap-2">
+         {ranked.map(({ user, stat, rank }) => {
+           const isMe = user.isCurrentUser;
+@@ -252,9 +398,9 @@ export const PolyLeaderboardScreen: React.FC = () => {
+                   : 'bg-[#162639] border-[#1F334D]'
+               }`}
+             >
+-              {/* Left: Pure Numeric Rank (No badges/trophies) + User Avatar + Nickname */}
++              {/ * Left: Pure Numeric Rank (No badges/trophies) + User Avatar + Nickname * /}
+               <div className="flex items-center gap-3">
+-                {/* Pure Numeric Rank (Strictly Numbers Only) */}
++                {/ * Pure Numeric Rank (Strictly Numbers Only) * /}
+                 <span
+                   className={`w-6 text-center text-sm font-black font-mono ${
+                     isMe ? 'text-[#E2C28E]' : rank <= 3 ? 'text-white' : 'text-slate-400'
+@@ -263,7 +409,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
+                   {rank}
+                 </span>
+ 
+-                {/* User Initial Avatar (Strictly no badges or tier icons) */}
++                {/ * User Initial Avatar (Strictly no badges or tier icons) * /}
+                 <div
+                   className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold font-mono border ${
+                     isMe
+@@ -274,7 +420,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
+                   {initial}
+                 </div>
+ 
+-                {/* Nickname & Participation */}
++                {/ * Nickname & Participation * /}
+                 <div className="flex flex-col">
+                   <div className="flex items-center gap-1.5">
+                     <span className={`text-xs font-bold font-mono ${isMe ? 'text-[#E2C28E]' : 'text-slate-200'}`}>
+@@ -292,7 +438,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
+                 </div>
+               </div>
+ 
+-              {/* Right: Accuracy Rate (%) + 누적 수익 DP(보조 표시, 정렬 기준 아님) */}
++              {/ * Right: Accuracy Rate (%) + 누적 수익 DP(보조 표시, 정렬 기준 아님) * /}
+               <div className="text-right flex flex-col items-end">
+                 <div className="flex items-baseline gap-0.5">
+                   <span className={`text-base font-black font-mono ${isMe ? 'text-[#E2C28E]' : 'text-white'}`}>
+@@ -314,6 +460,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
+           );
+         })}
+       </div>
++      */}
+     </div>
+   );
+ };
+diff --git a/src/screens/PolyMarketDetailScreen.tsx b/src/screens/PolyMarketDetailScreen.tsx
+index 7aba677..b9c918f 100644
+--- a/src/screens/PolyMarketDetailScreen.tsx
++++ b/src/screens/PolyMarketDetailScreen.tsx
+@@ -3,19 +3,16 @@ import { useApp } from '../context/AppContext';
+ import { apiCommonClient } from '../utils/apiClient';
+ import { getStoredUserInfo } from '../utils/auth';
+ import { useComments, COMMENT_TYPE_CHALLENGE, formatCommentTime } from '../hooks/useComments';
++import { PolyVoteConfirmModal, PolyVoteResultModal, PolyVoteResult, calcExpectedPayout, ChoiceChip } from '../components/PolyVoteModals';
++import { PolyOddsBar, PolyVoteButtons } from '../components/PolyVoteControls';
+ 
+-const DP_PRESETS = [100, 500, 1000, 5000];
++// 2026-09-27 UI/UX 정리: DP_PRESETS·calcExpectedPayout은 components/PolyVoteModals.tsx로 이동(목록 화면과 공용).
++// 제목 16 → 18px, 여론 막대 % 라벨, 탭 문구 한글화·이모지 제거, 의견 목록 글자 12 → 13px·font-mono 제거,
++// 확인·완료 모달은 공용 컴포넌트 사용. 기존 모달 JSX는 파일 하단 주석에 보존.
+ 
+ // 모바일 카드 폭 기준 2줄 정도로 보이는 글자 수 제한
+ const COMMENT_MAX_LENGTH = 60;
+ 
+-const calcExpectedPayout = (amount: number, oddsStr: string): number => {
+-  const percent = parseFloat(oddsStr.replace(/[^0-9.]/g, '')) || 50;
+-  const decimal = percent / 100;
+-  if (decimal <= 0) return amount;
+-  return Math.round(amount / decimal);
+-};
+-
+ export const PolyMarketDetailScreen: React.FC = () => {
+   const {
+     selectedMarket,
+@@ -63,15 +60,8 @@ export const PolyMarketDetailScreen: React.FC = () => {
+     prevAmount?: number;
+   } | null>(null);
+ 
+-  const [successModalData, setSuccessModalData] = useState<{
+-    choice: string;
+-    odds: string;
+-    amount: number;
+-    expectedPayout: number;
+-    isRevote: boolean;
+-    prevChoice?: string;
+-    participationRewardDp?: number;
+-  } | null>(null);
++  // 2026-09-27: 공용 PolyVoteResult 형태로 변경 (title·balanceAfter 추가 / 기존 prevChoice는 표시에 쓰이지 않아 제외)
++  const [successModalData, setSuccessModalData] = useState<PolyVoteResult | null>(null);
+ 
+   if (!selectedMarket) {
+     return (
+@@ -113,6 +103,9 @@ export const PolyMarketDetailScreen: React.FC = () => {
+ 
+   const handleConfirmVote = async () => {
+     if (!confirmModalData) return;
++    // 완료 모달 "예상 잔여 포인트" — 확인 모달과 같은 계산 (재투표 시 기존 투입액 반환 후 차감)
++    const balanceAfter =
++      headerWalletDp + (confirmModalData.isRevote ? confirmModalData.prevAmount || 100 : 0) - selectedAmount;
+ 
+     let response: any;
+     try {
+@@ -149,13 +142,14 @@ export const PolyMarketDetailScreen: React.FC = () => {
+     if (res.success) {
+       const payout = calcExpectedPayout(selectedAmount, confirmModalData.odds);
+       setSuccessModalData({
++        title: selectedMarket.title,
+         choice: confirmModalData.choice,
+         odds: confirmModalData.odds,
+         amount: selectedAmount,
+         expectedPayout: payout,
+         isRevote: res.isRevote,
+-        prevChoice: res.prevChoice,
+-        participationRewardDp: res.participationRewardDp
++        participationRewardDp: res.participationRewardDp,
++        balanceAfter
+       });
+     }
+     setConfirmModalData(null);
+@@ -163,7 +157,218 @@ export const PolyMarketDetailScreen: React.FC = () => {
+ 
+   return (
+     <div className="flex flex-col gap-4 pb-44 pt-2">
+-      {/* Back Button */}
++      {/* Back Button — 2026-09-27: 문구를 리더보드 화면과 통일(기존: 마켓 목록으로 돌아가기),
++          "보유 DP:" 알약 → 콜론 없는 사각 칩 */}
++      <div className="flex items-center justify-between gap-3">
++        <button
++          onClick={() => setCurrentSubScreen(null)}
++          className="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition"
++        >
++          <span className="material-symbols-outlined text-sm">arrow_back</span>
++          <span>예측 챌린지 목록으로</span>
++        </button>
++        <span className="shrink-0 h-7 px-2.5 rounded-lg bg-[#162639] border border-[#C5A059]/40 flex items-center gap-1.5 text-xs tabular-nums">
++          <span className="text-slate-400">보유</span>
++          <span className="font-bold text-[#E2C28E]">{headerWalletDp.toLocaleString()} DP</span>
++        </span>
++      </div>
++
++      {/* Market Header Summary Box */}
++      <div className="bg-[#162639] border border-[#C5A059]/50 rounded-2xl p-4 flex flex-col gap-3">
++        <span className="self-start h-6 px-2 rounded-md text-[11px] font-bold text-[#E2C28E] bg-[#C5A059]/10 border border-[#C5A059]/40 inline-flex items-center">
++          {selectedMarket.category}
++        </span>
++
++        <h1 className="text-lg font-bold text-white leading-snug break-keep">
++          {selectedMarket.title}
++        </h1>
++
++        {/* 설명이 제목과 같은 문장이면(서버 데이터) 중복 표시하지 않음 */}
++        {selectedMarket.description && selectedMarket.description.trim() !== selectedMarket.title.trim() && (
++          <p className="text-[13px] text-slate-300 leading-relaxed break-keep bg-[#0D1B2A]/70 p-3.5 rounded-xl border border-[#1F334D]">
++            {selectedMarket.description}
++          </p>
++        )}
++
++        {/* Existing Vote */}
++        {existingVote && (
++          <div className="bg-[#0D1B2A] border border-[#C5A059]/40 px-3.5 py-2.5 rounded-xl flex items-center justify-between gap-2 tabular-nums">
++            <span className="text-xs text-slate-400 flex items-center gap-1.5">
++              <span className="material-symbols-outlined text-base text-[#C5A059]">how_to_vote</span>
++              내 투표
++            </span>
++            <span className="flex items-center gap-2">
++              <ChoiceChip choice={existingVote.choice} />
++              <span className="text-[13px] font-bold text-white">{existingVote.amountDp.toLocaleString()} DP</span>
++            </span>
++          </div>
++        )}
++
++        {/* Visual Probability Bar & Yes/No Buttons */}
++        <PolyOddsBar yesValue={selectedMarket.yesValue} noValue={selectedMarket.noValue} />
++        <PolyVoteButtons
++          size="lg"
++          myChoice={existingVote?.choice}
++          onVote={(choice) => handleOpenVoteModal(choice, choice === 'YES' ? selectedMarket.yesOdds : selectedMarket.noOdds)}
++        />
++        {existingVote && (
++          <p className="text-[11px] text-slate-500 text-center -mt-1">다른 쪽을 누르거나 금액을 바꿔 포지션을 변경할 수 있습니다.</p>
++        )}
++      </div>
++
++      {/* Tabs: Market Rules vs Market News/Context — 2026-09-27: 탭 문구 한글화(영문 괄호 제거), 본문 이모지 제거 */}
++      <div className="bg-[#162639] border border-[#1F334D] rounded-2xl overflow-hidden">
++        <div className="flex border-b border-[#1F334D]">
++          {([
++            { id: 'rules' as const, icon: 'gavel', label: '판정 기준' },
++            { id: 'news' as const, icon: 'newspaper', label: '분석 · 뉴스' },
++          ]).map((tab) => {
++            const isActive = activeTab === tab.id;
++            return (
++              <button
++                key={tab.id}
++                type="button"
++                onClick={() => setActiveTab(tab.id)}
++                aria-pressed={isActive}
++                className={`flex-1 h-11 text-[13px] font-bold transition flex items-center justify-center gap-1.5 border-b-2 ${
++                  isActive ? 'bg-[#0D1B2A] text-[#E2C28E] border-[#C5A059]' : 'text-slate-400 hover:text-white border-transparent'
++                }`}
++              >
++                <span className="material-symbols-outlined text-base">{tab.icon}</span>
++                <span>{tab.label}</span>
++              </button>
++            );
++          })}
++        </div>
++
++        <div className="p-4 flex flex-col gap-2">
++          <h4 className="text-xs font-bold text-slate-400">
++            {activeTab === 'rules' ? '정산 및 승패 판정 기준' : '실시간 컨센서스 & 인텔리전스'}
++          </h4>
++          <p className="text-[13px] text-slate-200 leading-relaxed whitespace-pre-line break-keep bg-[#0D1B2A] p-3.5 rounded-xl border border-[#1F334D]">
++            {activeTab === 'rules' ? selectedMarket.rulesText : selectedMarket.contextNews}
++          </p>
++          {/* 2026-09-27 이전부터 비활성화돼 있던 보조 문구(블록체인 스마트 컨트랙트 정산 안내 / 최근 24시간 투표 유입량)는
++              기존 JSX 주석(파일 하단 보존 블록 참고)과 동일하게 계속 숨김 */}
++        </div>
++      </div>
++
++      {/* Real-time Discussion / Comments */}
++      <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3">
++        <div className="flex items-center justify-between gap-2">
++          <h3 className="text-xs font-bold text-slate-400 tracking-wider flex items-center gap-1.5">
++            <span className="material-symbols-outlined text-sm text-[#C5A059]">forum</span>
++            <span>참여자 토론 & 의견</span>
++          </h3>
++          <span className="text-xs text-slate-400 tabular-nums">
++            {commentsLoading ? '불러오는 중…' : `${comments.length}개`}
++          </span>
++        </div>
++
++        <div className="flex flex-col gap-2">
++          {comments.map((comment) => {
++            const authorName = comment.u_name || comment.mem_name || `회원 ${comment.mem_index}`;
++            const authorAvatar = comment.u_profile || comment.mem_profile || '';
++            const isMine = myUidx != null && comment.mem_index === myUidx;
++
++            return (
++              <div
++                key={comment.tb_index}
++                className="bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D] flex gap-2.5"
++              >
++                {authorAvatar ? (
++                  <img
++                    src={authorAvatar}
++                    alt={authorName}
++                    referrerPolicy="no-referrer"
++                    className="w-7 h-7 rounded-full object-cover border border-[#C5A059]/40 shrink-0"
++                  />
++                ) : (
++                  <span className="w-7 h-7 rounded-full bg-[#162639] border border-[#C5A059]/40 flex items-center justify-center text-[#C5A059] shrink-0">
++                    <span className="material-symbols-outlined text-base">person</span>
++                  </span>
++                )}
++                <div className="flex-1 min-w-0">
++                  <div className="flex items-center justify-between gap-2">
++                    <span className="text-[13px] font-bold text-white truncate">
++                      {authorName}
++                      {isMine && <span className="ml-1 text-xs font-bold text-[#E2C28E]">나</span>}
++                    </span>
++                    <div className="flex items-center gap-1 shrink-0">
++                      <span className="text-[11px] text-slate-500 tabular-nums">{formatCommentTime(comment.reg_timestamp)}</span>
++                      {isMine && (
++                        <button
++                          type="button"
++                          onClick={() => handleDeleteComment(comment.tb_index)}
++                          className="w-7 h-7 -mr-1.5 rounded-md flex items-center justify-center text-slate-500 hover:text-white hover:bg-[#1F334D]/60 transition"
++                          aria-label="의견 삭제"
++                        >
++                          <span className="material-symbols-outlined text-base">delete</span>
++                        </button>
++                      )}
++                    </div>
++                  </div>
++                  <p className="mt-0.5 text-[13px] text-slate-300 leading-relaxed break-words">{comment.tb_comment}</p>
++                </div>
++              </div>
++            );
++          })}
++          {!commentsLoading && comments.length === 0 && (
++            <p className="text-center text-[13px] text-slate-500 py-4">아직 등록된 의견이 없습니다. 첫 의견을 남겨보세요!</p>
++          )}
++        </div>
++
++        {/* 의견 입력 (DOUBLE RING 파트너스 커뮤니티 댓글 입력 형식 참고) — 2026-09-27: 높이 40px·글자 13px */}
++        <form onSubmit={handleAddComment} className="flex flex-col gap-1">
++          <div className="flex gap-2">
++            <input
++              type="text"
++              placeholder="이 챌린지에 대한 의견을 남겨보세요"
++              value={commentInput}
++              onChange={(e) => setCommentInput(e.target.value.slice(0, COMMENT_MAX_LENGTH))}
++              maxLength={COMMENT_MAX_LENGTH}
++              disabled={isSubmittingComment}
++              className="flex-1 min-w-0 h-10 bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3 text-white text-[13px] placeholder:text-slate-500 focus:border-[#C5A059] focus:outline-none disabled:opacity-50"
++            />
++            <button
++              type="submit"
++              disabled={isSubmittingComment || commentInput.trim().length === 0}
++              className="h-10 px-4 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-[13px] shrink-0 disabled:opacity-50"
++            >
++              등록
++            </button>
++          </div>
++          <span className="text-[11px] text-slate-500 text-right tabular-nums pr-1">
++            {commentInput.length}/{COMMENT_MAX_LENGTH}
++          </span>
++        </form>
++      </div>
++
++      {/* Confirmation Modal with Presets — 2026-09-27 공용 컴포넌트 */}
++      {confirmModalData && (
++        <PolyVoteConfirmModal
++          category={selectedMarket.category}
++          title={selectedMarket.title}
++          choice={confirmModalData.choice}
++          odds={confirmModalData.odds}
++          isRevote={confirmModalData.isRevote}
++          prevAmount={confirmModalData.prevAmount}
++          walletDp={headerWalletDp}
++          selectedAmount={selectedAmount}
++          onSelectAmount={setSelectedAmount}
++          onCancel={() => setConfirmModalData(null)}
++          onConfirm={handleConfirmVote}
++        />
++      )}
++
++      {/* Result Screen Modal — 2026-09-27 공용 컴포넌트 */}
++      {successModalData && (
++        <PolyVoteResultModal result={successModalData} onClose={() => setSuccessModalData(null)} />
++      )}
++
++      {/* [기존 화면 JSX 전체(헤더·탭·의견·확인/완료 모달) — 2026-09-27 위 레이아웃·공용 컴포넌트로 대체, 삭제하지 않고 주석 보존.
++          주석 안에 넣기 위해 내부 주석 구분자는 "/ *", "* /"로 바꿔 둠]
++      {/ * Back Button * /}
+       <div className="flex items-center justify-between">
+         <button
+           onClick={() => setCurrentSubScreen(null)}
+@@ -180,7 +385,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
+         </div>
+       </div>
+ 
+-      {/* Market Header Summary Box */}
++      {/ * Market Header Summary Box * /}
+       <div className="bg-[#162639] border border-[#C5A059]/50 rounded-2xl p-5 shadow-xl flex flex-col gap-3">
+         <div className="flex items-start gap-2">
+           <span className="text-[10px] font-bold text-[#C5A059] bg-[#C5A059]/15 px-2.5 py-0.5 rounded border border-[#C5A059]/30">
+@@ -196,7 +401,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
+           {selectedMarket.description}
+         </p>
+ 
+-        {/* Existing Vote Badge */}
++        {/ * Existing Vote Badge * /}
+         {existingVote && (
+           <div className="bg-[#0D1B2A] border border-[#C5A059]/60 p-2.5 rounded-xl flex items-center justify-between text-xs">
+             <span className="text-slate-400 flex items-center gap-1.5">
+@@ -209,7 +414,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
+           </div>
+         )}
+ 
+-        {/* Visual Probability Bar & Yes/No Buttons */}
++        {/ * Visual Probability Bar & Yes/No Buttons * /}
+         <div className="space-y-2 pt-1">
+           <div className="w-full bg-[#0D1B2A] h-2.5 rounded-full overflow-hidden flex border border-[#1F334D]">
+             <div
+@@ -222,7 +427,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
+             />
+           </div>
+ 
+-          {/* YES / NO Action Buttons (percentage only) */}
++          {/ * YES / NO Action Buttons (percentage only) * /}
+           <div className="grid grid-cols-2 gap-2.5 pt-2">
+             <button
+               onClick={() => handleOpenVoteModal('YES', selectedMarket.yesOdds)}
+@@ -251,7 +456,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
+         </div>
+       </div>
+ 
+-      {/* Tabs: Market Rules vs Market News/Context */}
++      {/ * Tabs: Market Rules vs Market News/Context * /}
+       <div className="bg-[#162639] border border-[#1F334D] rounded-2xl overflow-hidden shadow-md">
+         <div className="flex border-b border-[#1F334D]">
+           <button
+@@ -285,11 +490,11 @@ export const PolyMarketDetailScreen: React.FC = () => {
+               <p className="text-slate-300 bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D]">
+                 {selectedMarket.rulesText}
+               </p>
+-              {/* 
++              {/ * 
+               <p className="text-[10px] text-slate-500 pt-1">
+                 * 블록체인 스마트 컨트랙트에 의해 공식 공시 발표 즉시 정산 및 배당 분배가 실행됩니다.
+               </p>
+-              */}
++              * /}
+             </div>
+           ) : (
+             <div className="space-y-2">
+@@ -297,20 +502,20 @@ export const PolyMarketDetailScreen: React.FC = () => {
+               <p className="text-slate-300 bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D] leading-relaxed">
+                 {selectedMarket.contextNews}
+               </p>
+-              {/* 
++              {/ * 
+               <div className="flex items-center gap-2 pt-1 text-[11px] text-[#C5A059]">
+                 <span className="material-symbols-outlined text-sm">trending_up</span>
+                 
+                 <span>최근 24시간 동안 총 {selectedMarket.totalVolumeDp}의 예측 투표가 유입되었습니다.</span>
+                 
+               </div>
+-              */}
++              * /}
+             </div>
+           )}
+         </div>
+       </div>
+ 
+-      {/* Real-time Discussion / Comments */}
++      {/ * Real-time Discussion / Comments * /}
+       <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 shadow-md space-y-3">
+         <div className="flex items-center justify-between border-b border-[#1F334D] pb-2.5">
+           <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
+@@ -372,7 +577,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
+           )}
+         </div>
+ 
+-        {/* 의견 입력 (더블링 파트너스 커뮤니티 댓글 입력 형식 참고) */}
++        {/ * 의견 입력 (더블링 파트너스 커뮤니티 댓글 입력 형식 참고) * /}
+         <form onSubmit={handleAddComment} className="flex flex-col gap-1 pt-1">
+           <div className="flex gap-2">
+             <input
+@@ -398,7 +603,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
+         </form>
+       </div>
+ 
+-      {/* Confirmation Modal with Presets */}
++      {/ * Confirmation Modal with Presets * /}
+       {confirmModalData && (() => {
+         const isRevote = confirmModalData.isRevote;
+         const prevAmount = confirmModalData.prevAmount || 100;
+@@ -411,7 +616,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
+         return (
+           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+             <div className="bg-[#162639] border border-[#C5A059] rounded-2xl p-5 w-full max-w-sm flex flex-col gap-4 shadow-2xl animate-in fade-in zoom-in-95">
+-              {/* Header */}
++              {/ * Header * /}
+               <div className="flex items-center justify-between border-b border-[#1F334D] pb-3">
+                 <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                   <span className="material-symbols-outlined text-[#C5A059]">how_to_vote</span>
+@@ -425,14 +630,14 @@ export const PolyMarketDetailScreen: React.FC = () => {
+                 </button>
+               </div>
+ 
+-              {/* Market Info */}
++              {/ * Market Info * /}
+               <div className="space-y-3 text-xs">
+                 <div>
+                   <span className="text-[10px] font-bold text-[#C5A059] uppercase">{selectedMarket.category}</span>
+                   <p className="text-white font-bold text-xs mt-0.5 line-clamp-2">{selectedMarket.title}</p>
+                 </div>
+ 
+-                {/* Selected Choice Badge */}
++                {/ * Selected Choice Badge * /}
+                 <div className="flex items-center justify-between bg-[#0D1B2A] p-2.5 rounded-xl border border-[#1F334D]">
+                   <span className="text-slate-400">선택 항목:</span>
+                   <span className={`font-black text-sm ${
+@@ -442,7 +647,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
+                   </span>
+                 </div>
+ 
+-                {/* Preset Options (100 / 500 / 1,000 / 5,000 DP) */}
++                {/ * Preset Options (100 / 500 / 1,000 / 5,000 DP) * /}
+                 <div className="space-y-1.5">
+                   <div className="flex justify-between items-center text-[11px]">
+                     <span className="text-slate-300 font-bold">매수 DP 선택:</span>
+@@ -475,7 +680,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
+                   </div>
+                 </div>
+ 
+-                {/* Live Cost & Expected Return Summary */}
++                {/ * Live Cost & Expected Return Summary * /}
+                 <div className="bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D] space-y-2">
+                   <div className="flex justify-between items-center">
+                     <span className="text-slate-400">사용 포인트:</span>
+@@ -490,7 +695,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
+                     </span>
+                   </div>
+ 
+-                  {/* Expected Payout based on Odds 
++                  {/ * Expected Payout based on Odds 
+                   <div className="pt-2 border-t border-[#1F334D]/80">
+                     <div className="bg-[#162639] p-2 rounded-lg border border-[#C5A059]/30 text-center">
+                       <span className="text-[11px] text-slate-300 block">
+@@ -498,11 +703,11 @@ export const PolyMarketDetailScreen: React.FC = () => {
+                       </span>
+                     </div>
+                   </div>
+-                      */}
++                      * /}
+                 </div>
+               </div>
+ 
+-              {/* Action Buttons */}
++              {/ * Action Buttons * /}
+               <div className="grid grid-cols-2 gap-2 pt-1">
+                 <button
+                   onClick={() => setConfirmModalData(null)}
+@@ -523,7 +728,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
+         );
+       })()}
+ 
+-      {/* Result Screen Modal */}
++      {/ * Result Screen Modal * /}
+       {successModalData && (
+         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+           <div className="bg-[#162639] border border-[#C5A059] rounded-3xl p-6 w-full max-w-sm flex flex-col items-center gap-4 text-center shadow-2xl animate-in zoom-in-95">
+@@ -543,7 +748,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
+             </div>
+ 
+             <div className="w-full bg-[#0D1B2A] p-3.5 rounded-2xl border border-[#1F334D] text-left text-xs space-y-2">
+-              {/* Instant Participation Reward Banner */}
++              {/ * Instant Participation Reward Banner * /}
+               {successModalData.participationRewardDp && (
+                 <div className="bg-gradient-to-r from-[#C5A059]/20 via-[#E2C28E]/15 to-[#C5A059]/20 border border-[#E2C28E]/60 rounded-xl p-2.5 flex items-center justify-between shadow-sm animate-in fade-in">
+                   <div className="flex items-center gap-1.5">
+@@ -596,6 +801,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
+           </div>
+         </div>
+       )}
++      */}
+     </div>
+   );
+ };
+diff --git a/src/screens/PolyMarketScreen.tsx b/src/screens/PolyMarketScreen.tsx
+index 23a0104..468b86a 100644
+--- a/src/screens/PolyMarketScreen.tsx
++++ b/src/screens/PolyMarketScreen.tsx
+@@ -3,15 +3,12 @@ import { useApp } from '../context/AppContext';
+ import { PolyMarketItem } from '../data/polyMarketData';
+ import { apiCommonClient } from '../utils/apiClient';
+ import { getStoredUserInfo } from '../utils/auth';
++import { PolyVoteConfirmModal, PolyVoteResultModal, PolyVoteResult, calcExpectedPayout } from '../components/PolyVoteModals';
++import { PolyOddsBar, PolyVoteButtons } from '../components/PolyVoteControls';
+ 
+-const DP_PRESETS = [100, 500, 1000, 5000];
+-
+-const calcExpectedPayout = (amount: number, oddsStr: string): number => {
+-  const percent = parseFloat(oddsStr.replace(/[^0-9.]/g, '')) || 50;
+-  const decimal = percent / 100;
+-  if (decimal <= 0) return amount;
+-  return Math.round(amount / decimal);
+-};
++// 2026-09-27 UI/UX 정리: DP_PRESETS·calcExpectedPayout은 components/PolyVoteModals.tsx로 이동(상세 화면과 공용).
++// 카테고리 탭 알약 → h-8 사각 태그(+개수), 리더보드 버튼 h-8 아웃라인, 카드 제목 14 → 15px·설명 12 → 13px,
++// 여론 막대에 YES/NO % 라벨, 확인·완료 모달은 공용 컴포넌트 사용. 기존 모달 JSX는 파일 하단 주석에 보존.
+ 
+ export const PolyMarketScreen: React.FC = () => {
+   const {
+@@ -58,19 +55,20 @@ export const PolyMarketScreen: React.FC = () => {
+     refreshPlmContents();
+   }, [refreshPlmContents]);
+ 
+-  const [resultModalData, setResultModalData] = useState<{
+-    marketTitle: string;
+-    choice: string;
+-    odds: string;
+-    amount: number;
+-    expectedPayout: number;
+-    isRevote: boolean;
+-    prevChoice?: string;
+-    participationRewardDp?: number;
+-  } | null>(null);
++  // 2026-09-27: 공용 PolyVoteResult 형태로 변경 (marketTitle → title, balanceAfter 추가 / 기존 prevChoice는 표시에 쓰이지 않아 제외)
++  const [resultModalData, setResultModalData] = useState<PolyVoteResult | null>(null);
+ 
+   // Policy-compliant 4 categories + ALL
+-  const categories = ['ALL', '사회', '연예', '정치', '인물'];
++  // 2026-09-27: 서버 마켓에 4개 외 카테고리(예: 스포츠)가 오면 탭을 뒤에 추가해 해당 챌린지로 바로 갈 수 있게 하고,
++  // 챌린지가 0건인 카테고리 탭은 숨김 (기존: 4개 고정 표시 → 빈 목록 탭 존재, 스포츠 챌린지는 "전체"에서만 보임)
++  const BASE_CATEGORIES = ['사회', '연예', '정치', '인물'];
++  const extraCategories = Array.from(new Set(polyMarkets.map((m) => m.category))).filter(
++    (c) => c && !BASE_CATEGORIES.includes(c)
++  );
++  const categories = [
++    'ALL',
++    ...[...BASE_CATEGORIES, ...extraCategories].filter((c) => polyMarkets.some((m) => m.category === c)),
++  ];
+ 
+   const filteredMarkets = selectedCategory === 'ALL'
+     ? polyMarkets
+@@ -97,7 +95,9 @@ export const PolyMarketScreen: React.FC = () => {
+ 
+   const handleConfirmVote = async () => {
+     if (!confirmModalData) return;
+-    const { market, choice, odds, prevChoice } = confirmModalData;
++    const { market, choice, odds, isRevote, prevAmount } = confirmModalData;
++    // 완료 모달 "예상 잔여 포인트" — 확인 모달과 같은 계산 (재투표 시 기존 투입액 반환 후 차감)
++    const balanceAfter = headerWalletDp + (isRevote ? prevAmount || 100 : 0) - selectedAmount;
+ 
+     let serverResponse: any;
+     try {
+@@ -127,14 +127,14 @@ export const PolyMarketScreen: React.FC = () => {
+     if (res.success) {
+       const payout = calcExpectedPayout(selectedAmount, odds);
+       setResultModalData({
+-        marketTitle: market.title,
++        title: market.title,
+         choice,
+         odds,
+         amount: selectedAmount,
+         expectedPayout: payout,
+         isRevote: res.isRevote,
+-        prevChoice: prevChoice || res.prevChoice,
+-        participationRewardDp: res.participationRewardDp
++        participationRewardDp: res.participationRewardDp,
++        balanceAfter
+       });
+     }
+     setConfirmModalData(null);
+@@ -145,10 +145,13 @@ export const PolyMarketScreen: React.FC = () => {
+     setCurrentSubScreen('poly-market-detail');
+   };
+ 
++  const categoryCount = (cat: string) =>
++    cat === 'ALL' ? polyMarkets.length : polyMarkets.filter((m) => m.category === cat).length;
++
+   return (
+     <div className="flex flex-col gap-4 pb-44 pt-2">
+       {/* Header Title */}
+-      <div className="flex items-center justify-between">
++      <div className="flex items-center justify-between gap-3">
+         <div>
+           <h2 className="text-lg font-bold text-white flex items-center gap-2">
+             <span className="material-symbols-outlined text-[#C5A059]">query_stats</span>
+@@ -161,115 +164,117 @@ export const PolyMarketScreen: React.FC = () => {
+             <p className="text-xs text-slate-400">웹3 기반 사회·연예·정치·인물 실시간 오즈 &amp; 100~5,000 DP 투표</p>
+           */}
+         </div>
+-        <div className="flex items-center gap-2">
+-          {/* Leaderboard Button */}
+-          <button
+-            onClick={() => setCurrentSubScreen('poly-leaderboard')}
+-            className="flex items-center gap-1.5 bg-[#162639] border border-[#C5A059]/40 hover:border-[#C5A059] px-2.5 py-1.5 rounded-xl shadow-sm transition text-[#E2C28E] hover:text-white group active:scale-95"
+-            title="이번 시즌 리더보드 보기"
+-          >
+-            <span className="material-symbols-outlined text-base text-[#E2C28E] group-hover:scale-110 transition-transform">leaderboard</span>
+-            <span className="text-xs font-bold">리더보드</span>
+-          </button>
+-        </div>
++        {/* Leaderboard Button — 2026-09-27: 다른 화면 헤더 버튼과 같은 h-8 아웃라인 */}
++        <button
++          type="button"
++          onClick={() => setCurrentSubScreen('poly-leaderboard')}
++          className="shrink-0 h-8 pl-2 pr-3 rounded-lg border border-[#C5A059]/50 bg-[#C5A059]/10 text-[#E2C28E] text-xs font-bold flex items-center gap-1 hover:bg-[#C5A059]/20 active:scale-[0.97] transition"
++          title="이번 시즌 리더보드 보기"
++        >
++          <span className="material-symbols-outlined text-base">leaderboard</span>
++          <span>리더보드</span>
++        </button>
+       </div>
+ 
+-      {/* Category Tabs: 전체 마켓 / 사회 / 연예 / 정치 / 인물 */}
+-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+-        {categories.map((cat) => (
+-          <button
+-            key={cat}
+-            onClick={() => setSelectedCategory(cat)}
+-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition border ${
+-              selectedCategory === cat
+-                ? 'bg-[#C5A059] text-[#0D1B2A] border-[#C5A059] font-bold shadow-sm'
+-                : 'bg-[#162639] text-slate-300 border-[#1F334D] hover:border-[#C5A059]/40'
+-            }`}
+-          >
+-            {cat === 'ALL' ? '전체 마켓' : cat}
+-          </button>
+-        ))}
++      {/* Category Tabs: 전체 / 사회 / 연예 / 정치 / 인물 — 2026-09-27: "전체 마켓" → "전체", 개수 표시 */}
++      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar -mx-1 px-1">
++        {categories.map((cat) => {
++          const isActive = selectedCategory === cat;
++          return (
++            <button
++              key={cat}
++              type="button"
++              onClick={() => setSelectedCategory(cat)}
++              aria-pressed={isActive}
++              className={`shrink-0 h-8 px-3 rounded-lg border text-xs font-bold whitespace-nowrap tabular-nums transition ${
++                isActive
++                  ? 'bg-[#C5A059] border-[#C5A059] text-[#0D1B2A]'
++                  : 'bg-[#162639] border-[#1F334D] text-slate-300 hover:border-[#C5A059]/50'
++              }`}
++            >
++              {cat === 'ALL' ? '전체' : cat} ({categoryCount(cat)})
++            </button>
++          );
++        })}
+       </div>
+ 
+       {/* Market Cards List - Unified Single Yes/No Format */}
+-      <div className="space-y-3">
++      <div className="flex flex-col gap-3">
++        {filteredMarkets.length === 0 && (
++          <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-6 text-center">
++            <p className="text-[13px] text-slate-400">이 카테고리에 진행 중인 챌린지가 없습니다.</p>
++          </div>
++        )}
+         {filteredMarkets.map((m) => {
+           const userVote = getUserVoteForMarket(m.id);
+ 
+           return (
+             <div
+               key={m.id}
+-              className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3 shadow-md hover:border-[#C5A059]/50 transition cursor-pointer"
++              className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3 hover:border-[#C5A059]/50 transition cursor-pointer"
+               onClick={() => handleNavigateDetail(m)}
+             >
+-              {/* Category */}
+-              <div className="flex items-center gap-2">
+-                <span className="text-[10px] font-bold text-[#C5A059] bg-[#C5A059]/15 px-2.5 py-0.5 rounded border border-[#C5A059]/30">
++              {/* Category & My Vote */}
++              <div className="flex items-center gap-1.5 flex-wrap">
++                <span className="h-6 px-2 rounded-md text-[11px] font-bold text-[#E2C28E] bg-[#C5A059]/10 border border-[#C5A059]/40 inline-flex items-center">
+                   {m.category}
+                 </span>
+                 {userVote && (
+-                  <span className="text-[10px] font-extrabold text-[#E2C28E] bg-[#C5A059]/10 px-2 py-0.5 rounded border border-[#C5A059]/30 flex items-center gap-1">
+-                    <span className="material-symbols-outlined text-xs">how_to_vote</span>
+-                    내 투표: {userVote.choice} ({userVote.amountDp.toLocaleString()} DP)
++                  <span className="h-6 px-2 rounded-md text-[11px] font-bold text-[#E2C28E] bg-[#0D1B2A] border border-[#C5A059]/40 inline-flex items-center gap-1 tabular-nums">
++                    <span className="material-symbols-outlined text-sm">how_to_vote</span>
++                    내 투표 {userVote.choice} · {userVote.amountDp.toLocaleString()} DP
+                   </span>
+                 )}
+               </div>
+ 
+               {/* Title & Description */}
+               <div>
+-                <h3 className="text-sm font-bold text-white hover:text-[#E2C28E] transition leading-snug flex items-center justify-between">
+-                  <span>{m.title}</span>
+-                  <span className="material-symbols-outlined text-xs text-slate-400">chevron_right</span>
+-                </h3>
+-                <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">{m.description}</p>
+-              </div>
+-
+-              {/* Voting Probability Bar */}
+-              <div>
+-                <div className="w-full bg-[#0D1B2A] h-2.5 rounded-full overflow-hidden flex border border-[#1F334D]">
+-                  <div
+-                    className="bg-emerald-500 h-full transition-all duration-300"
+-                    style={{ width: `${m.yesValue}%` }}
+-                  />
+-                  <div
+-                    className="bg-rose-500 h-full transition-all duration-300"
+-                    style={{ width: `${m.noValue}%` }}
+-                  />
++                <div className="flex items-start justify-between gap-2">
++                  <h3 className="text-[15px] font-bold text-white leading-snug break-keep">{m.title}</h3>
++                  <span className="material-symbols-outlined text-lg text-slate-500 shrink-0">chevron_right</span>
+                 </div>
++                {/* 설명이 제목과 같은 문장이면(서버 데이터) 중복 표시하지 않음 */}
++                {m.description && m.description.trim() !== m.title.trim() && (
++                  <p className="text-[13px] text-slate-400 mt-1 line-clamp-2 leading-relaxed break-keep">{m.description}</p>
++                )}
+               </div>
+ 
+-              {/* Clean YES / NO Voting Buttons (percentage only) */}
+-              <div className="grid grid-cols-2 gap-2.5 pt-1">
+-                <button
+-                  onClick={(e) => handleOpenVoteModal(m, 'YES', m.yesOdds, e)}
+-                  className={`py-2.5 px-3 rounded-xl border text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] ${
+-                    userVote?.choice === 'YES'
+-                      ? 'bg-emerald-500 text-[#0D1B2A] border-emerald-400 font-black shadow-emerald-900/30'
+-                      : 'bg-emerald-500/15 border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/30'
+-                  }`}
+-                >
+-                  <span className="material-symbols-outlined text-sm">thumb_up</span>
+-                  <span>YES</span>
+-                </button>
+-
+-                <button
+-                  onClick={(e) => handleOpenVoteModal(m, 'NO', m.noOdds, e)}
+-                  className={`py-2.5 px-3 rounded-xl border text-xs font-black transition flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] ${
+-                    userVote?.choice === 'NO'
+-                      ? 'bg-rose-500 text-white border-rose-400 font-black shadow-rose-900/30'
+-                      : 'bg-rose-500/15 border-rose-500/50 text-rose-300 hover:bg-rose-500/30'
+-                  }`}
+-                >
+-                  <span className="material-symbols-outlined text-sm">thumb_down</span>
+-                  <span>NO</span>
+-                </button>
+-              </div>
++              {/* Voting Probability Bar + YES / NO Buttons */}
++              <PolyOddsBar yesValue={m.yesValue} noValue={m.noValue} />
++              <PolyVoteButtons
++                myChoice={userVote?.choice}
++                onVote={(choice, e) => handleOpenVoteModal(m, choice, choice === 'YES' ? m.yesOdds : m.noOdds, e)}
++              />
+             </div>
+           );
+         })}
+       </div>
+ 
+-      {/* DP Use & Confirmation Modal (with 4 Presets) */}
++      {/* DP Use & Confirmation Modal (with 4 Presets) — 2026-09-27 공용 컴포넌트 */}
++      {confirmModalData && (
++        <PolyVoteConfirmModal
++          category={confirmModalData.market.category}
++          title={confirmModalData.market.title}
++          choice={confirmModalData.choice}
++          odds={confirmModalData.odds}
++          isRevote={confirmModalData.isRevote}
++          prevAmount={confirmModalData.prevAmount}
++          walletDp={headerWalletDp}
++          selectedAmount={selectedAmount}
++          onSelectAmount={setSelectedAmount}
++          onCancel={() => setConfirmModalData(null)}
++          onConfirm={handleConfirmVote}
++        />
++      )}
++
++      {/* Result Screen Modal — 2026-09-27 공용 컴포넌트 */}
++      {resultModalData && (
++        <PolyVoteResultModal result={resultModalData} onClose={() => setResultModalData(null)} />
++      )}
++
++      {/* [기존 확인·완료 모달 JSX — 2026-09-27 공용 컴포넌트(PolyVoteModals)로 대체, 삭제하지 않고 주석 보존.
++          주석 안에 넣기 위해 내부 주석 구분자는 "/ *", "* /"로 바꿔 둠]
++      {/ * DP Use & Confirmation Modal (with 4 Presets) * /}
+       {confirmModalData && (() => {
+         const isRevote = confirmModalData.isRevote;
+         const prevAmount = confirmModalData.prevAmount || 100;
+@@ -282,7 +287,7 @@ export const PolyMarketScreen: React.FC = () => {
+         return (
+           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+             <div className="bg-[#162639] border border-[#C5A059] rounded-2xl p-5 w-full max-w-sm flex flex-col gap-4 shadow-2xl animate-in fade-in zoom-in-95">
+-              {/* Header */}
++              {/ * Header * /}
+               <div className="flex items-center justify-between border-b border-[#1F334D] pb-3">
+                 <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                   <span className="material-symbols-outlined text-[#C5A059]">how_to_vote</span>
+@@ -296,14 +301,14 @@ export const PolyMarketScreen: React.FC = () => {
+                 </button>
+               </div>
+ 
+-              {/* Market Info & Selection */}
++              {/ * Market Info & Selection * /}
+               <div className="space-y-3 text-xs">
+                 <div>
+                   <span className="text-[10px] font-bold text-[#C5A059] uppercase">{confirmModalData.market.category}</span>
+                   <p className="text-white font-bold text-xs mt-0.5 line-clamp-2">{confirmModalData.market.title}</p>
+                 </div>
+ 
+-                {/* Selected Choice Badge */}
++                {/ * Selected Choice Badge * /}
+                 <div className="flex items-center justify-between bg-[#0D1B2A] p-2.5 rounded-xl border border-[#1F334D]">
+                   <span className="text-slate-400">선택 항목:</span>
+                   <span className={`font-black text-sm ${
+@@ -313,7 +318,7 @@ export const PolyMarketScreen: React.FC = () => {
+                   </span>
+                 </div>
+ 
+-                {/* Preset Options (100 / 500 / 1,000 / 5,000 DP) */}
++                {/ * Preset Options (100 / 500 / 1,000 / 5,000 DP) * /}
+                 <div className="space-y-1.5">
+                   <div className="flex justify-between items-center text-[11px]">
+                     <span className="text-slate-300 font-bold">매수 DP 선택:</span>
+@@ -346,7 +351,7 @@ export const PolyMarketScreen: React.FC = () => {
+                   </div>
+                 </div>
+ 
+-                {/* Live Cost & Expected Return Summary */}
++                {/ * Live Cost & Expected Return Summary * /}
+                 <div className="bg-[#0D1B2A] p-3 rounded-xl border border-[#1F334D] space-y-2">
+                   <div className="flex justify-between items-center">
+                     <span className="text-slate-400">사용 포인트:</span>
+@@ -361,7 +366,7 @@ export const PolyMarketScreen: React.FC = () => {
+                     </span>
+                   </div>
+ 
+-                  {/* Expected Payout based on Odds 
++                  {/ * Expected Payout based on Odds 
+                   <div className="pt-2 border-t border-[#1F334D]/80">
+                     <div className="bg-[#162639] p-2 rounded-lg border border-[#C5A059]/30 text-center">
+                       <span className="text-[11px] text-slate-300 block">
+@@ -369,11 +374,11 @@ export const PolyMarketScreen: React.FC = () => {
+                       </span>
+                     </div>
+                   </div>
+-                    */}
++                    * /}
+                 </div>
+               </div>
+ 
+-              {/* Action Buttons */}
++              {/ * Action Buttons * /}
+               <div className="grid grid-cols-2 gap-2 pt-1">
+                 <button
+                   onClick={() => setConfirmModalData(null)}
+@@ -394,7 +399,7 @@ export const PolyMarketScreen: React.FC = () => {
+         );
+       })()}
+ 
+-      {/* Result Screen Modal */}
++      {/ * Result Screen Modal * /}
+       {resultModalData && (
+         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+           <div className="bg-[#162639] border border-[#C5A059] rounded-3xl p-6 w-full max-w-sm flex flex-col items-center gap-4 text-center shadow-2xl animate-in zoom-in-95">
+@@ -414,7 +419,7 @@ export const PolyMarketScreen: React.FC = () => {
+             </div>
+ 
+             <div className="w-full bg-[#0D1B2A] p-3.5 rounded-2xl border border-[#1F334D] text-left text-xs space-y-2">
+-              {/* Instant Participation Reward Banner */}
++              {/ * Instant Participation Reward Banner * /}
+               {resultModalData.participationRewardDp && (
+                 <div className="bg-gradient-to-r from-[#C5A059]/20 via-[#E2C28E]/15 to-[#C5A059]/20 border border-[#E2C28E]/60 rounded-xl p-2.5 flex items-center justify-between shadow-sm animate-in fade-in">
+                   <div className="flex items-center gap-1.5">
+@@ -467,6 +472,7 @@ export const PolyMarketScreen: React.FC = () => {
+           </div>
+         </div>
+       )}
++      */}
+     </div>
+   );
+ };
+-- 
+2.55.0.windows.3
+

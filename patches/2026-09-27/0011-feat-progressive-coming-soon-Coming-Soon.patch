@@ -1,0 +1,240 @@
+From de63229ae5b881de2cb9dd15871fad19487a9d27 Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Sun, 27 Sep 2026 18:31:40 +0900
+Subject: [PATCH 11/18] =?UTF-8?q?feat-progressive-coming-soon:=20=EC=9E=85?=
+ =?UTF-8?q?=EC=A0=90=20=EC=A0=84=20=ED=98=B8=ED=85=94=20Coming=20Soon=20?=
+ =?UTF-8?q?=ED=99=94=EB=A9=B4=20=EB=B0=8F=20=EC=9E=85=EC=A0=90=20=EB=AC=B8?=
+ =?UTF-8?q?=EC=9D=98=20=EC=B6=94=EA=B0=80?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+[문제]
+- 프로그래시브 게임이 등록되지 않은(입점 전) 호텔 상세에 $0.00 요약 박스, "호텔 프로그래시브 (0개 게임)",
+  빈 게임 목록이 그대로 표시됨
+- 입점 전 호텔에도 솔레어의 당첨 내역(mock 12건) 진입 버튼이 표시됨
+
+[변경]
+- 신규 src/components/ProgressiveComingSoon.tsx
+  - "Coming Soon" 제목 + "{호텔명}의 프로그래시브 정보를 준비하고 있습니다."
+  - 입점 후 제공 정보 안내: 실시간 누적 프로그래시브 금액 / 게임별 프로그래시브 현황 /
+    당첨 기록 / 당첨금 / 당첨자 국적
+  - "입점 문의하기" 버튼 → 문의 창: "{호텔명} 입점 및 제휴 문의는 아래 이메일로 보내 주세요."
+    + Contactus@wildwynn.com + 복사 버튼 (복사 시 토스트, 실패 시 이메일 주소 안내 토스트)
+  - 메일 보내기(mailto) 버튼은 아직 제공하지 않기로 하여 주석 처리
+  - 서버 API 없이 이메일 안내만 함 (문의 접수 기능 아님)
+  - 문의 창 z-[45]: 헤더·하단 네비(z-40) 위, 앱 공통 토스트(z-50) 아래
+  - 한글 설명 문구 break-keep (단어 중간 줄바꿈 방지)
+- src/screens/HotelJackpotDetailScreen.tsx
+  - isComingSoon = hotel.jackpots.length === 0
+  - 입점 전 호텔: 요약 박스 숨김, 트리맵·당첨 내역·게임 목록 대신 ProgressiveComingSoon 표시
+  - 게임이 있는 호텔(솔레어 등)은 기존 화면 그대로
+
+[검증] 베네시안 마카오(0개): Coming Soon 표시·$0 박스/트리맵/12건 미표시, 문의 창 열기·복사 토스트·
+  X/바깥 클릭 닫기 확인 / 솔레어(21개): 기존 화면 유지 (Playwright 412px)
+[미검증] Android 앱(Capacitor)에서 클립보드 복사 동작
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/components/ProgressiveComingSoon.tsx | 131 +++++++++++++++++++++++
+ src/screens/HotelJackpotDetailScreen.tsx |  16 ++-
+ 2 files changed, 146 insertions(+), 1 deletion(-)
+ create mode 100644 src/components/ProgressiveComingSoon.tsx
+
+diff --git a/src/components/ProgressiveComingSoon.tsx b/src/components/ProgressiveComingSoon.tsx
+new file mode 100644
+index 0000000..026c7af
+--- /dev/null
++++ b/src/components/ProgressiveComingSoon.tsx
+@@ -0,0 +1,131 @@
++import React, { useState } from 'react';
++import { useApp } from '../context/AppContext';
++
++// 2026-09-27: 프로그래시브 정보가 아직 없는(입점 전) 호텔 상세 화면용 Coming Soon 블록.
++// HotelJackpotDetailScreen에서 게임(jackpots)이 0개일 때 요약 박스·트리맵·게임 목록 대신 표시한다.
++// "입점 문의하기"는 서버 API 없이 이메일 안내만 한다(주소 복사).
++
++const CONTACT_EMAIL = 'Contactus@wildwynn.com';
++
++const UPCOMING_FEATURES = [
++  { icon: 'payments', label: '실시간 누적 프로그래시브 금액' },
++  { icon: 'casino', label: '게임별 프로그래시브 현황' },
++  { icon: 'history', label: '당첨 기록 / 당첨금 / 당첨자 국적' },
++];
++
++interface ProgressiveComingSoonProps {
++  hotelName: string;
++}
++
++export const ProgressiveComingSoon: React.FC<ProgressiveComingSoonProps> = ({ hotelName }) => {
++  const { showToast } = useApp();
++  const [isInquiryOpen, setIsInquiryOpen] = useState(false);
++
++  // 2026-09-27 비활성화: 메일 보내기 기능은 아직 제공하지 않음(아래 버튼 주석 참고).
++  // const mailtoHref = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`[DOUBLE RING] ${hotelName} 입점 문의`)}`;
++
++  const handleCopyEmail = async () => {
++    try {
++      await navigator.clipboard.writeText(CONTACT_EMAIL);
++      showToast('이메일 주소가 복사되었습니다.');
++    } catch (error) {
++      console.error('이메일 주소 복사 실패:', error);
++      showToast(`복사에 실패했습니다. ${CONTACT_EMAIL} 로 문의해 주세요.`);
++    }
++  };
++
++  return (
++    <>
++      <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-5 flex flex-col gap-5">
++        <div className="flex items-start gap-3.5">
++          <div className="w-12 h-12 shrink-0 rounded-xl bg-[#C5A059]/10 border border-[#C5A059]/40 flex items-center justify-center text-[#E2C28E]">
++            <span className="material-symbols-outlined text-2xl">hourglass_top</span>
++          </div>
++          <div className="min-w-0">
++            <h2 className="text-xl font-extrabold leading-tight tracking-tight text-[#E2C28E]">Coming Soon</h2>
++            <p className="mt-1 text-xs leading-relaxed text-slate-300 break-keep">
++              {hotelName}의 프로그래시브 정보를 준비하고 있습니다.
++            </p>
++          </div>
++        </div>
++
++        <div className="bg-[#0D1B2A] border border-[#1F334D] rounded-xl p-4 flex flex-col gap-3">
++          <p className="text-[11px] font-semibold text-slate-400">입점이 완료되면 아래 정보를 제공합니다.</p>
++          <ul className="flex flex-col gap-2.5">
++            {UPCOMING_FEATURES.map((feature) => (
++              <li key={feature.label} className="flex items-center gap-2.5 text-xs font-semibold text-slate-200">
++                <span className="material-symbols-outlined text-base text-[#C5A059]">{feature.icon}</span>
++                <span>{feature.label}</span>
++              </li>
++            ))}
++          </ul>
++        </div>
++
++        <button
++          type="button"
++          onClick={() => setIsInquiryOpen(true)}
++          className="w-full py-3.5 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-sm flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition"
++        >
++          <span className="material-symbols-outlined text-lg">mail</span>
++          <span>입점 문의하기</span>
++        </button>
++      </div>
++
++      {/* z-[45]: 헤더·하단 네비(z-40) 위, 앱 공통 토스트(z-50) 아래 — 복사 완료 토스트가 가려지지 않도록 */}
++      {isInquiryOpen && (
++        <div
++          className="fixed inset-0 z-[45] flex items-center justify-center bg-[#0D1B2A]/80 px-4"
++          onClick={() => setIsInquiryOpen(false)}
++        >
++          <div
++            role="dialog"
++            aria-modal="true"
++            aria-labelledby="progressive-inquiry-title"
++            className="w-full max-w-[380px] bg-[#162639] border border-[#C5A059]/40 rounded-2xl p-5 flex flex-col gap-4"
++            onClick={(e) => e.stopPropagation()}
++          >
++            <div className="flex items-center justify-between">
++              <h3 id="progressive-inquiry-title" className="text-base font-extrabold text-white">입점 문의</h3>
++              <button
++                type="button"
++                onClick={() => setIsInquiryOpen(false)}
++                aria-label="닫기"
++                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#0D1B2A] transition"
++              >
++                <span className="material-symbols-outlined text-lg">close</span>
++              </button>
++            </div>
++
++            <p className="text-xs leading-relaxed text-slate-300 break-keep">
++              {hotelName} 입점 및 제휴 문의는 아래 이메일로 보내 주세요.
++            </p>
++
++            <div className="bg-[#0D1B2A] border border-[#1F334D] rounded-xl pl-4 pr-2 py-2 flex items-center justify-between gap-2">
++              <span className="min-w-0 truncate text-sm font-bold text-[#E2C28E]">{CONTACT_EMAIL}</span>
++              <button
++                type="button"
++                onClick={handleCopyEmail}
++                className="shrink-0 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-200 border border-[#1F334D] hover:border-[#C5A059]/60 transition flex items-center gap-1"
++              >
++                <span className="material-symbols-outlined text-sm">content_copy</span>
++                <span>복사</span>
++              </button>
++            </div>
++
++            {/* 2026-09-27 비활성화 (삭제하지 않고 주석 보존).
++                사유: 메일 보내기 기능은 아직 제공하지 않기로 함. 이메일 주소 복사 버튼만 사용.
++                되살릴 경우 위 mailtoHref 주석도 함께 해제.
++            <a
++              href={mailtoHref}
++              className="w-full py-3 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-sm flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition"
++            >
++              <span className="material-symbols-outlined text-lg">send</span>
++              <span>메일 보내기</span>
++            </a>
++            */}
++          </div>
++        </div>
++      )}
++    </>
++  );
++};
+diff --git a/src/screens/HotelJackpotDetailScreen.tsx b/src/screens/HotelJackpotDetailScreen.tsx
+index 0dfba5e..d7f8dd9 100644
+--- a/src/screens/HotelJackpotDetailScreen.tsx
++++ b/src/screens/HotelJackpotDetailScreen.tsx
+@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
+ import { useApp } from '../context/AppContext';
+ import { HOTELS_JACKPOT_DATA, HotelJackpotData, formatUsd, formatKrw, formatKrwByCurrency, getJackpotThumbUrl, JackpotItem } from '../data/jackpotData';
+ import { SOLAIRE_JACKPOT_HISTORY } from '../data/jackpotHistoryData';
++import { ProgressiveComingSoon } from '../components/ProgressiveComingSoon';
+ 
+ interface HotelJackpotDetailScreenProps {
+   hotelId?: string;
+@@ -80,6 +81,10 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
+     return sortedJackpots.find(j => j.id === selectedJackpotId) || sortedJackpots[0];
+   }, [selectedJackpotId, sortedJackpots]);
+ 
++  // 2026-09-27: 등록된 프로그래시브 게임이 없는(입점 전) 호텔은 $0 요약·빈 트리맵·빈 게임 목록 대신
++  // Coming Soon 블록(입점 문의하기 포함)을 보여준다.
++  const isComingSoon = hotel.jackpots.length === 0;
++
+   return (
+     <div className="flex flex-col gap-4 pb-44 pt-2 animate-in fade-in duration-200">
+       {/* Back Button */}
+@@ -145,7 +150,8 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
+           </div>
+         </div>
+ 
+-        {/* Description & Overview */}
++        {/* Description & Overview — 2026-09-27: 입점 전 호텔(isComingSoon)은 $0 요약 박스를 숨김 */}
++        {!isComingSoon && (
+         <div className="p-4 flex flex-col gap-3">
+           {/* 2026-09-27 비활성화 (삭제하지 않고 주석 보존).
+               사유: API 호텔 데이터의 desc가 비어 있어(mapJackpotApiHotels에서 '' 고정) 호텔명 아래에
+@@ -176,8 +182,14 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
+           </div>
+ 
+         </div>
++        )}
+       </div>
+ 
++      {/* 2026-09-27: 입점 전 호텔은 트리맵·당첨 내역·게임 목록 대신 Coming Soon 블록 */}
++      {isComingSoon ? (
++        <ProgressiveComingSoon hotelName={hotel.name} />
++      ) : (
++      <>
+       {/* Hotel Internal Treemap Section */}
+       <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3 shadow-xl">
+         <div className="flex items-center justify-between">
+@@ -481,6 +493,8 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
+           })}
+         </div>
+       </div>
++      </>
++      )}
+ 
+       {/*
+         2026-09-08 제거 요청으로 비활성화 (삭제하지 않고 주석 보존).
+-- 
+2.55.0.windows.3
+

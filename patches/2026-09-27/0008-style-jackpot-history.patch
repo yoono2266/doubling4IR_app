@@ -1,0 +1,151 @@
+From fbb97bf235b35c790ea17ba2840927d38c55a38b Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Sun, 27 Sep 2026 18:31:39 +0900
+Subject: [PATCH 08/18] =?UTF-8?q?style-jackpot-history:=20=ED=94=84?=
+ =?UTF-8?q?=EB=A1=9C=EA=B7=B8=EB=9E=98=EC=8B=9C=EB=B8=8C=20=EB=8B=B9?=
+ =?UTF-8?q?=EC=B2=A8=20=EB=82=B4=EC=97=AD=20=ED=99=94=EB=A9=B4=20=EC=9A=A9?=
+ =?UTF-8?q?=EC=96=B4=C2=B7=EA=B8=80=EA=BC=B4=C2=B7=EA=B8=88=EC=95=A1=20?=
+ =?UTF-8?q?=ED=91=9C=EA=B8=B0=20=ED=86=B5=EC=9D=BC?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+[용어 통일]
+- 제목 "Jackpot History" → "프로그래시브 당첨 내역" (진입 버튼 문구와 동일)
+- 설명: 잭팟 → 프로그래시브, 획득 금액 → 당첨금, 획득자 → 당첨자
+- 카드 칸 "획득자 국적" → "당첨자 국적"
+- 호텔명 "솔레어 리조트 앤 카지노" → "솔레어 엔터테인먼트 시티" (뒤로가기 버튼·설명, 호텔 상세 표기와 동일)
+
+[요약 박스]
+- 누적 당첨 건수(text-lg)·누적 당첨금 합계(text-sm) 크기·여백 불일치 → 같은 크기(화면 폭 비례 최대 15px)·같은 줄
+
+[당첨 카드]
+- 달러(16px)·원화(9px) → 둘 다 15px, 우측 정렬, 원화 회색
+- 당첨 일시 줄과 달러 줄 높이 맞춤
+- 배팅 금액을 formatUsd()로 표기해 소수점 두 자리 ($12.5 → $12.50)
+
+[글꼴]
+- 날짜·금액·배팅 금액·슬롯 넘버의 font-mono 제거 → Pretendard tabular-nums (화면 내 font-mono 0개)
+- "최신순" 라벨을 호텔 상세 "금액순 정렬"과 같은 스타일로
+
+[참고] 당첨 내역 데이터(SOLAIRE_JACKPOT_HISTORY 12건)는 기존 mock 데이터 그대로 (변경 없음)
+[검증] 카드 12개 전체 날짜↔달러 세로 차이 0px, 달러↔원화 우측 끝 차이 0px, 360px 겹침 0건
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/screens/JackpotHistoryScreen.tsx | 46 ++++++++++++++++++----------
+ 1 file changed, 29 insertions(+), 17 deletions(-)
+
+diff --git a/src/screens/JackpotHistoryScreen.tsx b/src/screens/JackpotHistoryScreen.tsx
+index ffcfc74..b6d6cab 100644
+--- a/src/screens/JackpotHistoryScreen.tsx
++++ b/src/screens/JackpotHistoryScreen.tsx
+@@ -22,7 +22,8 @@ export const JackpotHistoryScreen: React.FC = () => {
+           className="text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-1.5 bg-[#162639] border border-[#1F334D] px-3 py-1.5 rounded-full transition hover:border-[#C5A059]/50"
+         >
+           <span className="material-symbols-outlined text-sm text-[#C5A059]">arrow_back</span>
+-          <span>솔레어 리조트 앤 카지노로 돌아가기</span>
++          {/* 2026-09-27: 호텔 상세 화면 표기(솔레어 엔터테인먼트 시티)와 통일 (기존: 솔레어 리조트 앤 카지노로 돌아가기) */}
++          <span>솔레어 엔터테인먼트 시티로 돌아가기</span>
+         </button>
+ 
+         <span className="text-[10px] font-bold text-[#E2C28E] bg-[#C5A059]/15 border border-[#C5A059]/30 px-2.5 py-1 rounded-full uppercase">
+@@ -34,22 +35,26 @@ export const JackpotHistoryScreen: React.FC = () => {
+       <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 shadow-xl flex flex-col gap-3">
+         <div className="flex items-center gap-1.5">
+           <span className="material-symbols-outlined text-[#C5A059] text-base">history</span>
+-          <h1 className="text-sm font-bold text-white tracking-tight">Jackpot History</h1>
++          {/* 2026-09-27: 진입 버튼 문구(프로그래시브 당첨 내역)와 통일 (기존: Jackpot History) */}
++          <h1 className="text-sm font-bold text-white tracking-tight">프로그래시브 당첨 내역</h1>
+         </div>
+         <p className="text-xs text-slate-300 leading-relaxed bg-[#0D1B2A] border border-[#1F334D] rounded-xl p-3">
+-          솔레어 리조트 앤 카지노에서 터진 역대 잭팟 당첨 기록입니다. 당첨 일시 · 획득 금액 · 게임 이름 · 배팅 금액 · 슬롯 넘버 · 획득자 국적을 확인할 수 있습니다.
++          {/* 2026-09-27: 용어 통일 — 잭팟→프로그래시브, 획득 금액→당첨금, 획득자→당첨자 (기존: 솔레어 리조트 앤 카지노에서 터진 역대 잭팟 당첨 기록입니다. 당첨 일시 · 획득 금액 · 게임 이름 · 배팅 금액 · 슬롯 넘버 · 획득자 국적을 확인할 수 있습니다.) */}
++          솔레어 엔터테인먼트 시티의 역대 프로그래시브 당첨 기록입니다. 당첨 일시 · 당첨금 · 게임 이름 · 배팅 금액 · 슬롯 넘버 · 당첨자 국적을 확인할 수 있습니다.
+         </p>
+ 
++        {/* 2026-09-27: 건수(text-lg)·합계(text-sm)의 크기·여백이 달라 줄이 맞지 않던 것을 호텔 상세 요약 박스와 같은
++            규칙(같은 크기·굵기, 화면 폭 비례 최대 15px, font-mono → Pretendard tabular-nums)으로 통일 */}
+         <div className="grid grid-cols-2 gap-2 bg-[#0D1B2A] p-3 rounded-xl border border-[#C5A059]/30">
+-          <div>
++          <div className="min-w-0">
+             <span className="text-[10px] text-slate-400 uppercase font-semibold block">누적 당첨 건수</span>
+-            <p className="text-lg font-black text-white font-mono tracking-tight mt-0.5">
++            <p className="mt-1 whitespace-nowrap text-[clamp(12px,3.6vw,15px)] font-extrabold leading-tight tabular-nums text-white">
+               {records.length}건
+             </p>
+           </div>
+-          <div>
++          <div className="min-w-0">
+             <span className="text-[10px] text-slate-400 uppercase font-semibold block">누적 당첨금 합계</span>
+-            <p className="text-sm font-black text-[#E2C28E] font-mono mt-1">
++            <p className="mt-1 whitespace-nowrap text-[clamp(12px,3.6vw,15px)] font-extrabold leading-tight tabular-nums text-[#E2C28E]">
+               {formatUsd(totalWonUsd)}
+             </p>
+           </div>
+@@ -63,7 +68,8 @@ export const JackpotHistoryScreen: React.FC = () => {
+             <span className="material-symbols-outlined text-sm text-[#C5A059]">format_list_numbered</span>
+             <span>당첨 내역 ({records.length})</span>
+           </h3>
+-          <span className="text-[11px] text-[#C5A059] font-mono">최신순</span>
++          {/* 2026-09-27: 호텔 상세 "금액순 정렬"과 같은 스타일 (기존: text-[11px] font-mono) */}
++          <span className="whitespace-nowrap text-xs font-normal tracking-wider text-[#C5A059]">최신순</span>
+         </div>
+ 
+         <div className="space-y-2.5">
+@@ -73,16 +79,20 @@ export const JackpotHistoryScreen: React.FC = () => {
+               className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3 shadow-md"
+             >
+               {/* Top: 언제 + 얼마 */}
++              {/* 2026-09-27: 달러(text-base)·원화(9px) 크기를 같게(15px) 통일·우측 정렬, 원화 회색.
++                  당첨 일시 줄과 달러 줄의 높이(h-5)를 맞춤. font-mono → Pretendard tabular-nums */}
+               <div className="flex items-start justify-between gap-2 border-b border-[#1F334D]/70 pb-2.5">
+-                <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
++                <div className="flex items-center gap-1.5 h-5 text-[11px] text-slate-400 tabular-nums">
+                   <span className="material-symbols-outlined text-[13px] text-[#C5A059]">schedule</span>
+                   <span>{r.wonAt}</span>
+                 </div>
+-                <div className="text-right">
+-                  <p className="text-base font-black text-[#E2C28E] font-mono leading-tight">
++                <div className="text-right shrink-0">
++                  <p className="h-5 whitespace-nowrap text-[15px] leading-5 font-extrabold text-[#E2C28E] tabular-nums">
+                     {formatUsd(r.amountUsd)}
+                   </p>
+-                  <p className="text-[9px] text-slate-400 font-mono">{formatKrw(r.amountUsd)}</p>
++                  <p className="h-5 whitespace-nowrap text-[15px] leading-5 font-extrabold text-slate-400 tabular-nums">
++                    {formatKrw(r.amountUsd)}
++                  </p>
+                 </div>
+               </div>
+ 
+@@ -95,20 +105,22 @@ export const JackpotHistoryScreen: React.FC = () => {
+                 </div>
+               </div>
+ 
+-              {/* 배팅금액 / 슬롯넘버 / 획득자 국적 */}
++              {/* 배팅금액 / 슬롯넘버 / 당첨자 국적 — 2026-09-27: font-mono → Pretendard tabular-nums */}
+               <div className="grid grid-cols-3 gap-2 text-center">
+                 <div className="bg-[#0D1B2A] border border-[#1F334D] rounded-xl p-2">
+                   <span className="text-[9px] text-slate-400 uppercase font-semibold block">배팅 금액</span>
+-                  <p className="text-xs font-bold text-white font-mono mt-0.5">
+-                    ${r.betUsd.toLocaleString()}
++                  <p className="text-xs font-bold text-white tabular-nums mt-0.5">
++                    {/* 2026-09-27: 소수점 두 자리 고정 — formatUsd 사용 (기존: ${r.betUsd.toLocaleString()}) */}
++                    {formatUsd(r.betUsd)}
+                   </p>
+                 </div>
+                 <div className="bg-[#0D1B2A] border border-[#1F334D] rounded-xl p-2">
+                   <span className="text-[9px] text-slate-400 uppercase font-semibold block">슬롯 넘버</span>
+-                  <p className="text-xs font-bold text-white font-mono mt-0.5">{r.slotNo}</p>
++                  <p className="text-xs font-bold text-white tabular-nums mt-0.5">{r.slotNo}</p>
+                 </div>
+                 <div className="bg-[#0D1B2A] border border-[#1F334D] rounded-xl p-2">
+-                  <span className="text-[9px] text-slate-400 uppercase font-semibold block">획득자 국적</span>
++                  {/* 2026-09-27: 용어 통일 (기존: 획득자 국적) */}
++                  <span className="text-[9px] text-slate-400 uppercase font-semibold block">당첨자 국적</span>
+                   <p className="text-xs font-bold text-white mt-0.5">
+                     <span className="mr-0.5">{r.flag}</span>
+                     {r.nationality}
+-- 
+2.55.0.windows.3
+
