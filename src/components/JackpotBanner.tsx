@@ -71,7 +71,7 @@ export const JackpotBanner: React.FC = () => {
 
           <div className="flex items-end justify-between pr-14">
             <div>
-              <p className="text-base font-extrabold text-[#FFF0D0] gold-gradient-text tracking-tight font-mono leading-tight">
+              <p className="text-base font-extrabold text-[#FFF0D0] gold-gradient-text tracking-tight font-['Roboto',sans-serif] leading-tight">
                 {banners[currentIndex].amount}
               </p>
               <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1 truncate max-w-[240px]">

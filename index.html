@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" rel="stylesheet" />
+    <!-- 2026-09-30: 홈 라이브 잭팟 배너 금액 표기용 Roboto -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@800&display=swap" rel="stylesheet" />
     <script>
       tailwind.config = {
         darkMode: 'class',
@@ -33,17 +35,28 @@
               'on-background': '#F8F9FA'
             },
             fontFamily: {
-              sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif']
+              // 2026-09-30: 숫자·숫자 기호는 'Roboto Num'(아래 @font-face)으로, 그 외 글자는 기존 글꼴로 표시
+              sans: ['Roboto Num', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif'],
+              mono: ['Roboto Num', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', '"Liberation Mono"', '"Courier New"', 'monospace']
             }
           }
         }
       }
     </script>
     <style>
+      /* 2026-09-30: 모든 화면의 숫자·숫자 기호(0-9 $ % + , - .)만 Roboto로 표시 (unicode-range) */
+      @font-face {
+        font-family: 'Roboto Num';
+        src: url('https://cdn.jsdelivr.net/fontsource/fonts/roboto:vf@latest/latin-wght-normal.woff2') format('woff2-variations');
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
+        unicode-range: U+0024-0025, U+002B-002E, U+0030-0039;
+      }
       body {
         background-color: #070e17;
         color: #F8F9FA;
-        font-family: 'Pretendard', sans-serif;
+        font-family: 'Roboto Num', 'Pretendard', sans-serif;
         -webkit-tap-highlight-color: transparent;
       }
       .material-symbols-outlined {
