@@ -25,7 +25,9 @@ export const StreakTracker: React.FC = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <h3 className="text-base font-black text-white leading-none">연속 출석 현황</h3>
-          <span className="text-base bg-orange-500/20 text-orange-300 font-extrabold px-2 py-0.5 rounded border border-orange-500/30 animate-bounce leading-none">
+          {/* 2026-09-30: 뱃지가 작아 보여 크기 조정 — 위아래 여백 2px → 6px(py-1.5), 모서리 4px → 8px(rounded-lg),
+              좌우 여백 8px·글자 16px 유지 (기존: px-2 py-0.5 rounded) */}
+          <span className="text-base bg-orange-500/20 text-orange-300 font-extrabold px-2 py-1.5 rounded-lg border border-orange-500/30 animate-bounce leading-none">
             🔥 {currentDays}일째 출석 중
           </span>
         </div>
@@ -104,9 +106,11 @@ export const StreakTracker: React.FC = () => {
                   {milestone.days}일
                 </span>
 
-                {/* Bonus Badge — 화면 폭 비례 (최대 12px, 최소 9px), 칸 폭을 넘지 않게. 3단계 색은 기존과 동일 */}
+                {/* Bonus Badge — 3단계 색은 기존과 동일.
+                    2026-09-30 재조정(요청: 너무 작아 보임 → 이전 크기로): 375px 이상 화면은 이전과 같은 12px·좌우 여백 6px,
+                    그보다 좁은 화면에서만 칸(약 60~70px)을 넘지 않게 화면 폭 비례로 축소(최소 10px). */}
                 <span
-                  className={`max-w-full text-[clamp(9px,2.8vw,12px)] font-bold leading-tight tabular-nums px-1 py-px rounded-full border whitespace-nowrap ${
+                  className={`max-w-full text-[clamp(10px,3.2vw,12px)] font-bold leading-tight tabular-nums px-1 min-[375px]:px-1.5 py-px rounded-full border whitespace-nowrap ${
                     isReached
                       ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-black'
                       : isActiveGap
