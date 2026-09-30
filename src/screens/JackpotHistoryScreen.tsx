@@ -74,6 +74,10 @@ export const JackpotHistoryScreen: React.FC = () => {
             규칙(같은 크기·굵기, 화면 폭 비례 최대 15px, font-mono → Pretendard tabular-nums)으로 통일 */}
         {/* 2026-09-30: 요약 박스 구성 변경 (기존: 2칸 grid — 좌 "누적 당첨 건수/12건", 우 "누적 당첨금 합계/PHP/KRW" 세로 배치)
             → 1행 "누적 당첨 건수 12건" / 2행 "누적 당첨금" / 3행 PHP(좌정렬) · KRW(우정렬) 한 줄 */}
+        {/* 2026-09-30 비활성화 (삭제하지 않고 주석 보존).
+            사유: 누적 당첨 요약 박스("누적 당첨 건수 N건" / "누적 당첨금 PHP·KRW") 전체를 노출하지 않기로 함.
+                  건수는 아래 목록 제목 "당첨 내역 (N)"으로 계속 표시. 복구 시 아래 false를 지우면 됨. */}
+        {false && (
         <div className="flex flex-col gap-2 bg-[#0D1B2A] p-3 rounded-xl border border-[#C5A059]/30">
           <div className="flex items-baseline gap-2">
             <span className="text-[10px] text-slate-400 uppercase font-semibold">누적 당첨 건수</span>
@@ -93,6 +97,7 @@ export const JackpotHistoryScreen: React.FC = () => {
             </div>
           </div>
         </div>
+        )}
       </div>
 
       {/* Records */}
