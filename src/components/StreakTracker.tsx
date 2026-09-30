@@ -31,7 +31,100 @@ export const StreakTracker: React.FC = () => {
         </div>
       </div>
 
-      {/* 4-Step Milestone Progress Bar (3, 7, 14, 30 Days) */}
+      {/* 4-Step Milestone Progress Bar (3, 7, 14, 30 Days)
+          2026-09-30 FE 수정 (BE 기준 컴포넌트 — 사용자 승인 후 수정, 패치노트에 별도 기재):
+          작은 모바일 화면에서 노드 사이 구간이 DP 뱃지 폭에 밀려 10px 안팎으로 줄어 빨간 진행 화살표가
+          찌그러져 보이던 문제 → 4칸 균등 격자로 바꾸고, 연결선은 원 중심 사이에 따로 그려 항상 한 칸 폭을 확보.
+          표시 규칙(4일 미만 화살표 숨김, 첫 구간 비움)·3단계 색·보상 수령 동작·빨간 진행 색은 그대로. */}
+      <div className="pt-7 pb-1 relative z-10">
+        <div className="grid grid-cols-4 w-full px-1">
+          {STREAK_MILESTONES.map((milestone, index) => {
+            const isReached = currentDays >= milestone.days;
+            const isClaimed = claimedStreakMilestones.includes(milestone.days);
+            const isNextTarget = !isClaimed && isReached;
+            const isActiveGap = !isReached && nextProgress?.nextMilestoneDays === milestone.days;
+            const showProgressArrow = isActiveGap && currentDays >= 4;
+            const isFirstSegment = index === 0;
+
+            return (
+              <div key={milestone.days} className="relative flex flex-col items-center gap-1 min-w-0">
+                {/* 직전 노드 → 이 노드 연결선: 원(28px) 중심 높이(14px)에서, 양쪽 원 가장자리 4px 바깥까지 */}
+                {!isFirstSegment && (
+                  <div className="absolute top-[14px] right-[calc(50%+18px)] w-[calc(100%-36px)] -translate-y-1/2 flex items-center">
+                    {showProgressArrow ? (
+                      <div className="relative w-full flex items-center pr-[2px]">
+                        <div className="w-full h-1 bg-red-500 rounded-full" />
+                        <div className="absolute -right-[2px] top-1/2 -translate-y-1/2 w-0 h-0 border-y-[6px] border-y-transparent border-l-[9px] border-l-red-500" />
+                      </div>
+                    ) : (
+                      <div
+                        className={`w-full h-1 rounded-full ${
+                          isReached
+                            ? 'bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-400'
+                            : 'bg-transparent border border-dashed border-slate-600/40'
+                        }`}
+                      />
+                    )}
+                  </div>
+                )}
+
+                {/* D-N 라벨: 연결선 가운데 위 */}
+                {showProgressArrow && nextProgress && (
+                  <div className="absolute -top-[22px] right-[calc(50%+18px)] w-[calc(100%-36px)] flex justify-center pointer-events-none">
+                    <span className="whitespace-nowrap rounded-full border border-red-500/40 bg-red-500/15 px-1.5 py-px text-[11px] font-black leading-none tabular-nums text-red-400">
+                      D-{nextProgress.daysRemaining}
+                    </span>
+                  </div>
+                )}
+
+                {/* Node Circle */}
+                <button
+                  disabled={!isReached || isClaimed}
+                  onClick={() => claimStreakReward(milestone.days)}
+                  className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all ${
+                    isClaimed
+                      ? 'bg-emerald-500 text-[#0D1B2A] ring-2 ring-emerald-400/50 shadow-sm'
+                      : isNextTarget
+                      ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-[#0D1B2A] ring-2 ring-emerald-300 animate-pulse cursor-pointer shadow-[0_0_12px_rgba(16,185,129,0.6)]'
+                      : isActiveGap
+                      ? 'bg-gradient-to-br from-[#E2C28E] to-[#C5A059] text-[#0D1B2A] ring-2 ring-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.6)]'
+                      : 'bg-[#0D1B2A] text-slate-500 border border-[#1F334D]'
+                  }`}
+                  title={`${milestone.days}일 마일스톤 (+${milestone.reward} DP)`}
+                >
+                  {isClaimed ? (
+                    <span className="material-symbols-outlined text-sm font-black">check</span>
+                  ) : (
+                    <span>{milestone.days}</span>
+                  )}
+                </button>
+
+                {/* Day Label — 화면 폭 비례 (최대 13px, 최소 10px). 고정폭 font-mono → 기본 글꼴 tabular-nums */}
+                <span className={`text-[clamp(10px,3.3vw,13px)] font-bold tabular-nums ${isReached ? 'text-emerald-400' : 'text-slate-500'}`}>
+                  {milestone.days}일
+                </span>
+
+                {/* Bonus Badge — 화면 폭 비례 (최대 12px, 최소 9px), 칸 폭을 넘지 않게. 3단계 색은 기존과 동일 */}
+                <span
+                  className={`max-w-full text-[clamp(9px,2.8vw,12px)] font-bold leading-tight tabular-nums px-1 py-px rounded-full border whitespace-nowrap ${
+                    isReached
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-black'
+                      : isActiveGap
+                      ? 'bg-[#E2C28E]/20 text-[#E2C28E] border-[#E2C28E]/40 font-black'
+                      : 'bg-[#0D1B2A] text-slate-500 border-[#1F334D]'
+                  }`}
+                >
+                  +{milestone.reward.toLocaleString()}DP
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 2026-09-30 비활성화 (삭제하지 않고 주석 보존). 사유: 위 4칸 균등 격자 구조로 교체 (작은 화면에서 진행 화살표 찌그러짐).
+          BE 원본 구조이므로 BE 반영 여부 확인 전까지 보존 — 복구 시 위 격자 블록을 지우고 아래 false를 제거. */}
+      {false && (
       <div className="pt-5 pb-1 relative z-10">
         <div className="flex items-center w-full px-2">
           {STREAK_MILESTONES.map((milestone, index) => {
@@ -126,6 +219,7 @@ export const StreakTracker: React.FC = () => {
           })}
         </div>
       </div>
+      )}
     </div>
   );
 };
