@@ -55,11 +55,14 @@ export const JackpotHistoryScreen: React.FC = () => {
       </div>
 
       {/* Header */}
-      <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 shadow-xl flex flex-col gap-3">
-        <div className="flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[#C5A059] text-base">history</span>
+      {/* 2026-09-30: 제목만 남은 카드 박스가 어색해 박스(배경·테두리·그림자)를 없애고 화면 제목 형태로 변경.
+          (기존 박스: className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 shadow-xl flex flex-col gap-3",
+           제목: 아이콘 text-base / h1 text-sm font-bold) */}
+      <div className="flex flex-col gap-3 px-1 pt-1">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-[#C5A059] text-[22px]">history</span>
           {/* 2026-09-27: 진입 버튼 문구(프로그래시브 당첨 내역)와 통일 (기존: Jackpot History) */}
-          <h1 className="text-sm font-bold text-white tracking-tight">프로그래시브 당첨 내역</h1>
+          <h1 className="text-lg font-extrabold text-white tracking-tight">프로그래시브 당첨 내역</h1>
         </div>
         {/* 2026-09-30 주석 처리 (요청): 제목 아래 설명 박스("솔레어 엔터테인먼트 시티의 역대 프로그래시브 당첨 기록입니다…") 삭제
         <p className="text-xs text-slate-300 leading-relaxed bg-[#0D1B2A] border border-[#1F334D] rounded-xl p-3">
