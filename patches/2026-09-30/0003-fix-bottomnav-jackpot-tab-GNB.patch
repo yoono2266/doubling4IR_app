@@ -1,0 +1,56 @@
+From a0574dbd9f38ceb7f2333048173326f17315d5cd Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Wed, 30 Sep 2026 04:54:46 +0900
+Subject: [PATCH 3/7] =?UTF-8?q?fix-bottomnav-jackpot-tab:=20GNB=20?=
+ =?UTF-8?q?=ED=94=84=EB=A1=9C=EA=B7=B8=EB=9E=98=EC=8B=9C=EB=B8=8C=20?=
+ =?UTF-8?q?=ED=83=AD=20=EB=A6=AC=EC=8A=A4=ED=8A=B8=20=ED=99=94=EB=A9=B4=20?=
+ =?UTF-8?q?=EC=9D=B4=EB=8F=99?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- GNB '프로그래시브' 탭이 솔레어 상세(SREC)로 직행하던 분기를 사유 주석과 함께 비활성화
+- 탭 기본 화면인 프로그래시브 리스트(JackpotMapScreen)로 이동 (홈 라이브 잭팟 배너는 기존대로 솔레어 상세)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/components/BottomNav.tsx | 23 +++++++++++++----------
+ 1 file changed, 13 insertions(+), 10 deletions(-)
+
+diff --git a/src/components/BottomNav.tsx b/src/components/BottomNav.tsx
+index 1efe723..595ba5b 100644
+--- a/src/components/BottomNav.tsx
++++ b/src/components/BottomNav.tsx
+@@ -46,16 +46,19 @@ export const BottomNav: React.FC = () => {
+     // 2026-09-27: 탭 이동은 항상 최상단에서 시작 (이전 화면 스크롤 위치·게시글 복원값이 넘어오지 않도록)
+     resetMainScrollTop();
+ 
+-    // '잭팟' 탭은 잭팟 목록(JackpotMapScreen)이 아니라
+-    // 실제 잭팟 데이터가 등록된 "솔레어 엔터테인먼트 시티"(jp_index=19, hotel_code=SREC) 상세 화면
+-    // (HotelJackpotDetailScreen)으로 바로 진입한다. id는 mapJackpotApiHotels()가 쓰는 것과 동일하게
+-    // hotel_code 기준('SREC')이어야 jackpotHotels 캐시에서 정상적으로 매칭된다.
+-    if (tab === 'jackpot') {
+-      setCurrentTab('jackpot');
+-      setSelectedHotelId('SREC');
+-      setCurrentSubScreen('hotel-jackpot-detail');
+-      return;
+-    }
++    // 2026-09-30: GNB '프로그래시브' 탭은 솔레어 상세가 아니라 프로그래시브 리스트(JackpotMapScreen)로 이동하도록 변경.
++    // 아래 솔레어 상세(SREC) 직행 분기는 요청에 따라 주석 처리 — 다시 상세로 직행해야 하면 주석 해제.
++    // (홈의 라이브 잭팟 배너 클릭은 기존대로 솔레어 상세로 이동)
++    // // '잭팟' 탭은 잭팟 목록(JackpotMapScreen)이 아니라
++    // // 실제 잭팟 데이터가 등록된 "솔레어 엔터테인먼트 시티"(jp_index=19, hotel_code=SREC) 상세 화면
++    // // (HotelJackpotDetailScreen)으로 바로 진입한다. id는 mapJackpotApiHotels()가 쓰는 것과 동일하게
++    // // hotel_code 기준('SREC')이어야 jackpotHotels 캐시에서 정상적으로 매칭된다.
++    // if (tab === 'jackpot') {
++    //   setCurrentTab('jackpot');
++    //   setSelectedHotelId('SREC');
++    //   setCurrentSubScreen('hotel-jackpot-detail');
++    //   return;
++    // }
+ 
+     setCurrentTab(tab);
+     setCurrentSubScreen(null);
+-- 
+2.55.0.windows.3
+

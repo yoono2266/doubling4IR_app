@@ -1,0 +1,44 @@
+From 959d2dbbc1f127ffc36e07fb0b5119e9b846cfa7 Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Wed, 30 Sep 2026 03:23:02 +0900
+Subject: [PATCH 1/7] =?UTF-8?q?fix-bottomnav-label:=20GNB=20=ED=94=84?=
+ =?UTF-8?q?=EB=A1=9C=EA=B7=B8=EB=9E=98=EC=8B=9C=EB=B8=8C=20=EB=9D=BC?=
+ =?UTF-8?q?=EB=B2=A8=20=ED=95=9C=20=EC=A4=84=20=ED=91=9C=EC=8B=9C?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- 작은 폰(320px 폭)에서 하단 GNB '프로그래시브' 라벨이 두 줄로 줄바꿈되던 문제 수정
+- 해당 버튼 좌우 패딩 px-3 → px-0, 라벨에 whitespace-nowrap 추가
+- 다른 탭 버튼은 변경 없음
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/components/BottomNav.tsx | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/components/BottomNav.tsx b/src/components/BottomNav.tsx
+index 4443de3..1efe723 100644
+--- a/src/components/BottomNav.tsx
++++ b/src/components/BottomNav.tsx
+@@ -69,7 +69,7 @@ export const BottomNav: React.FC = () => {
+       {/* 1. Jackpot */}
+       <button
+         onClick={() => handleTabClick('jackpot')}
+-        className={`w-full flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
++        className={`w-full flex flex-col items-center justify-center py-1 px-0 rounded-xl transition-all ${
+           isJackpotActive
+             ? 'text-[#C5A059] font-bold scale-105'
+             : 'text-slate-400 hover:text-slate-200'
+@@ -78,7 +78,7 @@ export const BottomNav: React.FC = () => {
+         <span className={`material-symbols-outlined text-2xl ${isJackpotActive ? 'fill-1' : ''}`}>
+           casino
+         </span>
+-        <span className="text-[11px] mt-0.5 tracking-tight">프로그래시브</span>
++        <span className="text-[11px] mt-0.5 tracking-tight whitespace-nowrap">프로그래시브</span>
+       </button>
+ 
+       {/* 2. Poly Market */}
+-- 
+2.55.0.windows.3
+

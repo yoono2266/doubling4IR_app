@@ -1,0 +1,80 @@
+From dd6d57034c6430b899fa19e45841f9c1ac6b6231 Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Wed, 30 Sep 2026 03:35:49 +0900
+Subject: [PATCH 2/7] =?UTF-8?q?style-number-font:=20=EC=A0=84=20=ED=99=94?=
+ =?UTF-8?q?=EB=A9=B4=20=EC=88=AB=EC=9E=90=20=ED=8F=B0=ED=8A=B8=20Roboto=20?=
+ =?UTF-8?q?=EC=A0=81=EC=9A=A9?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- index.html: 숫자·숫자 기호(0-9 $ % + , - .) 전용 'Roboto Num' @font-face 추가 (unicode-range, jsDelivr fontsource 가변 폰트)
+- index.html: body·Tailwind sans/mono 글꼴 목록 맨 앞에 'Roboto Num' 추가 — 한글·영문은 기존 글꼴 유지
+- JackpotBanner: 홈 라이브 잭팟 배너 금액 font-mono → Roboto (Google Fonts Roboto 800 로드 추가)
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ index.html                       | 17 +++++++++++++++--
+ src/components/JackpotBanner.tsx |  2 +-
+ 2 files changed, 16 insertions(+), 3 deletions(-)
+
+diff --git a/index.html b/index.html
+index 1c50cab..8dc7087 100644
+--- a/index.html
++++ b/index.html
+@@ -13,6 +13,8 @@
+     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+     <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" rel="stylesheet" />
++    <!-- 2026-09-30: 홈 라이브 잭팟 배너 금액 표기용 Roboto -->
++    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@800&display=swap" rel="stylesheet" />
+     <script>
+       tailwind.config = {
+         darkMode: 'class',
+@@ -33,17 +35,28 @@
+               'on-background': '#F8F9FA'
+             },
+             fontFamily: {
+-              sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif']
++              // 2026-09-30: 숫자·숫자 기호는 'Roboto Num'(아래 @font-face)으로, 그 외 글자는 기존 글꼴로 표시
++              sans: ['Roboto Num', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif'],
++              mono: ['Roboto Num', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', '"Liberation Mono"', '"Courier New"', 'monospace']
+             }
+           }
+         }
+       }
+     </script>
+     <style>
++      /* 2026-09-30: 모든 화면의 숫자·숫자 기호(0-9 $ % + , - .)만 Roboto로 표시 (unicode-range) */
++      @font-face {
++        font-family: 'Roboto Num';
++        src: url('https://cdn.jsdelivr.net/fontsource/fonts/roboto:vf@latest/latin-wght-normal.woff2') format('woff2-variations');
++        font-weight: 100 900;
++        font-style: normal;
++        font-display: swap;
++        unicode-range: U+0024-0025, U+002B-002E, U+0030-0039;
++      }
+       body {
+         background-color: #070e17;
+         color: #F8F9FA;
+-        font-family: 'Pretendard', sans-serif;
++        font-family: 'Roboto Num', 'Pretendard', sans-serif;
+         -webkit-tap-highlight-color: transparent;
+       }
+       .material-symbols-outlined {
+diff --git a/src/components/JackpotBanner.tsx b/src/components/JackpotBanner.tsx
+index b3a694a..661dde3 100644
+--- a/src/components/JackpotBanner.tsx
++++ b/src/components/JackpotBanner.tsx
+@@ -71,7 +71,7 @@ export const JackpotBanner: React.FC = () => {
+ 
+           <div className="flex items-end justify-between pr-14">
+             <div>
+-              <p className="text-base font-extrabold text-[#FFF0D0] gold-gradient-text tracking-tight font-mono leading-tight">
++              <p className="text-base font-extrabold text-[#FFF0D0] gold-gradient-text tracking-tight font-['Roboto',sans-serif] leading-tight">
+                 {banners[currentIndex].amount}
+               </p>
+               <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1 truncate max-w-[240px]">
+-- 
+2.55.0.windows.3
+

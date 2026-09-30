@@ -1,0 +1,158 @@
+From a10f071541cc067fd78135f07f085df0268a7dd6 Mon Sep 17 00:00:00 2001
+From: Yoon <yoono47@gmail.com>
+Date: Wed, 30 Sep 2026 05:46:21 +0900
+Subject: [PATCH 7/7] =?UTF-8?q?feat-solaire-exterior-image:=20=EC=86=94?=
+ =?UTF-8?q?=EB=A0=88=EC=96=B4=20=EC=83=81=EC=84=B8=20=EB=A1=A4=EB=A7=81?=
+ =?UTF-8?q?=C2=B7=ED=99=88=20=EB=B0=B0=EB=84=88=20=EC=A0=84=EA=B2=BD=20?=
+ =?UTF-8?q?=EC=82=AC=EC=A7=84=20=EC=A0=81=EC=9A=A9?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- 잭팟 상세(SREC) 상단 이미지: 솔레어 외관 사진 2장(낮·밤)을 2초 간격 교차 페이드 롤링 (다른 호텔은 기존 1장)
+- RotatingHeroImages 컴포넌트 추가 (prefers-reduced-motion이면 첫 장 고정)
+- 홈 라이브 프로그래시브 배너 배경: 외부 스톡(Unsplash) 슬롯머신 사진 → 솔레어 전경(낮)
+- offerRoomData: 솔레어 외관 사진 목록을 SOLAIRE_EXTERIOR_IMAGES로 분리해 오퍼 탭·상세·배너 공용 사용
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ src/components/JackpotBanner.tsx         |  5 ++-
+ src/components/RotatingHeroImages.tsx    | 39 ++++++++++++++++++++++++
+ src/data/offerRoomData.ts                | 11 ++++---
+ src/screens/HotelJackpotDetailScreen.tsx | 19 ++++++++----
+ 4 files changed, 63 insertions(+), 11 deletions(-)
+ create mode 100644 src/components/RotatingHeroImages.tsx
+
+diff --git a/src/components/JackpotBanner.tsx b/src/components/JackpotBanner.tsx
+index 661dde3..6949a6d 100644
+--- a/src/components/JackpotBanner.tsx
++++ b/src/components/JackpotBanner.tsx
+@@ -1,5 +1,6 @@
+ import React, { useState, useEffect } from 'react';
+ import { useApp } from '../context/AppContext';
++import { SOLAIRE_EXTERIOR_IMAGES } from '../data/offerRoomData';
+ 
+ // 홈 상단 "라이브 잭팟" 배너 — 현재 잭팟 데이터는 "솔레어 리조트 앤 카지노"만 노출한다.
+ export const JackpotBanner: React.FC = () => {
+@@ -14,7 +15,9 @@ export const JackpotBanner: React.FC = () => {
+       amount: '$8,230,450.00', // 2026-09-27: 달러 소수점 두 자리 표기 통일 (기존: '$8,230,450')
+       subtitle: '솔레어 리조트 마닐라 VIP 슬롯 누적금',
+       badge: 'LIVE',
+-      bgImage: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=1200&auto=format&fit=crop&q=80',
++      // 2026-09-30: 배경을 솔레어 리조트 전경(낮)으로 교체
++      // (기존: 'https://images.unsplash.com/photo-1596838132731-3301c3fd4317?w=1200&auto=format&fit=crop&q=80' 외부 스톡 슬롯머신 사진)
++      bgImage: SOLAIRE_EXTERIOR_IMAGES[0].src,
+       type: 'jackpot'
+     }
+   ];
+diff --git a/src/components/RotatingHeroImages.tsx b/src/components/RotatingHeroImages.tsx
+new file mode 100644
+index 0000000..e3d357c
+--- /dev/null
++++ b/src/components/RotatingHeroImages.tsx
+@@ -0,0 +1,39 @@
++import React, { useEffect, useState } from 'react';
++
++// 2026-09-30: 여러 장의 사진을 일정 간격으로 교차 페이드하며 롤링하는 히어로 이미지.
++// 부모 요소(relative, 크기 지정) 안을 가득 채운다. 동작 줄이기(prefers-reduced-motion) 설정이면 첫 장만 고정 표시.
++
++interface RotatingHeroImagesProps {
++  images: { src: string; alt: string }[];
++  intervalMs?: number;
++}
++
++export const RotatingHeroImages: React.FC<RotatingHeroImagesProps> = ({ images, intervalMs = 4000 }) => {
++  const [activeIndex, setActiveIndex] = useState<number>(0);
++
++  useEffect(() => {
++    if (images.length < 2) return;
++    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
++    if (reduceMotion) return;
++    const timer = window.setInterval(() => {
++      setActiveIndex(prev => (prev + 1) % images.length);
++    }, intervalMs);
++    return () => window.clearInterval(timer);
++  }, [images.length, intervalMs]);
++
++  return (
++    <>
++      {images.map((image, index) => (
++        <img
++          key={image.src}
++          src={image.src}
++          alt={image.alt}
++          aria-hidden={index !== activeIndex}
++          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-in-out ${
++            index === activeIndex ? 'opacity-100' : 'opacity-0'
++          }`}
++        />
++      ))}
++    </>
++  );
++};
+diff --git a/src/data/offerRoomData.ts b/src/data/offerRoomData.ts
+index 05c3d38..38cf916 100644
+--- a/src/data/offerRoomData.ts
++++ b/src/data/offerRoomData.ts
+@@ -23,14 +23,17 @@ export interface OfferHotelImage {
+   alt: string;
+ }
+ 
++// 솔레어 외관 사진 (낮·밤) — 오퍼 탭 호텔 슬라이드와 잭팟 상세(SREC) 상단 롤링 이미지에서 공용 사용
++export const SOLAIRE_EXTERIOR_IMAGES: OfferHotelImage[] = [
++  { src: `${OFFER_IMAGE_BASE}/exterior-day.jpg`, alt: '솔레어 리조트 앤 카지노 외관 (낮)' },
++  { src: `${OFFER_IMAGE_BASE}/exterior-night.jpg`, alt: '솔레어 리조트 앤 카지노 외관 (밤)' },
++];
++
+ export const OFFER_HOTEL = {
+   nameKo: '솔레어 리조트 앤 카지노',
+   nameEn: 'Solaire Resort & Casino',
+   location: '필리핀 마닐라, 엔터테인먼트 시티',
+-  images: [
+-    { src: `${OFFER_IMAGE_BASE}/exterior-day.jpg`, alt: '솔레어 리조트 앤 카지노 외관 (낮)' },
+-    { src: `${OFFER_IMAGE_BASE}/exterior-night.jpg`, alt: '솔레어 리조트 앤 카지노 외관 (밤)' },
+-  ] as OfferHotelImage[],
++  images: SOLAIRE_EXTERIOR_IMAGES,
+ };
+ 
+ // 멤버십 다이닝 카드에 쓰는 솔레어 뷔페 사진 (기존 외부 스톡 이미지 대체)
+diff --git a/src/screens/HotelJackpotDetailScreen.tsx b/src/screens/HotelJackpotDetailScreen.tsx
+index f7e2c72..5ed9f23 100644
+--- a/src/screens/HotelJackpotDetailScreen.tsx
++++ b/src/screens/HotelJackpotDetailScreen.tsx
+@@ -1,6 +1,8 @@
+ import React, { useState, useMemo, useEffect } from 'react';
+ import { useApp } from '../context/AppContext';
+ import { HOTELS_JACKPOT_DATA, HotelJackpotData, formatUsd, formatKrw, formatKrwByCurrency, formatAmountByCurrency, formatKrwCodeByCurrency, getJackpotThumbUrl, JackpotItem } from '../data/jackpotData';
++import { SOLAIRE_EXTERIOR_IMAGES } from '../data/offerRoomData';
++import { RotatingHeroImages } from '../components/RotatingHeroImages';
+ import { SOLAIRE_JACKPOT_HISTORY } from '../data/jackpotHistoryData';
+ import { ProgressiveComingSoon } from '../components/ProgressiveComingSoon';
+ 
+@@ -110,12 +112,17 @@ export const HotelJackpotDetailScreen: React.FC<HotelJackpotDetailScreenProps> =
+       {/* Hotel Hero Card */}
+       <div className="bg-[#162639] border border-[#1F334D] rounded-2xl overflow-hidden shadow-xl">
+         <div className="relative h-44 w-full">
+-          <img
+-            src={hotel.image}
+-            alt={hotel.name}
+-            className="w-full h-full object-cover"
+-            referrerPolicy="no-referrer"
+-          />
++          {/* 2026-09-30: 솔레어(SREC)는 제공받은 외관 사진 2장(낮·밤)을 2초 간격으로 교차 롤링 (기존: hotel.image 1장). 다른 호텔은 기존 그대로 */}
++          {hotel.id === 'SREC' ? (
++            <RotatingHeroImages images={SOLAIRE_EXTERIOR_IMAGES} intervalMs={2000} />
++          ) : (
++            <img
++              src={hotel.image}
++              alt={hotel.name}
++              className="w-full h-full object-cover"
++              referrerPolicy="no-referrer"
++            />
++          )}
+           <div className="absolute inset-0 bg-gradient-to-t from-[#162639] via-[#162639]/40 to-transparent"></div>
+ 
+           {/* Top Badges */}
+-- 
+2.55.0.windows.3
+
