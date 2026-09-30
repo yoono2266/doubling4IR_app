@@ -9,6 +9,7 @@ import { LOGO_BASE64 } from '../assets/logoBase64';
 import { apiCommonClient, ApiError, ResultCode } from '../utils/apiClient';
 import { getStoredUserInfo } from '../utils/auth';
 import { getLoginBonusAmount, getLoginBonusTitle } from '../data/streakData';
+import { PasswordResetFlow } from '../components/auth/PasswordResetFlow';
 
 // /members/uAuth API 응답 타입 (소셜 로그인 서버 인증 체크)
 interface UAuthResponse {
@@ -255,6 +256,8 @@ export const LoginScreen: React.FC = () => {
   const [bonusVisible, setBonusVisible] = useState(false);
   // 모달 확인 시 "수령 완료"로 기록할 create_date 값
   const [pendingBonusDate, setPendingBonusDate] = useState('');
+  // 2026-09-30: "Forgot Password?" → 로그인 카드 안에서 비밀번호 재설정 흐름으로 전환 (App.tsx 라우팅 변경 없음)
+  const [isPasswordResetOpen, setIsPasswordResetOpen] = useState(false);
 
   // 로그인 성공 공통 처리: create_date(계정별 출석 기준일)가 없으면 모달 없이 바로 홈으로 이동하고,
   // 이미 해당 create_date로 보너스를 받았으면 역시 모달 없이 홈으로 이동한다.
@@ -477,6 +480,23 @@ export const LoginScreen: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 py-6">
       <div className="w-full max-w-sm bg-[#162639] border border-[#1F334D] rounded-3xl p-6 shadow-2xl flex flex-col gap-5">
+        {isPasswordResetOpen ? (
+          <PasswordResetFlow
+            initialEmail={email.trim()}
+            onBackToLogin={(resetEmail) => {
+              if (resetEmail) setEmail(resetEmail);
+              setIsPasswordResetOpen(false);
+            }}
+            onCompleted={(resetEmail) => {
+              setEmail(resetEmail);
+              setPassword('');
+              setErrorMsg(null);
+              setIsPasswordResetOpen(false);
+              showToast('비밀번호가 변경되었습니다. 새 비밀번호로 로그인해 주세요.');
+            }}
+          />
+        ) : (
+        <>
 
         {/* Brand Header */}
         <div className="text-center flex flex-col items-center gap-2 pt-1">
@@ -555,7 +575,14 @@ export const LoginScreen: React.FC = () => {
                 setCurrentSubScreen('email-verify-request');
                 showToast('비밀번호 재설정 이메일 안내로 이동합니다.');
                 */
+                /*
+                  2026-09-30 비활성화 (삭제하지 않고 주석 보존).
+                  사유: 비밀번호 재설정 흐름(이메일 → 인증번호 → 새 비밀번호)을 PasswordResetFlow로 구현함.
+                  API는 BE 제공 전이라 FE 제안 경로로 호출 (BE_API_REQUESTS.md REQ-260927-01).
                 showToast('비밀번호 재설정 기능은 준비 중입니다. (Coming Soon)');
+                */
+                setErrorMsg(null);
+                setIsPasswordResetOpen(true);
               }}
               className="text-[11px] font-semibold text-[#C5A059] hover:underline"
             >
@@ -637,6 +664,8 @@ export const LoginScreen: React.FC = () => {
             </button>
           </p>
         </div>
+        </>
+        )}
       </div>
 
       {/* 오늘의 로그인 보너스 모달 */}
