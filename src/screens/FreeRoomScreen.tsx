@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { COMP_BENEFITS, CompBenefitItem } from '../data/compBenefitData';
-import { OFFER_DINING_IMAGE, OFFER_HOTEL, OFFER_ROOMS, OfferPlan } from '../data/offerRoomData';
+import { OFFER_DINING_IMAGE, OFFER_HOTEL, OFFER_ROOMS, OFFER_PLANS, OFFER_PRODUCTS, OfferPlan, OfferProduct, OfferRoom } from '../data/offerRoomData';
+import { OfferRoomCard } from '../components/offer/OfferRoomCard';
 import { OfferImageCarousel } from '../components/offer/OfferImageCarousel';
 import { OfferTierStatus } from '../components/offer/OfferTierStatus';
 import { OfferPlanSelector } from '../components/offer/OfferPlanSelector';
 import { OfferApplicationForm } from '../components/offer/OfferApplicationForm';
+import { OfferCountryTabs, OfferComingSoon, OFFER_COUNTRIES, OfferCountryCode, isOfferAvailableIn } from '../components/offer/OfferCountryTabs';
+import { MembershipBadge } from '../components/MembershipBadge';
+import { useMemberTierName } from '../hooks/useMemberTierName';
 
 // 카드1(오퍼 스위트) — 잭팟 상세(HotelJackpotDetailScreen) / jackpotData.ts의 솔레어 리조트 데이터·이미지 재사용.
 // 히어로 레이아웃과 "포함된 VIP 스페셜 혜택" 6개 그리드 구성은 기존 그대로 유지하고, 내용만 솔레어로 교체한다.
@@ -33,11 +37,21 @@ export const FreeRoomScreen: React.FC = () => {
   const { startBooking, setCurrentSubScreen, requireLogin, user, myProfile } = useApp();
   // 2026-09-30: 룸 오퍼 리뉴얼 — 객실 슬라이드에서 보고 있는 객실 (등급 카드·신청 대상이 이 객실 기준)
   const [roomIndex, setRoomIndex] = useState<number>(0);
+  // 2026-10-03: 국가 탭 선택 (기본 ALL, 프로그래시브 리스트와 동일) · 현재 로그인 계정의 멤버십 등급 표시명
+  const [offerCountry, setOfferCountry] = useState<OfferCountryCode>('ALL');
+  const memberTierName = useMemberTierName();
   const selectedRoom = OFFER_ROOMS[roomIndex] ?? OFFER_ROOMS[0];
 
   // 2026-09-30: 오퍼 신청 → 예약 정보 입력 화면(OfferApplicationForm). 플랫폼 결제 없음 —
   // 호텔 직접 부킹 후 확정 메일(예약 번호) 발송 방식이라 기존 코인 디포짓 예약 흐름(startBooking)은 쓰지 않음.
   const [applyingPlan, setApplyingPlan] = useState<OfferPlan | null>(null);
+  // 2026-10-03: 신청서에 표시할 리조트명 (BO 지정 오퍼 상품 기준)
+  const [applyingHotelName, setApplyingHotelName] = useState<string>(OFFER_HOTEL.nameKo);
+  // 2026-10-03: 신청 중인 오퍼 상품 — 예약 신청서 객실(OfferApplicationForm room)을 상품 정보로 구성 (객실 정보 없는 리조트는 '스위트')
+  const [applyingProduct, setApplyingProduct] = useState<OfferProduct | null>(null);
+  const applyingRoom: OfferRoom = applyingProduct
+    ? { ...selectedRoom, id: applyingProduct.id, name: applyingProduct.roomName, summary: '', image: applyingProduct.image, requiredDrTier: applyingProduct.requiredDrTier }
+    : selectedRoom;
   const handleApplyPlan = (plan: OfferPlan) => {
     if (!requireLogin()) return;
     setApplyingPlan(plan);
@@ -73,17 +87,33 @@ export const FreeRoomScreen: React.FC = () => {
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-[#C5A059]">workspace_premium</span>
-            오퍼 VIP 호텔 바우처
+            {/* 2026-10-03: 제목 변경 (기존: 오퍼 VIP 호텔 바우처 → 오퍼 → VIP를 위한 오퍼 리스트) */}
+            VIP를 위한 오퍼 리스트
           </h2>
+          {/* 2026-10-03 비활성화 (삭제하지 않고 주석 보존). 사유: 제목 아래 부제 삭제 요청.
           <p className="text-xs text-slate-400">더블링 멤버십 등급 전용 스위트 · 게이밍 · 다이닝 오퍼</p>
+          */}
         </div>
+        {/* 2026-10-03: 고정 "SILVER MEMBER" → 현재 로그인 계정의 회원 뱃지(마이페이지 닉네임 옆 뱃지와 같은 MembershipBadge·등급)
         <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#C5A059]/20 text-[#C5A059] border border-[#C5A059]/30">
           SILVER MEMBER
         </span>
+        */}
+        <MembershipBadge tierName={memberTierName} />
       </div>
 
+      {/* 2026-10-03: 국가 탭 (ALL·마카오·필리핀·싱가포르·일본, 기본 ALL — 프로그래시브 리스트와 동일). 현재 오퍼는 필리핀 솔레어만 — ALL·필리핀 외 준비 중 안내 */}
+      <OfferCountryTabs value={offerCountry} onChange={setOfferCountry} />
+      {!isOfferAvailableIn(offerCountry) && (
+        <OfferComingSoon countryLabel={OFFER_COUNTRIES.find((c) => c.code === offerCountry)?.label ?? ''} />
+      )}
+
+      {isOfferAvailableIn(offerCountry) && (
+      <>
       {/* 2026-09-30: 룸 오퍼 리뉴얼 (회의 구조: 이미지 → 호텔 등급 / DOUBLE RING 등급 → 조건부 1+1 · Free Room · 할인·일반 예약).
           호텔 외관 슬라이드 → 객실 슬라이드 → 선택 객실 기준 등급 확인 → 오퍼 방식 선택·신청. 데이터는 offerRoomData.ts (mock). */}
+      {/* 2026-10-03 비활성화 (삭제하지 않고 보존). 사유: 솔레어 리조트 앤 카지노 전경 이미지 카드 삭제 요청. 복구 시 false 제거. */}
+      {false && (
       <OfferImageCarousel
         heightClass="h-40"
         slides={OFFER_HOTEL.images.map((image, index) => ({
@@ -98,9 +128,38 @@ export const FreeRoomScreen: React.FC = () => {
           ),
         }))}
       />
+      )}
 
+      {/* 2026-10-03: 호텔 객실 오퍼 전면 개편 — BO 지정 오퍼 상품(OFFER_PRODUCTS, mock)마다 카드 1장.
+          객실 사진 1장 위에 리조트명·국가 코드·BO 지정 오퍼 방식 1개·리조트/DOUBLE RING 최소 등급.
+          오퍼 방식 버튼을 누르면 해당 상품 객실·방식으로 예약 신청서(OfferApplicationForm)가 열림. */}
+      {OFFER_PRODUCTS.filter((product) => offerCountry === 'ALL' || product.regionCode === offerCountry).map((product) => {
+        const plan = OFFER_PLANS.find((p) => p.id === product.planId);
+        if (!plan) return null;
+        return (
+          <OfferRoomCard
+            key={product.id}
+            product={product}
+            plan={plan}
+            onApply={() => {
+              // 2026-10-03: 신청서에 쓸 상품(리조트명·객실명·사진) 기억 (기존: setRoomIndex(OFFER_ROOMS 순번))
+              setApplyingProduct(product);
+              setApplyingHotelName(product.resortName);
+              handleApplyPlan(plan);
+            }}
+          />
+        );
+      })}
+
+      {/* 2026-10-03 비활성화 (삭제하지 않고 보존). 사유: 호텔 객실 오퍼 전면 개편 — 객실 사진 슬라이드, "이 객실, 내 멤버십으로
+          신청할 수 있나요?" 등급 박스, 오퍼 방식 선택 목록과 신청 버튼을 위 OfferRoomCard 한 장으로 대체 (멤버십 다이닝은 유지).
+          복구 시 false 제거. */}
+      {false && (
+      <>
       <section className="flex flex-col gap-3">
+        {/* 2026-10-03 비활성화 (삭제하지 않고 주석 보존). 사유: "객실 선택" 제목 글자 삭제 요청 (객실 슬라이드는 유지).
         <h3 className="text-sm font-bold text-white">객실 선택</h3>
+        */}
         <OfferImageCarousel
           heightClass="aspect-[16/10]"
           onIndexChange={setRoomIndex}
@@ -121,11 +180,14 @@ export const FreeRoomScreen: React.FC = () => {
       <OfferTierStatus room={selectedRoom} userDrTier={String(user.membershipTier)} />
 
       <OfferPlanSelector onApply={handleApplyPlan} />
+      </>
+      )}
 
       {applyingPlan && (
         <OfferApplicationForm
-          hotelName={OFFER_HOTEL.nameKo}
-          room={selectedRoom}
+          // 2026-10-03: 신청한 오퍼 상품의 리조트명 (기존: OFFER_HOTEL.nameKo 고정)
+          hotelName={applyingHotelName}
+          room={applyingRoom}
           plan={applyingPlan}
           defaultEmail={typeof myProfile.memberInfo?.u_id === 'string' ? myProfile.memberInfo.u_id : ''}
           onClose={() => setApplyingPlan(null)}
@@ -292,6 +354,8 @@ export const FreeRoomScreen: React.FC = () => {
           </div>
         </div>
       ))}
+      </>
+      )}
     </div>
   );
 };

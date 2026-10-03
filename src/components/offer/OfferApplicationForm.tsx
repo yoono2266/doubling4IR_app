@@ -94,10 +94,13 @@ export const OfferApplicationForm: React.FC<OfferApplicationFormProps> = ({ hote
     if (!/^[A-Za-z][A-Za-z\s-]*$/.test(givenName.trim())) next.givenName = '여권과 같은 영문 이름을 입력해 주세요.';
     if (!/^[A-Za-z0-9]{6,12}$/.test(passportNo.trim())) next.passportNo = '여권번호를 영문·숫자로 정확히 입력해 주세요.';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) next.email = '확정 메일을 받을 이메일을 입력해 주세요.';
-    if (arrivalFlight.trim() && !arrivalAt) next.arrivalAt = '도착 일시를 입력해 주세요.';
-    if (departureFlight.trim() && !departureAt) next.departureAt = '출발 일시를 입력해 주세요.';
+    // 2026-10-03 비활성화 (삭제하지 않고 주석 보존). 사유: 항공편 정보 입력란 전체 삭제 요청 → 관련 검사도 제외.
+    // if (arrivalFlight.trim() && !arrivalAt) next.arrivalAt = '도착 일시를 입력해 주세요.';
+    // if (departureFlight.trim() && !departureAt) next.departureAt = '출발 일시를 입력해 주세요.';
     if (!passportFile) next.passportFile = '여권 사본을 첨부해 주세요.';
-    if (isMembershipCardRequired && !membershipCardFile) next.membershipCardFile = '보유하신 호텔 멤버십 카드 사진을 첨부해 주세요.';
+    // 2026-10-03 비활성화 (삭제하지 않고 주석 보존). 사유: 호텔 멤버십 카드 사진 입력란 삭제 요청 → 조건부 1+1 필수 검사도 제외
+    //   (입력란이 없는데 필수 검사가 남으면 조건부 1+1 신청서를 제출할 수 없음).
+    // if (isMembershipCardRequired && !membershipCardFile) next.membershipCardFile = '보유하신 호텔 멤버십 카드 사진을 첨부해 주세요.';
     if (!isAgreed) next.agree = '개인정보 수집 및 호텔 제공에 동의해 주세요.';
     return next;
   };
@@ -234,6 +237,8 @@ export const OfferApplicationForm: React.FC<OfferApplicationFormProps> = ({ hote
                   </label>
                   <input id="offer-passport-file" type="file" accept="image/*,application/pdf" onChange={handleFileChange('passportFile', setPassportFile)} className="sr-only" />
                 </Field>
+                {/* 2026-10-03 비활성화 (삭제하지 않고 보존). 사유: 호텔 멤버십 카드 사진 입력란 삭제 요청. 복구 시 false 제거. */}
+                {false && (
                 <Field
                   label={isMembershipCardRequired ? '호텔 멤버십 카드 사진' : '호텔 멤버십 카드 사진 (선택)'}
                   htmlFor="offer-membership-card-file"
@@ -253,12 +258,15 @@ export const OfferApplicationForm: React.FC<OfferApplicationFormProps> = ({ hote
                   </label>
                   <input id="offer-membership-card-file" type="file" accept="image/*,application/pdf" onChange={handleFileChange('membershipCardFile', setMembershipCardFile)} className="sr-only" />
                 </Field>
+                )}
                 <Field label="확정 메일 받을 이메일" htmlFor="offer-email" error={errors.email}>
                   <input id="offer-email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className={inputClass} />
                 </Field>
               </section>
 
-              {/* 항공편 (픽업 서비스용) */}
+              {/* 2026-10-03 비활성화 (삭제하지 않고 보존). 사유: 항공편 정보 전체 삭제 요청. 복구 시 false 제거. */}
+              {false && (
+              /* 항공편 (픽업 서비스용) */
               <section className="flex flex-col gap-3">
                 <div>
                   <h3 className="text-sm font-bold text-white">항공편 정보</h3>
@@ -279,6 +287,7 @@ export const OfferApplicationForm: React.FC<OfferApplicationFormProps> = ({ hote
                   </Field>
                 </div>
               </section>
+              )}
 
               {/* 동의 */}
               <div className="flex flex-col gap-1.5">
@@ -289,7 +298,8 @@ export const OfferApplicationForm: React.FC<OfferApplicationFormProps> = ({ hote
                     onChange={e => setIsAgreed(e.target.checked)}
                     className="mt-0.5 h-4 w-4 shrink-0 accent-[#C5A059]"
                   />
-                  <span>예약을 위해 여권 정보, 여권 사본, 호텔 멤버십 카드 사진을 수집하고 {hotelName}에 제공하는 데 동의합니다.</span>
+                  {/* 2026-10-03 문구 변경 요청 (기존: 예약을 위해 여권 정보, 여권 사본, 호텔 멤버십 카드 사진을 수집하고 {hotelName}에 제공하는 데 동의합니다.) */}
+                  <span>예약을 위해 여권 정보, 여권 사본을 수집하고 제공하는 데 동의합니다.</span>
                 </label>
                 {errors.agree && <p className="text-[11px] font-semibold text-amber-300">{errors.agree}</p>}
               </div>
