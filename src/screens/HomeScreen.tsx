@@ -1,13 +1,24 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 // 2026-10-03 비활성화 (삭제하지 않고 주석 보존). 사유: 홈 상단 카드형 JackpotBanner를 광고 BM용 HomeAdBanner로 교체.
 // import { JackpotBanner } from '../components/JackpotBanner';
 import { HomeAdBanner } from '../components/HomeAdBanner';
 import { useScrolledPastTop } from '../hooks/useScrolledPastTop';
-import { PolyMarketCarousel } from '../components/PolyMarketCarousel';
+// 2026-10-03 비활성화 (삭제하지 않고 주석 보존). 사유: 홈 챌린지 캐러셀을 피드 안 챌린지 카드(HomeChallengeCard)로 교체.
+// import { PolyMarketCarousel } from '../components/PolyMarketCarousel';
 import { VideoPromoCard } from '../components/VideoPromoCard';
 import { apiCommonClient, ApiError, ResultCode, CommonResponse } from '../utils/apiClient';
 import { saveMainScrollTop, restoreMainScrollTop } from '../utils/scrollMemory';
+// 2026-10-03: 홈 피드 [콘텐츠 → 챌린지 → 오퍼] 반복 구성
+import { HomeChallengeCard } from '../components/home/HomeChallengeCard';
+import { ChallengeJoinConfirmModal } from '../components/challenge/ChallengeJoinConfirmModal';
+import { OfferRoomCard } from '../components/offer/OfferRoomCard';
+import { OfferApplicationForm } from '../components/offer/OfferApplicationForm';
+import { OFFER_PLANS, OFFER_PRODUCTS, OfferPlan, OfferProduct, toOfferApplicationRoom } from '../data/offerRoomData';
+import { useChallengeMarkets } from '../hooks/useChallengeMarkets';
+import { useChallengeJoin } from '../hooks/useChallengeJoin';
+import { useMemberTierInfo, getDrTierRank } from '../hooks/useMemberTierName';
+import { buildHomeFeed, orderChallengesForHome, orderOffersForHome, shufflePostsWithinPages } from '../utils/homeFeed';
 
 // /contents/main-content API 요청/응답 타입
 interface MainContentParam {
@@ -67,7 +78,24 @@ export const HomeScreen: React.FC = () => {
     requireLogin,
     setSelectedHotelId,
     refreshPlmContents,
+    // 2026-10-03: 홈 피드 챌린지·오퍼용
+    setSelectedMarket,
+    getUserVoteForMarket,
+    polyVotes,
+    myProfile,
   } = useApp();
+
+  // ── 2026-10-03: 홈 피드 [콘텐츠 → 챌린지 → 오퍼] ──
+  const challengeMarkets = useChallengeMarkets();
+  const { pendingJoin, isSubmitting: isJoinSubmitting, requestJoin, cancelJoin, confirmJoin } = useChallengeJoin();
+  const { rank: myDrTierRank } = useMemberTierInfo();
+  // 홈 진입 시점에 이미 참여한 챌린지(id·제목) — 이 챌린지들은 피드 뒤쪽으로. 홈에서 새로 참여한 챌린지는 다음 진입 때 이동
+  const [votedAtEntry] = useState(() => ({
+    ids: new Set(polyVotes.map((v) => v.marketId)),
+    titles: new Set(polyVotes.map((v) => v.title)),
+  }));
+  // 홈 오퍼 카드에서 신청 중인 상품·오퍼 방식 (예약 신청서를 홈 위에 띄움)
+  const [applyingOffer, setApplyingOffer] = useState<{ product: OfferProduct; plan: OfferPlan } | null>(null);
 
   const handlePolyCardClick = () => {
     if (!requireLogin()) return;
@@ -278,6 +306,18 @@ useEffect(() => {
     return /\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i.test(url);
   };
 
+  // 2026-10-03: 홈 피드 — 콘텐츠(페이지 안 랜덤) · 챌린지(미참여 먼저) · 오퍼(내 등급으로 신청 가능한 상품 먼저)를 묶음 반복
+  const homeFeed = useMemo(() => {
+    const contents = shufflePostsWithinPages(posts);
+    const challenges = orderChallengesForHome(
+      challengeMarkets,
+      new Set(challengeMarkets.filter((m) => votedAtEntry.ids.has(m.id) || votedAtEntry.titles.has(m.title)).map((m) => m.id))
+    );
+    const offers = orderOffersForHome(OFFER_PRODUCTS, myDrTierRank, getDrTierRank);
+    // 콘텐츠를 모두 불러왔거나(더 없음) 불러오기에 실패해 더 없을 때 남은 챌린지·오퍼를 이어서 나열
+    return buildHomeFeed(contents, challenges, offers, !hasMore && !isLoading);
+  }, [posts, challengeMarkets, votedAtEntry, myDrTierRank, hasMore, isLoading]);
+
   return (
     <div className="relative flex flex-col gap-5 pb-44">
       {/* 2026-10-03: 맨 위 감지용 표시 요소 — 이 높이만큼 스크롤하면 상단 광고 배너가 최소화된다 (useScrolledPastTop) */}
@@ -318,7 +358,10 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* 2. 실시간 예측 챌린지 캐러셀 배너 */}
+      {/* 2026-10-03 비활성화 (삭제하지 않고 보존). 사유: "실시간 챌린지 / 전체보기" 줄 삭제 요청 + 챌린지를 아래 홈 피드
+          [콘텐츠 → 챌린지 → 오퍼] 안의 카드로 배치하면서 캐러셀도 제거. 복구 시 false 제거. */}
+      {false && (
+      /* 2. 실시간 예측 챌린지 캐러셀 배너 */
       <div>
         <div className="flex items-center justify-between mb-2.5">
           <h3 className="text-xs font-bold text-[#C5A059] uppercase tracking-wider flex items-center gap-1.5">
@@ -334,21 +377,58 @@ useEffect(() => {
           </button>
         </div>
 
-        <PolyMarketCarousel />
+        {/* <PolyMarketCarousel /> — import 주석 처리로 함께 비활성화 */}
       </div>
+      )}
 
       {/* 4. Community Feed */}
       <div>
+        {/* 2026-10-03 비활성화 (삭제하지 않고 주석 보존). 사유: "파트너스 커뮤니티" 줄 삭제 요청.
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-bold text-[#C5A059] uppercase tracking-wider flex items-center gap-1.5">
             <span className="material-symbols-outlined text-sm">forum</span>
             파트너스 커뮤니티
           </h3>
         </div>
+        */}
 
-        {/* Post Feed List */}
+        {/* Post Feed List
+            2026-10-03: 게시물만 나열(posts.map) → 홈 피드(homeFeed) [콘텐츠 → 챌린지 → 오퍼] 반복으로 변경.
+            콘텐츠 카드(영상형 VideoPromoCard / 일반형 카드)는 기존 코드 그대로 사용. */}
         <div className="space-y-3">
-          {posts.map((post) => {
+          {homeFeed.map((item) => {
+            if (item.kind === 'challenge') {
+              const market = item.market;
+              return (
+                <HomeChallengeCard
+                  key={item.key}
+                  market={market}
+                  myChoice={getUserVoteForMarket(market.id)?.choice}
+                  onOpen={() => {
+                    saveMainScrollTop();
+                    setSelectedMarket(market);
+                    setCurrentSubScreen('poly-market-detail');
+                  }}
+                  onSelect={(choice, e) => requestJoin(market, choice, e)}
+                />
+              );
+            }
+            if (item.kind === 'offer') {
+              const plan = OFFER_PLANS.find((p) => p.id === item.product.planId);
+              if (!plan) return null;
+              return (
+                <OfferRoomCard
+                  key={item.key}
+                  product={item.product}
+                  plan={plan}
+                  onApply={() => {
+                    if (!requireLogin()) return;
+                    setApplyingOffer({ product: item.product, plan });
+                  }}
+                />
+              );
+            }
+            const post = item.post;
             if (post.tb_type === 1) {
               return <VideoPromoCard key={post.tb_index} post={post} />;
             }
@@ -458,6 +538,29 @@ useEffect(() => {
             </div>
         </div>
       </div>
+
+      {/* 2026-10-03: 홈 피드 챌린지 참여 확인 창 (DP 금액 선택 없음) */}
+      {pendingJoin && (
+        <ChallengeJoinConfirmModal
+          category={pendingJoin.market.category}
+          title={pendingJoin.market.title}
+          choice={pendingJoin.choice}
+          isSubmitting={isJoinSubmitting}
+          onCancel={cancelJoin}
+          onConfirm={confirmJoin}
+        />
+      )}
+
+      {/* 2026-10-03: 홈 피드 오퍼 카드 → 예약 신청서 (오퍼 탭과 같은 신청서, mock 제출) */}
+      {applyingOffer && (
+        <OfferApplicationForm
+          hotelName={applyingOffer.product.resortName}
+          room={toOfferApplicationRoom(applyingOffer.product)}
+          plan={applyingOffer.plan}
+          defaultEmail={typeof myProfile?.memberInfo?.u_id === 'string' ? myProfile.memberInfo.u_id : ''}
+          onClose={() => setApplyingOffer(null)}
+        />
+      )}
     </div>
   );
 };

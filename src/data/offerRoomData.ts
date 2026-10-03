@@ -366,3 +366,13 @@ export const OFFER_PRODUCTS: OfferProduct[] = [
     planId: 'standard',
   },
 ];
+
+// 2026-10-03: 오퍼 상품 → 예약 신청서(OfferApplicationForm)용 객실 정보 (오퍼 탭·홈 피드 공용)
+export const toOfferApplicationRoom = (product: OfferProduct): OfferRoom => ({
+  ...OFFER_ROOMS[0],
+  id: product.id,
+  name: product.roomName,
+  summary: '',
+  image: product.image,
+  requiredDrTier: product.requiredDrTier,
+});
