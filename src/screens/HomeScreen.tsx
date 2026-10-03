@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
-import { JackpotBanner } from '../components/JackpotBanner';
+// 2026-10-03 비활성화 (삭제하지 않고 주석 보존). 사유: 홈 상단 카드형 JackpotBanner를 광고 BM용 HomeAdBanner로 교체.
+// import { JackpotBanner } from '../components/JackpotBanner';
+import { HomeAdBanner } from '../components/HomeAdBanner';
+import { useScrolledPastTop } from '../hooks/useScrolledPastTop';
 import { PolyMarketCarousel } from '../components/PolyMarketCarousel';
 import { VideoPromoCard } from '../components/VideoPromoCard';
 import { apiCommonClient, ApiError, ResultCode, CommonResponse } from '../utils/apiClient';
@@ -80,6 +83,12 @@ export const HomeScreen: React.FC = () => {
     setSelectedHotelId('SREC');
     setCurrentSubScreen('hotel-jackpot-detail');
   };
+  // 2026-10-03: 상단 광고 배너 최대화/최소화 — 맨 위에서 8px 이상 스크롤하면 최소화
+  const {
+    sentinelRef: adBannerSentinelRef,
+    sentinelHeight: adBannerSentinelHeight,
+    isScrolledPastTop: isAdBannerCompact,
+  } = useScrolledPastTop(8);
  const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -270,9 +279,22 @@ useEffect(() => {
   };
 
   return (
-    <div className="flex flex-col gap-5 pb-44">
+    <div className="relative flex flex-col gap-5 pb-44">
+      {/* 2026-10-03: 맨 위 감지용 표시 요소 — 이 높이만큼 스크롤하면 상단 광고 배너가 최소화된다 (useScrolledPastTop) */}
+      <div
+        ref={adBannerSentinelRef}
+        aria-hidden="true"
+        className="pointer-events-none absolute left-0 top-0 w-px"
+        style={{ height: adBannerSentinelHeight }}
+      />
       {/* 1. Auto-Rolling Jackpot & FreeRoom Banner (Sticky Top) */}
-      <div className="sticky top-0 z-30 bg-[#0D1B2A] -mx-4 px-4 pt-2.5 pb-3 border-b border-[#1F334D]/60 shadow-[0_4px_16px_rgba(0,0,0,0.6)]">
+      {/* 2026-10-03: 광고 배너가 화면과 구분되어 보이지 않도록 고정 영역의 아래 경계선·그림자 제거, 배너 아래 여백(pb-3) 제거
+          (기존 className: "sticky top-0 z-30 bg-[#0D1B2A] -mx-4 px-4 pt-2.5 pb-3 border-b border-[#1F334D]/60 shadow-[0_4px_16px_rgba(0,0,0,0.6)]")
+          2026-10-03: 헤더(DOUBLE RING) 경계선과 배너 사이 틈을 없애도록 위 여백(pt-2.5, 10px)도 제거 */}
+      <div className="sticky top-0 z-30 bg-[#0D1B2A] -mx-4 px-4">
+        {/* 2026-10-03 비활성화 (삭제하지 않고 주석 보존).
+            사유: 상단을 광고 BM용 배너(HomeAdBanner)로 바꾸면서 "라이브 프로그래시브 / 전체보기" 제목 줄 전체를 노출하지 않기로 함.
+                  프로그래시브 목록은 하단 GNB "프로그래시브" 탭으로 계속 진입 가능. 복구 시 handleJackpotMoreClick과 함께 사용.
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-bold text-[#C5A059] uppercase tracking-wider flex items-center gap-1.5">
             <span className="material-symbols-outlined text-sm">local_fire_department</span>
@@ -286,7 +308,14 @@ useEffect(() => {
             <span className="material-symbols-outlined text-xs">chevron_right</span>
           </button>
         </div>
+        */}
+        {/* 2026-10-03 비활성화 (삭제하지 않고 주석 보존). 사유: 광고 BM용 배너(HomeAdBanner)로 교체.
         <JackpotBanner />
+        */}
+        {/* 광고 배너: 화면 좌우 끝까지(-mx-4), 홈 첫 진입·맨 위 = 최대화, 스크롤하면 최소화 */}
+        <div className="-mx-4">
+          <HomeAdBanner isCompact={isAdBannerCompact} />
+        </div>
       </div>
 
       {/* 2. 실시간 예측 챌린지 캐러셀 배너 */}
