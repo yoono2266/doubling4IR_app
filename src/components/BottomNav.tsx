@@ -1,10 +1,59 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { resetMainScrollTop } from '../utils/scrollMemory';
+import { useGnbPin } from '../hooks/useGnbPin';
+
+// 2026-10-03: 스크롤 중에는 내비게이터를 아래로 숨기고, 스크롤이 멈추고 GNB_SHOW_DELAY_MS 뒤 다시 올림(오버레이 방식).
+// 핀(고정)을 켜면 자동 숨김 없이 항상 표시 — 핀 버튼(내비게이터 오른쪽 위) / 마이페이지 > 앱 설정 스위치 공용(useGnbPin).
+const GNB_SHOW_DELAY_MS = 400;
 
 export const BottomNav: React.FC = () => {
-  const { currentTab, currentSubScreen, setCurrentTab, setCurrentSubScreen, setSelectedHotelId, requireLogin } = useApp();
+  const { currentTab, currentSubScreen, setCurrentTab, setCurrentSubScreen, setSelectedHotelId, requireLogin, showToast } = useApp();
   const navRef = useRef<HTMLElement>(null);
+
+  // ── 2026-10-03: 스크롤 자동 숨김 + 핀 ──
+  const [isPinned, setPinned] = useGnbPin();
+  const [isHidden, setIsHidden] = useState(false);
+  const pinnedRef = useRef(isPinned);
+  const hiddenRef = useRef(false);
+
+  useEffect(() => {
+    pinnedRef.current = isPinned;
+    if (isPinned) {
+      hiddenRef.current = false;
+      setIsHidden(false);
+    }
+  }, [isPinned]);
+
+  useEffect(() => {
+    // 앱은 <main>(overflow-y-auto)이 스크롤된다. 스크롤 이벤트마다 상태를 바꾸지 않고 "숨김 시작"과 "멈춤 후 표시" 두 시점에만 갱신.
+    const main = document.querySelector('main');
+    if (!main) return;
+    let timer: number | undefined;
+    const handleScroll = () => {
+      if (pinnedRef.current) return;
+      if (!hiddenRef.current) {
+        hiddenRef.current = true;
+        setIsHidden(true);
+      }
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        hiddenRef.current = false;
+        setIsHidden(false);
+      }, GNB_SHOW_DELAY_MS);
+    };
+    main.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      main.removeEventListener('scroll', handleScroll);
+      window.clearTimeout(timer);
+    };
+  }, []);
+
+  const handleTogglePin = () => {
+    const next = !isPinned;
+    setPinned(next);
+    showToast(next ? '하단 메뉴를 고정했어요. 스크롤해도 숨지 않아요.' : '고정을 풀었어요. 스크롤하면 하단 메뉴가 잠시 숨어요.');
+  };
 
   // 잭팟 관련 화면(상세 'hotel-jackpot-detail' / 히스토리 'jackpot-history')에서는
   // 목록 탭이 아니어도 '잭팟'을 항상 활성 상태로 표시한다.
@@ -67,8 +116,28 @@ export const BottomNav: React.FC = () => {
   return (
     <nav
       ref={navRef}
-      className="fixed bottom-0 left-0 right-0 z-40 max-w-[430px] mx-auto bg-[#0D1B2A]/95 backdrop-blur-xl border-t border-[#1F334D] px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] grid grid-cols-5 items-center"
+      // 2026-10-03: 자동 숨김용 transition·translate 추가 (숨길 때 핀 버튼까지 화면 밖으로: 높이 + 3rem)
+      className={`fixed bottom-0 left-0 right-0 z-40 max-w-[430px] mx-auto bg-[#0D1B2A]/95 backdrop-blur-xl border-t border-[#1F334D] px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] grid grid-cols-5 items-center transition-transform duration-300 ease-out ${
+        isHidden ? 'translate-y-[calc(100%+3rem)] pointer-events-none' : 'translate-y-0'
+      }`}
+      aria-hidden={isHidden}
     >
+      {/* 2026-10-03: 핀(고정) 버튼 — 내비게이터 오른쪽 위. 켜면 자동 숨김 끔 */}
+      <button
+        type="button"
+        onClick={handleTogglePin}
+        aria-pressed={isPinned}
+        aria-label={isPinned ? '하단 메뉴 고정 해제' : '하단 메뉴 고정'}
+        title={isPinned ? '하단 메뉴 고정 해제' : '하단 메뉴 고정'}
+        className={`absolute -top-10 right-3 flex h-8 w-8 items-center justify-center rounded-lg border backdrop-blur-xl transition active:scale-95 ${
+          isPinned
+            ? 'border-[#C5A059] bg-[#C5A059] text-[#0D1B2A]'
+            : 'border-[#1F334D] bg-[#0D1B2A]/90 text-slate-400 hover:text-[#E2C28E]'
+        }`}
+      >
+        <span className={`material-symbols-outlined text-[18px] ${isPinned ? 'fill-1' : ''}`}>push_pin</span>
+      </button>
+
       {/* 1. Jackpot */}
       <button
         onClick={() => handleTabClick('jackpot')}

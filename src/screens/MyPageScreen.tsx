@@ -12,6 +12,7 @@ import { CompBenefitSelectionScreen } from './CompBenefitSelectionScreen';
 import { CurrentTripSummaryScreen } from './CurrentTripSummaryScreen';
 import { PointRedemptionScreen } from './PointRedemptionScreen';
 import { MEMBERSHIP_TIERS } from '../data/membershipData';
+import { GnbPinSettingRow } from '../components/GnbPinSettingRow';
 
 // Unix timestamp(초) → "yyyy-mm-dd hh:mm:ss" 문자열 변환
 const formatDateTime = (timestamp: any): string => {
@@ -824,6 +825,9 @@ export const MyPageScreen: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* 2026-10-03: 하단 메뉴(GNB) 항상 표시(핀) 스위치 — 내비게이터 핀 버튼과 같은 값 */}
+        <GnbPinSettingRow />
 
         {/* [기존 설정 카드 토글 2행 — 2026-09-27 위 목록으로 대체 (삭제하지 않고 주석 보존)]
         <div className="bg-[#162639] border border-[#1F334D] p-4 rounded-2xl flex flex-col gap-4 shadow-md text-xs">
