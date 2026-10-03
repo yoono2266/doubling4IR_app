@@ -157,7 +157,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
         className="text-xs text-slate-400 hover:text-white flex items-center gap-1 w-fit transition"
       >
         <span className="material-symbols-outlined text-sm">arrow_back</span>
-        <span>예측 챌린지 목록으로</span>
+        <span>챌린지 목록으로</span>
       </button>
 
       {/* Top Title & Season Header */}
@@ -300,7 +300,7 @@ export const PolyLeaderboardScreen: React.FC = () => {
         className="text-xs text-slate-400 hover:text-white flex items-center gap-1 w-fit transition"
       >
         <span className="material-symbols-outlined text-sm">arrow_back</span>
-        <span>예측 챌린지 목록으로</span>
+        <span>챌린지 목록으로</span>
       </button>
 
       {/ * Top Title & Season Header * /}

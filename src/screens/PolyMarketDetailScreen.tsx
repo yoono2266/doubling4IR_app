@@ -5,6 +5,11 @@ import { getStoredUserInfo } from '../utils/auth';
 import { useComments, COMMENT_TYPE_CHALLENGE, formatCommentTime } from '../hooks/useComments';
 import { PolyVoteConfirmModal, PolyVoteResultModal, PolyVoteResult, calcExpectedPayout, ChoiceChip } from '../components/PolyVoteModals';
 import { PolyOddsBar, PolyVoteButtons } from '../components/PolyVoteControls';
+import { ChallengeVotePanel } from '../components/challenge/ChallengeVotePanel';
+import { ChallengeJoinConfirmModal } from '../components/challenge/ChallengeJoinConfirmModal';
+import { useChallengeJoin } from '../hooks/useChallengeJoin';
+import { isChallengeDummy } from '../data/challengeDummyData';
+import { ChallengeCardBackground } from '../components/challenge/ChallengeCardBackground';
 
 // 2026-09-27 UI/UX 정리: DP_PRESETS·calcExpectedPayout은 components/PolyVoteModals.tsx로 이동(목록 화면과 공용).
 // 제목 16 → 18px, 여론 막대 % 라벨, 탭 문구 한글화·이모지 제거, 의견 목록 글자 12 → 13px·font-mono 제거,
@@ -28,6 +33,8 @@ export const PolyMarketDetailScreen: React.FC = () => {
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'rules' | 'news'>('rules');
+  // 2026-10-03: 챌린지 참여(확인 창 → 서버 기록 → 즉시 DP 안내) 공용 훅
+  const { pendingJoin, isSubmitting: isJoinSubmitting, requestJoin, cancelJoin, confirmJoin } = useChallengeJoin();
   const [selectedAmount, setSelectedAmount] = useState<number>(100);
   const [commentInput, setCommentInput] = useState('');
 
@@ -82,6 +89,11 @@ export const PolyMarketDetailScreen: React.FC = () => {
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!requireLogin()) return;
+    // 2026-10-03: 테스트 더미 챌린지(localhost 전용)는 서버 번호가 없어(target_index 0) 의견 등록을 막음
+    if (isChallengeDummy(selectedMarket?.id)) {
+      showToast('테스트용 챌린지에는 의견을 등록할 수 없어요.');
+      return;
+    }
     const success = await submitComment(commentInput);
     if (success) setCommentInput('');
   };
@@ -165,16 +177,23 @@ export const PolyMarketDetailScreen: React.FC = () => {
           className="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition"
         >
           <span className="material-symbols-outlined text-sm">arrow_back</span>
-          <span>예측 챌린지 목록으로</span>
+          {/* 2026-10-03: 명칭 변경 (기존: 예측 챌린지 목록으로) */}
+          <span>챌린지 목록으로</span>
         </button>
+        {/* 2026-10-03 비활성화 (삭제하지 않고 주석 보존). 사유: 챌린지 상세 상단 "보유 N DP" 뱃지 삭제 요청
+            (보유 DP는 헤더에 계속 표시됨).
         <span className="shrink-0 h-7 px-2.5 rounded-lg bg-[#162639] border border-[#C5A059]/40 flex items-center gap-1.5 text-xs tabular-nums">
           <span className="text-slate-400">보유</span>
           <span className="font-bold text-[#E2C28E]">{headerWalletDp.toLocaleString()} DP</span>
         </span>
+        */}
       </div>
 
-      {/* Market Header Summary Box */}
-      <div className="bg-[#162639] border border-[#C5A059]/50 rounded-2xl p-4 flex flex-col gap-3">
+      {/* Market Header Summary Box
+          2026-10-03: 카테고리 배경 이미지 적용(목록·홈 캐러셀과 같은 ChallengeCardBackground, 약 35%) —
+          relative isolate overflow-hidden 추가 (기존: "bg-[#162639] border border-[#C5A059]/50 rounded-2xl p-4 flex flex-col gap-3") */}
+      <div className="relative isolate overflow-hidden bg-[#162639] border border-[#C5A059]/50 rounded-2xl p-4 flex flex-col gap-3">
+        <ChallengeCardBackground category={selectedMarket.category} />
         <span className="self-start h-6 px-2 rounded-md text-[11px] font-bold text-[#E2C28E] bg-[#C5A059]/10 border border-[#C5A059]/40 inline-flex items-center">
           {selectedMarket.category}
         </span>
@@ -190,7 +209,10 @@ export const PolyMarketDetailScreen: React.FC = () => {
           </p>
         )}
 
-        {/* Existing Vote */}
+        {/* 2026-10-03 비활성화 (삭제하지 않고 주석 보존). 사유: 챌린지 개편 — DP를 걸지 않고(내 투표 금액 표시 불필요),
+            여론 막대 삭제(YES/NO 선택만), 확인 창 후 참여·즉시 DP 지급·선택 변경 불가(포지션 변경 안내 삭제),
+            참여 100명 전 "의견 수집중" → 아래 ChallengeVotePanel로 교체.
+        {/ * Existing Vote * /}
         {existingVote && (
           <div className="bg-[#0D1B2A] border border-[#C5A059]/40 px-3.5 py-2.5 rounded-xl flex items-center justify-between gap-2 tabular-nums">
             <span className="text-xs text-slate-400 flex items-center gap-1.5">
@@ -204,7 +226,7 @@ export const PolyMarketDetailScreen: React.FC = () => {
           </div>
         )}
 
-        {/* Visual Probability Bar & Yes/No Buttons */}
+        {/ * Visual Probability Bar & Yes/No Buttons * /}
         <PolyOddsBar yesValue={selectedMarket.yesValue} noValue={selectedMarket.noValue} />
         <PolyVoteButtons
           size="lg"
@@ -214,8 +236,19 @@ export const PolyMarketDetailScreen: React.FC = () => {
         {existingVote && (
           <p className="text-[11px] text-slate-500 text-center -mt-1">다른 쪽을 누르거나 금액을 바꿔 포지션을 변경할 수 있습니다.</p>
         )}
+        */}
+        <ChallengeVotePanel
+          market={selectedMarket}
+          myChoice={existingVote?.choice}
+          size="lg"
+          onSelect={(choice, e) => requestJoin(selectedMarket, choice, e)}
+        />
       </div>
 
+      {/* 2026-10-03 비활성화 (삭제하지 않고 보존). 사유: 챌린지 상세에서 "판정 기준 / 분석 · 뉴스" 박스를 삭제하고
+          "참여자 토론 & 의견" 박스만 남기기로 함. 복구 시 아래 false를 제거. */}
+      {false && (
+      <>
       {/* Tabs: Market Rules vs Market News/Context — 2026-09-27: 탭 문구 한글화(영문 괄호 제거), 본문 이모지 제거 */}
       <div className="bg-[#162639] border border-[#1F334D] rounded-2xl overflow-hidden">
         <div className="flex border-b border-[#1F334D]">
@@ -252,6 +285,8 @@ export const PolyMarketDetailScreen: React.FC = () => {
               기존 JSX 주석(파일 하단 보존 블록 참고)과 동일하게 계속 숨김 */}
         </div>
       </div>
+      </>
+      )}
 
       {/* Real-time Discussion / Comments */}
       <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3">
@@ -264,6 +299,32 @@ export const PolyMarketDetailScreen: React.FC = () => {
             {commentsLoading ? '불러오는 중…' : `${comments.length}개`}
           </span>
         </div>
+
+        {/* 의견 입력 (DOUBLE RING 파트너스 커뮤니티 댓글 입력 형식 참고) — 2026-09-27: 높이 40px·글자 13px
+            2026-10-03: 작성글 목록 아래 → 위로 이동 (요청: 의견 등록과 작성글 위치 교체) */}
+        <form onSubmit={handleAddComment} className="flex flex-col gap-1">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="이 챌린지에 대한 의견을 남겨보세요"
+              value={commentInput}
+              onChange={(e) => setCommentInput(e.target.value.slice(0, COMMENT_MAX_LENGTH))}
+              maxLength={COMMENT_MAX_LENGTH}
+              disabled={isSubmittingComment}
+              className="flex-1 min-w-0 h-10 bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3 text-white text-[13px] placeholder:text-slate-500 focus:border-[#C5A059] focus:outline-none disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              disabled={isSubmittingComment || commentInput.trim().length === 0}
+              className="h-10 px-4 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-[13px] shrink-0 disabled:opacity-50"
+            >
+              등록
+            </button>
+          </div>
+          <span className="text-[11px] text-slate-500 text-right tabular-nums pr-1">
+            {commentInput.length}/{COMMENT_MAX_LENGTH}
+          </span>
+        </form>
 
         <div className="flex flex-col gap-2">
           {comments.map((comment) => {
@@ -317,33 +378,22 @@ export const PolyMarketDetailScreen: React.FC = () => {
             <p className="text-center text-[13px] text-slate-500 py-4">아직 등록된 의견이 없습니다. 첫 의견을 남겨보세요!</p>
           )}
         </div>
-
-        {/* 의견 입력 (DOUBLE RING 파트너스 커뮤니티 댓글 입력 형식 참고) — 2026-09-27: 높이 40px·글자 13px */}
-        <form onSubmit={handleAddComment} className="flex flex-col gap-1">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="이 챌린지에 대한 의견을 남겨보세요"
-              value={commentInput}
-              onChange={(e) => setCommentInput(e.target.value.slice(0, COMMENT_MAX_LENGTH))}
-              maxLength={COMMENT_MAX_LENGTH}
-              disabled={isSubmittingComment}
-              className="flex-1 min-w-0 h-10 bg-[#0D1B2A] border border-[#1F334D] rounded-xl px-3 text-white text-[13px] placeholder:text-slate-500 focus:border-[#C5A059] focus:outline-none disabled:opacity-50"
-            />
-            <button
-              type="submit"
-              disabled={isSubmittingComment || commentInput.trim().length === 0}
-              className="h-10 px-4 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-[13px] shrink-0 disabled:opacity-50"
-            >
-              등록
-            </button>
-          </div>
-          <span className="text-[11px] text-slate-500 text-right tabular-nums pr-1">
-            {commentInput.length}/{COMMENT_MAX_LENGTH}
-          </span>
-        </form>
+        {/* 2026-10-03: 의견 입력창은 작성글 목록 위로 이동 (기존: 이 자리, 목록 아래) */}
       </div>
 
+      {/* 2026-10-03: 챌린지 참여 확인 창 (DP 금액 선택 없음) */}
+      {pendingJoin && (
+        <ChallengeJoinConfirmModal
+          category={pendingJoin.market.category}
+          title={pendingJoin.market.title}
+          choice={pendingJoin.choice}
+          isSubmitting={isJoinSubmitting}
+          onCancel={cancelJoin}
+          onConfirm={confirmJoin}
+        />
+      )}
+
+      {/* 2026-10-03: 아래 DP 사용 확인·완료 모달은 새 참여 방식에서 열리지 않음 (handleOpenVoteModal 호출부가 주석 처리됨, 코드 보존) */}
       {/* Confirmation Modal with Presets — 2026-09-27 공용 컴포넌트 */}
       {confirmModalData && (
         <PolyVoteConfirmModal

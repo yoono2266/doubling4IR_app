@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { PolyVote } from '../types';
+import { ChallengeAiAnalysisCard } from '../components/challenge/ChallengeAiAnalysisCard';
+import { isChallengeResultOpen } from '../components/challenge/challengeConfig';
+import { PolyOddsBar } from '../components/PolyVoteControls';
+import { useChallengeMarkets } from '../hooks/useChallengeMarkets';
 
 // 2026-09-27 UI/UX 정리 (마이페이지 > 예측 챌린지 참여 내역)
 // - 상단 3분할 요약 카드 → 요약 카드 1장(3칸 구분선), 보유 DP는 마이페이지·헤더와 같은 memberInfo.u_dp 사용
@@ -31,7 +35,10 @@ const ChoiceChip: React.FC<{ choice: string }> = ({ choice }) => (
   </span>
 );
 
-export const PolyPortfolioHistoryScreen: React.FC = () => {
+// 2026-10-03 비활성화 (삭제하지 않고 보존 — 화면 연결 해제). 사유: 챌린지 개편으로 "DP 투자" 방식 내용 전체 삭제 요청.
+//   (보유/진행중 투입/적중 시 회수 요약, 진행중·완료(정산됨) 탭, 투입 DP·여론 변화·예상 획득·잠재 손익, 지금 정리하기)
+//   마이페이지 'my-poly-history'는 파일 하단의 새 PolyPortfolioHistoryScreen(AI 성향 분석 + 참여 목록)을 사용.
+export const LegacyPolyPortfolioHistoryScreen: React.FC = () => {
   const { myProfile, polyVotes, setCurrentTab, setCurrentSubScreen, earlyExitPolyVote } = useApp();
 
   // Tab State: 'open' (진행중) vs 'settled' (완료)
@@ -87,7 +94,7 @@ export const PolyPortfolioHistoryScreen: React.FC = () => {
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-bold text-white flex items-center gap-2 min-w-0">
           <span className="material-symbols-outlined text-[#C5A059]">query_stats</span>
-          <span className="truncate">예측 챌린지 참여 내역</span>
+          <span className="truncate">챌린지 참여 내역</span>
         </h2>
         {/*
           2026-09-09 제거 요청으로 비활성화 (삭제하지 않고 주석 보존).
@@ -187,14 +194,14 @@ export const PolyPortfolioHistoryScreen: React.FC = () => {
               <span className="material-symbols-outlined text-3xl text-[#C5A059]">hourglass_empty</span>
               <div>
                 <p className="text-[13px] font-bold text-white">진행중인 예측 포지션이 없습니다.</p>
-                <p className="mt-1 text-xs text-slate-400 break-keep">새로운 예측 챌린지에 투표하고 DP를 획득해보세요!</p>
+                <p className="mt-1 text-xs text-slate-400 break-keep">새로운 챌린지에 투표하고 DP를 획득해보세요!</p>
               </div>
               <button
                 type="button"
                 onClick={goToChallenge}
                 className="h-10 px-4 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-[13px] hover:brightness-110 active:scale-[0.98] transition"
               >
-                예측 챌린지 둘러보기
+                챌린지 둘러보기
               </button>
             </div>
           ) : (
@@ -421,6 +428,139 @@ export const PolyPortfolioHistoryScreen: React.FC = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// 2026-10-03: 챌린지 참여 내역 (새 참여 방식 — DP를 걸지 않고 참여 즉시 DP 지급, 선택 변경 불가)
+// - 상단: AI 성향 분석 카드 (서버 미제공 — "분석 준비 중", BE 요청서 REQ-261003-02)
+// - 목록: 카테고리 · 참여일 · 제목 · 내 선택 · 상태(의견 수집중 / 참여 100명 도달 시 YES/NO 비율)
+//   참여 기록은 AppContext polyVotes(앱 내 기록, mock 포함) 기준이며, 결과 공개 여부는 같은 챌린지(polyMarkets)의 참여 인원으로 판단
+export const PolyPortfolioHistoryScreen: React.FC = () => {
+  const { polyVotes, setCurrentTab, setCurrentSubScreen, setSelectedMarket } = useApp();
+  // 서버 챌린지 + (localhost 개발 환경에서만) 테스트 더미 — 더미에 참여한 기록도 상세로 이동 가능
+  const challengeMarkets = useChallengeMarkets();
+
+  const goToChallenge = () => {
+    setCurrentTab('poly');
+    setCurrentSubScreen(null);
+  };
+
+  const findMarket = (vote: PolyVote) => challengeMarkets.find((m) => m.id === vote.marketId || m.title === vote.title);
+
+  return (
+    <div className="flex flex-col gap-4 pb-44 pt-2">
+      <button
+        onClick={() => setCurrentSubScreen(null)}
+        className="text-xs text-slate-400 hover:text-white flex items-center gap-1 w-fit transition"
+      >
+        <span className="material-symbols-outlined text-sm">arrow_back</span>
+        <span>마이페이지로 돌아가기</span>
+      </button>
+
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-bold text-white flex items-center gap-2 min-w-0">
+          <span className="material-symbols-outlined text-[#C5A059]">query_stats</span>
+          <span className="truncate">챌린지 참여 내역</span>
+        </h2>
+        <button
+          type="button"
+          onClick={goToChallenge}
+          className="shrink-0 h-8 pl-3 pr-1.5 rounded-lg border border-[#C5A059]/50 bg-[#C5A059]/10 text-[#E2C28E] text-xs font-bold flex items-center gap-0.5 hover:bg-[#C5A059]/20 active:scale-[0.97] transition"
+        >
+          <span>챌린지 참여</span>
+          <span className="material-symbols-outlined text-base">chevron_right</span>
+        </button>
+      </div>
+
+      <ChallengeAiAnalysisCard participatedCount={polyVotes.length} />
+
+      <div className="flex items-center justify-between px-1">
+        <h3 className="text-xs font-bold text-slate-400 flex items-center gap-1">
+          <span className="material-symbols-outlined text-sm text-[#C5A059]">format_list_bulleted</span>
+          <span className="tabular-nums">참여한 챌린지 ({polyVotes.length})</span>
+        </h3>
+        <span className="text-xs text-[#C5A059]">최신순</span>
+      </div>
+
+      {polyVotes.length === 0 ? (
+        <div className="bg-[#162639] border border-[#1F334D] rounded-2xl p-6 text-center flex flex-col items-center gap-3">
+          <span className="material-symbols-outlined text-3xl text-[#C5A059]">how_to_vote</span>
+          <div>
+            <p className="text-[13px] font-bold text-white">아직 참여한 챌린지가 없어요.</p>
+            <p className="mt-1 text-xs text-slate-400 break-keep">YES 또는 NO를 선택하면 바로 DP를 받을 수 있어요.</p>
+          </div>
+          <button
+            type="button"
+            onClick={goToChallenge}
+            className="h-10 px-4 rounded-xl gold-button-gradient text-[#0D1B2A] font-extrabold text-[13px] hover:brightness-110 active:scale-[0.98] transition"
+          >
+            챌린지 둘러보기
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {polyVotes.map((vote) => {
+            const market = findMarket(vote);
+            const isResultOpen = market ? isChallengeResultOpen(market) : false;
+            const isYes = vote.choice.includes('YES');
+
+            return (
+              <div
+                key={vote.id}
+                onClick={() => {
+                  if (!market) return;
+                  setSelectedMarket(market);
+                  setCurrentSubScreen('poly-market-detail');
+                }}
+                className={`bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3 transition ${
+                  market ? 'cursor-pointer hover:border-[#C5A059]/50' : ''
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="h-6 px-2 rounded-md text-[11px] font-bold text-[#E2C28E] bg-[#C5A059]/10 border border-[#C5A059]/40 inline-flex items-center">
+                    {vote.category}
+                  </span>
+                  <span className="text-xs text-slate-400 tabular-nums">참여 {vote.date}</span>
+                </div>
+
+                <h4 className="text-[15px] font-bold text-white leading-snug break-keep">{vote.title}</h4>
+
+                <div className="flex flex-col gap-2.5 rounded-xl border border-[#1F334D] bg-[#0D1B2A] p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-slate-400">내 선택</span>
+                    <span
+                      className={`h-6 px-2 rounded-md text-xs font-bold border inline-flex items-center ${
+                        isYes
+                          ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30'
+                          : 'text-rose-300 bg-rose-500/10 border-rose-500/30'
+                      }`}
+                    >
+                      {vote.choice}
+                    </span>
+                  </div>
+                  <div className="border-t border-[#1F334D] pt-2.5">
+                    {isResultOpen && market ? (
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-xs text-slate-400">참여 결과</span>
+                        <PolyOddsBar yesValue={market.yesValue} noValue={market.noValue} />
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs text-slate-400">참여 결과</span>
+                        <span className="flex items-center gap-1 text-[13px] font-bold text-[#E2C28E]">
+                          <span className="material-symbols-outlined text-base">hourglass_top</span>
+                          의견 수집중
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

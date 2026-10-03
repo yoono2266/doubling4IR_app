@@ -28,6 +28,8 @@ export interface PolyMarketItem {
   yesValue: number;
   noValue: number;
   totalVolumeDp: string;
+  // 2026-10-03: 참여 인원 수 (챌린지 결과 공개 기준 100명). 서버 제공 전이라 아직 채워지지 않음 — BE 요청서 REQ-261003-02
+  pickCount?: number;
   description: string;
   rulesText: string;
   contextNews: string;

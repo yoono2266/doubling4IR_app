@@ -41,7 +41,8 @@ export const PolyVoteButtons: React.FC<PolyVoteButtonsProps> = ({ myChoice, onVo
         className={`${base} ${
           myChoice === 'YES'
             ? 'bg-emerald-500 text-[#0D1B2A] border-emerald-400'
-            : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/20'
+            // 2026-10-03: 배경 투명도 30%p 낮춤(덜 투명하게) — 배경 10% → 40%, hover 20% → 50%
+            : 'bg-emerald-500/40 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/50'
         }`}
       >
         <span className="material-symbols-outlined text-base">{myChoice === 'YES' ? 'check_circle' : 'thumb_up'}</span>
@@ -54,7 +55,8 @@ export const PolyVoteButtons: React.FC<PolyVoteButtonsProps> = ({ myChoice, onVo
         className={`${base} ${
           myChoice === 'NO'
             ? 'bg-rose-500 text-white border-rose-400'
-            : 'bg-rose-500/10 border-rose-500/40 text-rose-300 hover:bg-rose-500/20'
+            // 2026-10-03: 배경 투명도 30%p 낮춤(덜 투명하게) — 배경 10% → 40%, hover 20% → 50%
+            : 'bg-rose-500/40 border-rose-500/40 text-rose-300 hover:bg-rose-500/50'
         }`}
       >
         <span className="material-symbols-outlined text-base">{myChoice === 'NO' ? 'check_circle' : 'thumb_down'}</span>

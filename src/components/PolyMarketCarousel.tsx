@@ -3,6 +3,11 @@ import { useApp } from '../context/AppContext';
 import { PolyMarketItem } from '../data/polyMarketData';
 import { apiCommonClient, CommonResponse } from '../utils/apiClient';
 import { getStoredUserInfo } from '../utils/auth';
+import { ChallengeVotePanel } from './challenge/ChallengeVotePanel';
+import { ChallengeJoinConfirmModal } from './challenge/ChallengeJoinConfirmModal';
+import { ChallengeCardBackground } from './challenge/ChallengeCardBackground';
+import { useChallengeJoin } from '../hooks/useChallengeJoin';
+import { useChallengeMarkets } from '../hooks/useChallengeMarkets';
 
 const DP_PRESETS = [100, 500, 1000, 5000];
 
@@ -28,6 +33,10 @@ export const PolyMarketCarousel: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState<number>(100);
+  // 2026-10-03: 챌린지 참여(확인 창 → 서버 기록 → 즉시 DP 안내) 공용 훅
+  const { pendingJoin, isSubmitting: isJoinSubmitting, requestJoin, cancelJoin, confirmJoin } = useChallengeJoin();
+  // 2026-10-03: 서버 챌린지 + (localhost 개발 환경에서만) 테스트 더미 6건
+  const challengeMarkets = useChallengeMarkets();
 
   // 확인 모달의 "보유"/"잔여 예상 포인트"는 Header.tsx와 동일하게 실제 서버 잔액
   // (myProfile.memberInfo.u_dp)을 기준으로 표시한다. (투표 자체의 mock 차감 로직인
@@ -62,14 +71,14 @@ export const PolyMarketCarousel: React.FC = () => {
 
   // Auto-scroll every 4.5 seconds when not paused
   useEffect(() => {
-    if (isPaused || polyMarkets.length <= 1) return;
+    if (isPaused || challengeMarkets.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % polyMarkets.length);
+      setCurrentIndex((prev) => (prev + 1) % challengeMarkets.length);
     }, 4500);
     return () => clearInterval(interval);
-  }, [isPaused, polyMarkets.length]);
+  }, [isPaused, challengeMarkets.length]);
 
-  const currentMarket = polyMarkets[currentIndex] || polyMarkets[0];
+  const currentMarket = challengeMarkets[currentIndex] || challengeMarkets[0];
   const userVote = currentMarket ? getUserVoteForMarket(currentMarket.id) : undefined;
 
   const handleCardClick = () => {
@@ -173,20 +182,26 @@ export const PolyMarketCarousel: React.FC = () => {
     >
       <div
         onClick={handleCardClick}
-        className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3 shadow-md hover:border-[#C5A059]/50 transition cursor-pointer"
+        // 2026-10-03: 카테고리 배경 이미지용 relative isolate overflow-hidden 추가 (기존: 없음)
+        className="relative isolate overflow-hidden bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3 shadow-md hover:border-[#C5A059]/50 transition cursor-pointer"
       >
+        {/* 2026-10-03: 카테고리별 배경 이미지 (현재 스포츠만, 약 35%) */}
+        <ChallengeCardBackground category={currentMarket.category} />
         {/* Header with Category & Volume */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold text-[#C5A059] bg-[#C5A059]/15 px-2.5 py-0.5 rounded border border-[#C5A059]/30">
               {currentMarket.category}
             </span>
+            {/* 2026-10-03 비활성화 (삭제하지 않고 주석 보존). 사유: DP를 걸지 않는 참여 방식으로 바뀌어 "내 투표: YES (N DP)" 표시가 맞지 않음.
+                내 선택은 아래 참여 영역(ChallengeVotePanel)에 표시.
             {userVote && (
               <span className="text-[10px] font-extrabold text-[#E2C28E] bg-[#C5A059]/10 px-2 py-0.5 rounded border border-[#C5A059]/30 flex items-center gap-1">
                 <span className="material-symbols-outlined text-xs">how_to_vote</span>
                 내 투표: {userVote.choice} ({userVote.amountDp.toLocaleString()} DP)
               </span>
             )}
+            */}
           </div>
           {/* 2026-09-15 비활성화 (삭제하지 않고 주석 보존).
               사유: 홈 화면 예측 챌린지 박스 우측 상단의 거래량/투표 규모(N,NNN DP) 표시를
@@ -206,9 +221,18 @@ export const PolyMarketCarousel: React.FC = () => {
           <p className="text-xs text-slate-400 mt-1 line-clamp-1">{currentMarket.description}</p>
         </div>
 
-        {/* Unified YES/NO Bar and Action Buttons */}
+        {/* 2026-10-03: 챌린지 개편 — 여론 막대 삭제(YES/NO 선택만), 확인 창 후 참여·즉시 DP 지급·선택 변경 불가,
+            참여 100명 전 "의견 수집중" (목록·상세와 같은 공용 ChallengeVotePanel) */}
+        <ChallengeVotePanel
+          market={currentMarket}
+          myChoice={userVote?.choice}
+          onSelect={(choice, e) => requestJoin(currentMarket, choice, e)}
+        />
+
+        {/* 2026-10-03 비활성화 (삭제하지 않고 주석 보존). 사유: 위 ChallengeVotePanel로 교체 (기존 여론 막대 + DP 금액 선택 투표 버튼).
+        {/ * Unified YES/NO Bar and Action Buttons * /}
         <div className="space-y-2">
-          {/* Visual Probability Bar */}
+          {/ * Visual Probability Bar * /}
           <div className="w-full bg-[#0D1B2A] h-2 rounded-full overflow-hidden flex">
             <div
               className="bg-emerald-500 h-full transition-all duration-300"
@@ -220,7 +244,7 @@ export const PolyMarketCarousel: React.FC = () => {
             />
           </div>
 
-          {/* Clean YES/NO Buttons (percentage only) */}
+          {/ * Clean YES/NO Buttons (percentage only) * /}
           <div className="grid grid-cols-2 gap-2 pt-0.5">
             <button
               onClick={(e) => handleVoteClick('YES', currentMarket.yesOdds, e)}
@@ -246,9 +270,13 @@ export const PolyMarketCarousel: React.FC = () => {
             </button>
           </div>
         </div>
+        */}
 
-        {/* Carousel Indicators & Controls */}
-        <div className="flex items-center justify-between pt-1 border-t border-[#1F334D]/60 text-[11px] text-slate-400">
+        {/* 2026-10-03 비활성화 (삭제하지 않고 보존). 사유: YES/NO 버튼 아래 위치 표시 줄(점 + "N / N") 자체를 삭제하기로 함.
+            챌린지가 여러 개면 기존 자동 넘김(일정 간격)으로만 전환됨. 복구 시 아래 false를 제거.
+            (같은 날 앞서 이 줄의 구분선 제거 — 기존: "pt-1 border-t border-[#1F334D]/60") */}
+        {false && (
+        <div className="flex items-center justify-between pt-1 text-[11px] text-slate-400">
           <div className="flex items-center gap-1">
             {polyMarkets.map((_, idx) => (
               <button
@@ -270,8 +298,22 @@ export const PolyMarketCarousel: React.FC = () => {
             <span>{polyMarkets.length}</span>
           </div>
         </div>
+        )}
       </div>
 
+      {/* 2026-10-03: 챌린지 참여 확인 창 (DP 금액 선택 없음) */}
+      {pendingJoin && (
+        <ChallengeJoinConfirmModal
+          category={pendingJoin.market.category}
+          title={pendingJoin.market.title}
+          choice={pendingJoin.choice}
+          isSubmitting={isJoinSubmitting}
+          onCancel={cancelJoin}
+          onConfirm={confirmJoin}
+        />
+      )}
+
+      {/* 2026-10-03: 아래 DP 사용 확인·완료 모달은 새 참여 방식에서 열리지 않음 (handleVoteClick 호출부가 주석 처리됨, 코드 보존) */}
       {/* Confirmation Modal with Presets */}
       {confirmData && (() => {
         const isRevote = confirmData.isRevote;

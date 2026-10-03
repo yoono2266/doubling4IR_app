@@ -645,7 +645,7 @@ export const MyPageScreen: React.FC = () => {
 
         <h2 className="text-lg font-bold text-white flex items-center gap-2">
           <span className="material-symbols-outlined text-[#C5A059]">history</span>
-          예측 챌린지 참여 내역 ({polyVotes?.length || 0}건)
+          챌린지 참여 내역 ({polyVotes?.length || 0}건)
         </h2>
 
         <div className="space-y-3">
@@ -795,7 +795,7 @@ export const MyPageScreen: React.FC = () => {
           </h3>
           <div className="bg-[#162639] border border-[#1F334D] rounded-2xl divide-y divide-[#1F334D]">
             {[
-              { key: 'u_notification' as const, isOn: isNotificationOn, title: '푸시 알림 수신', desc: '예약 확정 및 예측 챌린지 오즈 변동 알림' },
+              { key: 'u_notification' as const, isOn: isNotificationOn, title: '푸시 알림 수신', desc: '예약 확정 및 챌린지 결과 공개 알림' },
               { key: 'u_select_1' as const, isOn: isMarketingOn, title: '마케팅 수신 동의', desc: 'VIP 전용 리조트 프로모션 수신' },
             ].map((item) => (
               <button
@@ -831,7 +831,7 @@ export const MyPageScreen: React.FC = () => {
           <div className="flex items-center justify-between py-2 border-b border-[#1F334D]">
             <div>
               <p className="font-bold text-white">푸시 알림 수신</p>
-              <p className="text-[10px] text-slate-400">예약 확정 및 예측 챌린지 오즈 변동 알림</p>
+              <p className="text-[10px] text-slate-400">예약 확정 및 챌린지 결과 공개 알림</p>
             </div>
             <button
               onClick={() => handleToggleSetting('u_notification', isNotificationOn)}
@@ -998,7 +998,7 @@ export const MyPageScreen: React.FC = () => {
                 {/* 2026-09-27: 서비스명 표기 통일(더블링 → DOUBLE RING), 라벨 10px → 12px */}
                 <span className="text-xs font-bold text-slate-300 block">DOUBLE RING 포인트 (DP)</span>
                 <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 whitespace-nowrap inline-block mt-0.5">
-                  예측 챌린지 전용 · 무료
+                  챌린지 전용 · 무료
                 </span>
               </div>
             </div>
@@ -1159,7 +1159,7 @@ export const MyPageScreen: React.FC = () => {
               <span className="material-symbols-outlined text-lg">history</span>
             </div>
             <div className="min-w-0">
-              <span className="text-[13px] font-bold text-white block">예측 챌린지 참여 내역</span>
+              <span className="text-[13px] font-bold text-white block">챌린지 참여 내역</span>
               {/* 2026-09-27: 상단 DP 카드(서버 memberInfo.u_dp)와 잔액이 달라 보이던 문제 — mock user.walletDp(20,000) 대신
                   같은 서버 값 사용 (기존: 잔액: {user.walletDp.toLocaleString()} DP) */}
               <span className="text-[11px] text-[#E2C28E] font-medium tabular-nums">잔액: {(memberInfo?.u_dp || 0).toLocaleString()} DP</span>

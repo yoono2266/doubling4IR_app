@@ -10,7 +10,7 @@ interface LandingScreenProps {
 const FEATURES = [
   { Icon: Video, title: '실시간 콘텐츠', desc: '지금 이 순간을 놓치지 않고 바로 확인' },
   { Icon: Newspaper, title: '다양한 콘텐츠와 뉴스', desc: '취향 따라 골라보는 다채로운 이야기' },
-  { Icon: Vote, title: '예측 챌린지', desc: '사회·연예·정치 이슈, 오늘의 촉을 시험해보세요' },
+  { Icon: Vote, title: '챌린지', desc: '사회·연예·정치 이슈, 오늘의 촉을 시험해보세요' },
   { Icon: Award, title: '혜택형 여행', desc: '다닐수록 커지는 특별한 대우' },
 ];
 
@@ -79,7 +79,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onStart }) => {
           사유: 랜딩 화면 리뉴얼 범위에서 연령 제한/DP 환전 불가 고지 문구 제거 요청.
           <div className="w-full text-left space-y-1">
             <p className="text-[11px] text-slate-500 leading-relaxed">
-              ※ 예측 챌린지는 만 19세 이상 이용 가능합니다.
+              ※ 챌린지는 만 19세 이상 이용 가능합니다.
             </p>
             <p className="text-[11px] text-slate-500 leading-relaxed">
               ※ 포인트(DP)는 현금으로 구매·환전할 수 없습니다.

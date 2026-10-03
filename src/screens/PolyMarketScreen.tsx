@@ -5,6 +5,11 @@ import { apiCommonClient } from '../utils/apiClient';
 import { getStoredUserInfo } from '../utils/auth';
 import { PolyVoteConfirmModal, PolyVoteResultModal, PolyVoteResult, calcExpectedPayout } from '../components/PolyVoteModals';
 import { PolyOddsBar, PolyVoteButtons } from '../components/PolyVoteControls';
+import { ChallengeVotePanel } from '../components/challenge/ChallengeVotePanel';
+import { ChallengeJoinConfirmModal } from '../components/challenge/ChallengeJoinConfirmModal';
+import { ChallengeCardBackground } from '../components/challenge/ChallengeCardBackground';
+import { useChallengeJoin } from '../hooks/useChallengeJoin';
+import { useChallengeMarkets } from '../hooks/useChallengeMarkets';
 
 // 2026-09-27 UI/UX 정리: DP_PRESETS·calcExpectedPayout은 components/PolyVoteModals.tsx로 이동(상세 화면과 공용).
 // 카테고리 탭 알약 → h-8 사각 태그(+개수), 리더보드 버튼 h-8 아웃라인, 카드 제목 14 → 15px·설명 12 → 13px,
@@ -26,6 +31,10 @@ export const PolyMarketScreen: React.FC = () => {
   } = useApp();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  // 2026-10-03: 서버 챌린지 + (localhost 개발 환경에서만) 테스트 더미 6건 — 카테고리 탭·목록·개수에 사용
+  const challengeMarkets = useChallengeMarkets();
+  // 2026-10-03: 챌린지 참여(확인 창 → 서버 기록 → 즉시 DP 안내) 공용 훅
+  const { pendingJoin, isSubmitting: isJoinSubmitting, requestJoin, cancelJoin, confirmJoin } = useChallengeJoin();
 
   // 확인 모달의 "보유"/"잔여 예상 포인트"는 Header.tsx와 동일하게 실제 서버 잔액
   // (myProfile.memberInfo.u_dp)을 기준으로 표시한다. (투표 자체의 mock 차감 로직인
@@ -62,17 +71,17 @@ export const PolyMarketScreen: React.FC = () => {
   // 2026-09-27: 서버 마켓에 4개 외 카테고리(예: 스포츠)가 오면 탭을 뒤에 추가해 해당 챌린지로 바로 갈 수 있게 하고,
   // 챌린지가 0건인 카테고리 탭은 숨김 (기존: 4개 고정 표시 → 빈 목록 탭 존재, 스포츠 챌린지는 "전체"에서만 보임)
   const BASE_CATEGORIES = ['사회', '연예', '정치', '인물'];
-  const extraCategories = Array.from(new Set(polyMarkets.map((m) => m.category))).filter(
+  const extraCategories = Array.from(new Set(challengeMarkets.map((m) => m.category))).filter(
     (c) => c && !BASE_CATEGORIES.includes(c)
   );
   const categories = [
     'ALL',
-    ...[...BASE_CATEGORIES, ...extraCategories].filter((c) => polyMarkets.some((m) => m.category === c)),
+    ...[...BASE_CATEGORIES, ...extraCategories].filter((c) => challengeMarkets.some((m) => m.category === c)),
   ];
 
   const filteredMarkets = selectedCategory === 'ALL'
-    ? polyMarkets
-    : polyMarkets.filter(m => m.category === selectedCategory);
+    ? challengeMarkets
+    : challengeMarkets.filter(m => m.category === selectedCategory);
 
   const handleOpenVoteModal = (m: PolyMarketItem, choice: string, odds: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -146,7 +155,7 @@ export const PolyMarketScreen: React.FC = () => {
   };
 
   const categoryCount = (cat: string) =>
-    cat === 'ALL' ? polyMarkets.length : polyMarkets.filter((m) => m.category === cat).length;
+    cat === 'ALL' ? challengeMarkets.length : challengeMarkets.filter((m) => m.category === cat).length;
 
   return (
     <div className="flex flex-col gap-4 pb-44 pt-2">
@@ -155,7 +164,8 @@ export const PolyMarketScreen: React.FC = () => {
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <span className="material-symbols-outlined text-[#C5A059]">query_stats</span>
-            예측 챌린지
+            {/* 2026-10-03: 명칭 변경 "예측 챌린지" → "챌린지" */}
+            챌린지
           </h2>
           {/*
             2026-09-08 제거 요청으로 비활성화 (삭제하지 않고 주석 보존).
@@ -164,7 +174,8 @@ export const PolyMarketScreen: React.FC = () => {
             <p className="text-xs text-slate-400">웹3 기반 사회·연예·정치·인물 실시간 오즈 &amp; 100~5,000 DP 투표</p>
           */}
         </div>
-        {/* Leaderboard Button — 2026-09-27: 다른 화면 헤더 버튼과 같은 h-8 아웃라인 */}
+        {/* 2026-10-03 비활성화 (삭제하지 않고 주석 보존). 사유: 챌린지 개편으로 리더보드 삭제 요청 (리더보드 화면 진입 버튼 숨김).
+        {/ * Leaderboard Button — 2026-09-27: 다른 화면 헤더 버튼과 같은 h-8 아웃라인 * /}
         <button
           type="button"
           onClick={() => setCurrentSubScreen('poly-leaderboard')}
@@ -174,6 +185,7 @@ export const PolyMarketScreen: React.FC = () => {
           <span className="material-symbols-outlined text-base">leaderboard</span>
           <span>리더보드</span>
         </button>
+        */}
       </div>
 
       {/* Category Tabs: 전체 / 사회 / 연예 / 정치 / 인물 — 2026-09-27: "전체 마켓" → "전체", 개수 표시 */}
@@ -211,20 +223,26 @@ export const PolyMarketScreen: React.FC = () => {
           return (
             <div
               key={m.id}
-              className="bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3 hover:border-[#C5A059]/50 transition cursor-pointer"
+              // 2026-10-03: 카테고리 배경 이미지용 relative isolate overflow-hidden 추가 (기존: 없음)
+              className="relative isolate overflow-hidden bg-[#162639] border border-[#1F334D] rounded-2xl p-4 flex flex-col gap-3 hover:border-[#C5A059]/50 transition cursor-pointer"
               onClick={() => handleNavigateDetail(m)}
             >
+              {/* 2026-10-03: 카테고리별 배경 이미지 (현재 스포츠만, 약 35%) */}
+              <ChallengeCardBackground category={m.category} />
               {/* Category & My Vote */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="h-6 px-2 rounded-md text-[11px] font-bold text-[#E2C28E] bg-[#C5A059]/10 border border-[#C5A059]/40 inline-flex items-center">
                   {m.category}
                 </span>
+                {/* 2026-10-03 비활성화 (삭제하지 않고 주석 보존). 사유: DP를 걸지 않는 참여 방식으로 바뀌어 "내 투표 YES · N DP" 표시가 맞지 않음.
+                    내 선택은 아래 참여 영역(ChallengeVotePanel)에 표시.
                 {userVote && (
                   <span className="h-6 px-2 rounded-md text-[11px] font-bold text-[#E2C28E] bg-[#0D1B2A] border border-[#C5A059]/40 inline-flex items-center gap-1 tabular-nums">
                     <span className="material-symbols-outlined text-sm">how_to_vote</span>
                     내 투표 {userVote.choice} · {userVote.amountDp.toLocaleString()} DP
                   </span>
                 )}
+                */}
               </div>
 
               {/* Title & Description */}
@@ -239,17 +257,38 @@ export const PolyMarketScreen: React.FC = () => {
                 )}
               </div>
 
-              {/* Voting Probability Bar + YES / NO Buttons */}
+              {/* 2026-10-03 비활성화 (삭제하지 않고 주석 보존). 사유: 챌린지 개편 — 여론 막대 삭제(YES/NO 선택만),
+                  DP 금액 선택 없이 확인 창 후 참여·즉시 DP 지급·변경 불가, 참여 100명 전 "의견 수집중" → ChallengeVotePanel로 교체.
+              {/ * Voting Probability Bar + YES / NO Buttons * /}
               <PolyOddsBar yesValue={m.yesValue} noValue={m.noValue} />
               <PolyVoteButtons
                 myChoice={userVote?.choice}
                 onVote={(choice, e) => handleOpenVoteModal(m, choice, choice === 'YES' ? m.yesOdds : m.noOdds, e)}
+              />
+              */}
+              <ChallengeVotePanel
+                market={m}
+                myChoice={userVote?.choice}
+                onSelect={(choice, e) => requestJoin(m, choice, e)}
               />
             </div>
           );
         })}
       </div>
 
+      {/* 2026-10-03: 챌린지 참여 확인 창 (DP 금액 선택 없음) */}
+      {pendingJoin && (
+        <ChallengeJoinConfirmModal
+          category={pendingJoin.market.category}
+          title={pendingJoin.market.title}
+          choice={pendingJoin.choice}
+          isSubmitting={isJoinSubmitting}
+          onCancel={cancelJoin}
+          onConfirm={confirmJoin}
+        />
+      )}
+
+      {/* 2026-10-03: 아래 DP 사용 확인·완료 모달은 새 참여 방식에서 열리지 않음 (handleOpenVoteModal 호출부가 주석 처리됨, 코드 보존) */}
       {/* DP Use & Confirmation Modal (with 4 Presets) — 2026-09-27 공용 컴포넌트 */}
       {confirmModalData && (
         <PolyVoteConfirmModal
